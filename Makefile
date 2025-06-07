@@ -40,3 +40,9 @@ brush:
 	python3 scripts/brush.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
+
+zoom:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/zoom.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
