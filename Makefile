@@ -11,9 +11,9 @@ install: venv
 	@source $(VENV_PATH)/bin/activate && \
 	pip install --disable-pip-version-check -q -r requirements.txt
 
-plot:
+lines:
 	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plot.py \
+	python3 scripts/lines.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
 

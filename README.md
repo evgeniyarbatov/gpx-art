@@ -6,3 +6,5 @@ Explore creative potential of GPX files with errors
 
 - abstraction
 - calligraphy
+- zen style
+- pop art color
