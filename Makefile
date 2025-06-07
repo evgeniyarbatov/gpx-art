@@ -22,3 +22,9 @@ abstract:
 	python3 scripts/abstract.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
+
+painting:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/painting.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
