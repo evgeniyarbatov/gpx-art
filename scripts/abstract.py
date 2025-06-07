@@ -41,7 +41,7 @@ def plot(gpx_filename, image_filename):
     ax.axis('off')
 
     # Draw multiple abstract layers
-    for i in range(30):  # More layers = more texture
+    for i in range(random.randint(10, 60)):  # More layers = more texture
         angle = random.uniform(0, 360)
         offset = np.random.uniform(-1.5, 1.5, size=2)
         transformed = transform(points, angle, offset)
@@ -51,12 +51,13 @@ def plot(gpx_filename, image_filename):
                 alpha=random.uniform(0.4, 0.5))
 
     plt.savefig(image_filename, bbox_inches='tight', dpi=300)
+    plt.close()
 
 def main(gpx_dir, images_dir):
     for (name, gpx_path) in get_files(gpx_dir):        
         plot(
             gpx_path,
-            f"{images_dir}/{name}-abstract.png",
+            f"{images_dir}/abstract-{name}.png",
         )
 
 if __name__ == "__main__":
