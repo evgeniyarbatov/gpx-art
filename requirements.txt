@@ -3,3 +3,4 @@ ipykernel
 gpxpy
 pandas
 matplotlib
+numpy
