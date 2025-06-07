@@ -28,3 +28,9 @@ painting:
 	python3 scripts/painting.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
+
+vertical:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/vertical.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)

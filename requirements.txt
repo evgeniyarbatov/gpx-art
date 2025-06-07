@@ -4,3 +4,5 @@ gpxpy
 pandas
 matplotlib
 numpy
+shapely
+pillow
