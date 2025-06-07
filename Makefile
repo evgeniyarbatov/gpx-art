@@ -34,3 +34,9 @@ vertical:
 	python3 scripts/vertical.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
+
+brush:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/brush.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
