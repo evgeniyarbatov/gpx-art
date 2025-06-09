@@ -8,7 +8,7 @@ from utils import (
     get_files,
 )
 
-def lines(gpx_filename, image_filename, num_lines=20, img_width=1000, img_height=1000, trace_width=30):
+def lines(gpx_filename, image_filename, num_lines=10, img_width=1000, img_height=1000, trace_width=30):
     # Step 1: Parse GPX
     with open(gpx_filename, 'r') as gpx_file:
         gpx = gpxpy.parse(gpx_file)
@@ -43,14 +43,18 @@ def lines(gpx_filename, image_filename, num_lines=20, img_width=1000, img_height
     mask_array = np.array(trace_mask)
 
     # Step 4: Create white canvas with black vertical lines except where mask is non-zero
+    line_thickness = 10  # Adjust this value to control line thickness
     img = Image.new("RGB", (img_width, img_height), "white")
     pixels = img.load()
 
     for i in range(num_lines):
-        x = int(img_width * i / num_lines)
-        for y in range(img_height):
-            if mask_array[y, x] == 0:  # no trace at this pixel
-                pixels[x, y] = (0, 0, 0)  # draw black pixel
+        x_center = int(img_width * i / num_lines)
+        for dx in range(-line_thickness // 2, line_thickness // 2 + 1):
+            x = x_center + dx
+            if 0 <= x < img_width:
+                for y in range(img_height):
+                    if mask_array[y, x] == 0:  # no trace at this pixel
+                        pixels[x, y] = (0, 0, 0)  # draw black pixel
 
     # Step 5: Save
     img.save(image_filename)
