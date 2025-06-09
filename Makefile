@@ -11,6 +11,9 @@ install: venv
 	@source $(VENV_PATH)/bin/activate && \
 	pip install --disable-pip-version-check -q -r requirements.txt
 
+clean:
+	@rm -rf $(IMAGES_DIR)/*
+
 lines:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/lines.py \
@@ -44,5 +47,11 @@ brush:
 zoom:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/zoom.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+simplify:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/simplify.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
