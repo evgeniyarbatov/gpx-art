@@ -58,8 +58,8 @@ def curves(gpx_filename, image_filename):
                 smooth_lats = np.polyval(lat_coeffs, t_smooth)
 
                 # Line styling
-                linewidth = random.uniform(2.0, 4.0)
-                alpha = random.uniform(0.4, 1.0)
+                linewidth = random.uniform(2.0, 6.0)
+                alpha = random.uniform(0.4, 0.7)
 
                 ax.plot(smooth_lons, smooth_lats, color=line_color, alpha=alpha, linewidth=linewidth)
 
