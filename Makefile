@@ -55,3 +55,9 @@ simplify:
 	python3 scripts/simplify.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
+
+curves:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/curves.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
