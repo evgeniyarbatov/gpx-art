@@ -6,3 +6,4 @@ matplotlib
 numpy
 shapely
 pillow
+scipy

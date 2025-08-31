@@ -61,3 +61,23 @@ curves:
 	python3 scripts/curves.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
+
+linevariations:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/line-variations.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+abstractvariations:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/abstract-variations.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+zen:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/zen.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+all: lines abstract curves simplify zoom vertical painting abstract linevariations abstractvariations zen
