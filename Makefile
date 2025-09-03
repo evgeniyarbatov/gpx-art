@@ -80,4 +80,10 @@ zen:
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
 
+geometric:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geometric.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
 all: lines abstract curves simplify zoom vertical painting abstract linevariations abstractvariations zen
