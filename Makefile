@@ -86,4 +86,7 @@ geometric:
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
 
+ui:
+	streamlit run airflow-streamlit/gpx_to_image.py --server.port 8501
+
 all: lines abstract curves simplify zoom vertical painting abstract linevariations abstractvariations zen
