@@ -86,7 +86,45 @@ geometric:
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
 
+zen-minimal:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/zen-minimal.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+zen-breath:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/zen-breath.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+zen-stones:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/zen-stones.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+zen-ripples:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/zen-ripples.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+zen-calligraphy:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/zen-calligraphy.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+zen-dots:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/zen-dots.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+zen-all: zen-minimal zen-breath zen-stones zen-ripples zen-calligraphy zen-dots
+
 ui:
 	streamlit run airflow-streamlit/gpx_to_image.py --server.port 8501
 
-all: lines abstract curves simplify zoom vertical painting abstract linevariations abstractvariations zen
+all: lines abstract curves simplify zoom vertical painting abstract linevariations abstractvariations zen zen-all
