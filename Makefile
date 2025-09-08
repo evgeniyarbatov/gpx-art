@@ -98,18 +98,6 @@ zen-breath:
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
 
-zen-stones:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/zen-stones.py \
-	$(GPX_DIR) \
-	$(IMAGES_DIR)
-
-zen-ripples:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/zen-ripples.py \
-	$(GPX_DIR) \
-	$(IMAGES_DIR)
-
 zen-calligraphy:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/zen-calligraphy.py \
@@ -121,8 +109,6 @@ zen-dots:
 	python3 scripts/zen-dots.py \
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
-
-zen-all: zen-minimal zen-breath zen-stones zen-ripples zen-calligraphy zen-dots
 
 ui:
 	streamlit run airflow-streamlit/gpx_to_image.py --server.port 8501
