@@ -110,7 +110,67 @@ zen-dots:
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
 
+geo-crystal:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-crystal.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-origami:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-origami.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-polygon:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-polygon.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-prism:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-prism.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-grid:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-grid.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-mandala:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-mandala.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-bauhaus:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-bauhaus.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-golden:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-golden.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-fractal:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-fractal.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
+geo-memphis:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/geo-memphis.py \
+	$(GPX_DIR) \
+	$(IMAGES_DIR)
+
 ui:
 	streamlit run airflow-streamlit/gpx_to_image.py --server.port 8501
 
-all: lines abstract curves simplify zoom vertical painting abstract linevariations abstractvariations zen zen-all
+all: lines abstract curves simplify zoom vertical painting abstract linevariations abstractvariations zen zen-all geo-all
