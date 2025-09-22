@@ -1,3 +1,5 @@
+.DEFAULT_GOAL := all
+
 PROJECT_NAME := $(shell basename $(PWD))
 VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
@@ -13,12 +15,6 @@ install: venv
 
 clean:
 	@rm -rf $(IMAGES_DIR)/*
-
-lines:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/lines.py \
-	$(GPX_DIR) \
-	$(IMAGES_DIR)
 
 abstract:
 	@source $(VENV_PATH)/bin/activate && \
@@ -170,7 +166,4 @@ geo-memphis:
 	$(GPX_DIR) \
 	$(IMAGES_DIR)
 
-ui:
-	streamlit run airflow-streamlit/gpx_to_image.py --server.port 8501
-
-all: lines abstract curves simplify zoom vertical painting abstract linevariations abstractvariations zen zen-all geo-all
+all: abstract painting vertical brush zoom simplify curves linevariations abstractvariations zen geometric zen-minimal zen-breath zen-calligraphy zen-dots geo-crystal geo-origami geo-polygon geo-prism geo-grid geo-mandala geo-bauhaus geo-golden geo-fractal geo-memphis
