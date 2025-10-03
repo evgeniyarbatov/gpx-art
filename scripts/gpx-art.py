@@ -475,63 +475,70 @@ def cubist(lons, lats):
     step = max(1, len(points) // random.randint(15, 25))
     vertices = points[::step]
 
-    # Draw overlapping fragmented planes with more squares
+    # Draw overlapping fragmented planes with irregular polygons
     for i in range(len(vertices) - 2):
-        # Create irregular quadrilaterals and triangles
-        if random.random() > 0.3 and i < len(vertices) - 3:
-            # Quadrilateral (more likely now)
-            offset1 = np.random.normal(0, 0.008, 2)
-            offset2 = np.random.normal(0, 0.008, 2)
-            quad = np.array([
-                vertices[i],
-                vertices[i+1] + offset1,
-                vertices[i+2],
-                vertices[i+1] + offset2
-            ])
-            poly = Polygon(quad, facecolor=random.choice(colors),
-                         edgecolor='#1a1a1a', alpha=random.uniform(0.3, 0.7),
-                         linewidth=random.uniform(1.5, 2.5))
-        else:
-            # Triangle
-            offset = np.random.normal(0, 0.01, 2)
-            triangle = np.array([
-                vertices[i],
-                vertices[i+1],
-                vertices[i+1] + offset
-            ])
-            poly = Polygon(triangle, facecolor=random.choice(colors),
-                         edgecolor='#1a1a1a', alpha=random.uniform(0.3, 0.7),
-                         linewidth=random.uniform(1.5, 2.5))
+        # Create irregular polygons with 3-7 vertices
+        num_verts = random.randint(3, 7)
+
+        # Start with path vertices
+        base_indices = [i + j % (len(vertices) - i) for j in range(min(num_verts, len(vertices) - i))]
+        polygon_verts = [vertices[idx] for idx in base_indices[:num_verts]]
+
+        # Add random distortions to create irregular shapes
+        distorted = []
+        for v in polygon_verts:
+            offset = np.random.normal(0, random.uniform(0.005, 0.015), 2)
+            distorted.append(v + offset)
+
+        # Occasionally add completely random vertices for more chaos
+        if random.random() > 0.6:
+            extra_verts = random.randint(1, 2)
+            for _ in range(extra_verts):
+                # Random point near the polygon center
+                center = np.mean(distorted, axis=0)
+                rand_offset = np.random.normal(0, 0.02, 2)
+                distorted.insert(random.randint(0, len(distorted)), center + rand_offset)
+
+        poly = Polygon(distorted, facecolor=random.choice(colors),
+                     edgecolor='#1a1a1a', alpha=random.uniform(0.3, 0.7),
+                     linewidth=random.uniform(1.5, 2.5))
         ax.add_patch(poly)
 
-    # Add additional squares scattered along the path
-    for _ in range(random.randint(5, 10)):
+    # Add scattered irregular shapes
+    for _ in range(random.randint(8, 15)):
         idx = random.randint(0, len(vertices) - 1)
         center = vertices[idx]
-        size = random.uniform(0.02, 0.05)
-        angle = random.uniform(-30, 30)
 
-        square = np.array([
-            [-size/2, -size/2], [size/2, -size/2],
-            [size/2, size/2], [-size/2, size/2]
-        ])
+        # Create irregular polygons
+        num_points = random.randint(4, 8)
+        angles = sorted(np.random.uniform(0, 2*np.pi, num_points))
+        radii = np.random.uniform(0.015, 0.045, num_points)
 
-        theta = np.radians(angle)
-        rot = np.array([[np.cos(theta), -np.sin(theta)],
-                       [np.sin(theta), np.cos(theta)]])
-        square = square @ rot.T + center
+        shape = []
+        for angle, radius in zip(angles, radii):
+            x = center[0] + radius * np.cos(angle)
+            y = center[1] + radius * np.sin(angle)
+            shape.append([x, y])
 
-        poly = Polygon(square, facecolor=random.choice(colors),
+        poly = Polygon(shape, facecolor=random.choice(colors),
                      edgecolor='#1a1a1a', alpha=random.uniform(0.4, 0.7),
                      linewidth=random.uniform(1.5, 2.5))
         ax.add_patch(poly)
 
-    # Add bold outline strokes
+    # Add angular strokes at varying angles
     for i in range(len(vertices) - 1):
-        ax.plot([vertices[i][0], vertices[i+1][0]],
-               [vertices[i][1], vertices[i+1][1]],
-               color='#1a1a1a', linewidth=random.uniform(2, 3.5),
-               alpha=0.8, solid_capstyle='round')
+        if random.random() > 0.3:  # Not every segment
+            # Vary the line - sometimes direct, sometimes offset
+            if random.random() > 0.5:
+                start, end = vertices[i], vertices[i+1]
+            else:
+                offset = np.random.normal(0, 0.01, 2)
+                start = vertices[i] + offset
+                end = vertices[i+1] - offset
+
+            ax.plot([start[0], end[0]], [start[1], end[1]],
+                   color='#1a1a1a', linewidth=random.uniform(2, 3.5),
+                   alpha=random.uniform(0.6, 0.9), solid_capstyle='round')
 
     return fig, bg_color
 
