@@ -15,7 +15,14 @@ install: venv
 
 clean:
 	@rm -f $(IMAGES_DIR)/*.png
+	@rm -f $(GPX_DIR)/*.gpx
+
+gpx:
+	@mkdir -p $(GPX_DIR)
+	@find /Users/zhenya/gitRepo/gpx-data/data/strava -name "*.gpx" -type f | shuf -n 100 | xargs -I {} cp {} $(GPX_DIR)/
 
 all:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) all
+
+.PHONY: gpx
