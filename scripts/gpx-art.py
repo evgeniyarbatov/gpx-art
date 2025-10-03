@@ -218,6 +218,159 @@ def simplify(lons, lats):
 
     return fig, bg_color
 
+@style('ripple')
+def ripple(lons, lats):
+    """Concentric circles emanating from path points"""
+    bg_color, fg_color = random.choice(ZEN_NATURE)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+    step = max(1, len(points) // random.randint(20, 35))
+    centers = points[::step]
+
+    for cx, cy in centers:
+        num_rings = random.randint(4, 8)
+        for i in range(num_rings):
+            radius = (i + 1) * random.uniform(0.008, 0.015)
+            alpha = 0.4 * (1 - i / num_rings)
+            circle = Circle((cx, cy), radius, fill=False,
+                          edgecolor=fg_color, alpha=alpha, linewidth=0.8)
+            ax.add_patch(circle)
+
+    ax.autoscale_view()
+    return fig, bg_color
+
+@style('flow')
+def flow(lons, lats):
+    """Flowing parallel lines following the path"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    # Create perpendicular offsets
+    for offset_scale in np.linspace(-0.02, 0.02, random.randint(5, 9)):
+        if len(points) < 2:
+            continue
+
+        # Calculate perpendicular vectors
+        tangents = np.diff(points, axis=0)
+        tangents = np.vstack([tangents, tangents[-1]])
+        norms = np.linalg.norm(tangents, axis=1, keepdims=True)
+        norms[norms == 0] = 1
+        tangents = tangents / norms
+
+        perpendiculars = np.column_stack([-tangents[:, 1], tangents[:, 0]])
+        offset_points = points + perpendiculars * offset_scale
+
+        alpha = 0.6 * (1 - abs(offset_scale) / 0.02)
+        linewidth = random.uniform(0.6, 1.2)
+        ax.plot(offset_points[:, 0], offset_points[:, 1],
+               color=fg_color, alpha=alpha, linewidth=linewidth,
+               solid_capstyle='round')
+
+    return fig, bg_color
+
+@style('petals')
+def petals(lons, lats):
+    """Scattered petal-like shapes along the path"""
+    bg_color, fg_color = random.choice(ZEN_NATURE)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+    step = max(1, len(points) // random.randint(40, 70))
+
+    patches = []
+    for point in points[::step]:
+        angle = random.uniform(0, 2 * np.pi)
+        for i in range(random.randint(4, 6)):
+            petal_angle = angle + (i * 2 * np.pi / 5)
+            length = random.uniform(0.012, 0.025)
+            width = random.uniform(0.006, 0.012)
+
+            # Create petal shape
+            t = np.linspace(0, np.pi, 15)
+            r = np.sin(t) * length
+            x = r * np.cos(petal_angle)
+            y = r * np.sin(petal_angle) * (width / length)
+
+            petal_points = np.column_stack([x, y]) + point
+            patches.append(Polygon(petal_points, closed=True))
+
+    collection = PatchCollection(patches, facecolors=fg_color,
+                                edgecolors='none', alpha=0.15)
+    ax.add_collection(collection)
+    ax.autoscale_view()
+
+    return fig, bg_color
+
+@style('echo')
+def echo(lons, lats):
+    """Fading echo trails of the main path"""
+    bg_color, fg_color = random.choice(ZEN_STONE)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    # Multiple offset versions with fading alpha
+    num_echoes = random.randint(7, 12)
+    for i in range(num_echoes):
+        offset = (i - num_echoes/2) * 0.003
+        echo_points = points + np.array([offset, -offset * 0.7])
+
+        alpha = 0.7 * np.exp(-abs(i - num_echoes/2) / 3)
+        linewidth = random.uniform(1.0, 2.0) * (1 - abs(i - num_echoes/2) / num_echoes)
+
+        ax.plot(echo_points[:, 0], echo_points[:, 1],
+               color=fg_color, alpha=alpha, linewidth=linewidth,
+               solid_capstyle='round')
+
+    return fig, bg_color
+
+@style('weave')
+def weave(lons, lats):
+    """Interwoven threads crossing the path"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    # Interpolate for smoother weaving
+    if len(points) > 3:
+        t = np.linspace(0, 1, len(points))
+        t_new = np.linspace(0, 1, len(points) * 3)
+
+        interp_x = interp1d(t, points[:, 0], kind='cubic')
+        interp_y = interp1d(t, points[:, 1], kind='cubic')
+
+        smooth_points = np.column_stack([interp_x(t_new), interp_y(t_new)])
+    else:
+        smooth_points = points
+
+    # Create wave patterns
+    for phase in np.linspace(0, 2*np.pi, random.randint(5, 8)):
+        wave_amplitude = random.uniform(0.01, 0.02)
+        wave_freq = random.uniform(8, 15)
+
+        wave_offset = wave_amplitude * np.sin(
+            np.linspace(0, wave_freq * 2 * np.pi, len(smooth_points)) + phase
+        )
+
+        tangents = np.diff(smooth_points, axis=0)
+        tangents = np.vstack([tangents, tangents[-1]])
+        norms = np.linalg.norm(tangents, axis=1, keepdims=True)
+        norms[norms == 0] = 1
+        tangents = tangents / norms
+
+        perpendiculars = np.column_stack([-tangents[:, 1], tangents[:, 0]])
+        woven_points = smooth_points + perpendiculars * wave_offset[:, np.newaxis]
+
+        ax.plot(woven_points[:, 0], woven_points[:, 1],
+               color=fg_color, alpha=0.4, linewidth=0.8,
+               solid_capstyle='round')
+
+    return fig, bg_color
+
 # ============================================================================
 # MAIN FUNCTIONS
 # ============================================================================
