@@ -4,6 +4,8 @@ VENV_PATH = ~/.venv/$(PROJECT_NAME)
 GPX_DIR = gpx
 IMAGES_DIR = images
 
+default: all
+
 venv:
 	@python3 -m venv $(VENV_PATH)
 
