@@ -61,6 +61,11 @@ IMPRESSIONIST_PALETTES = [
     ('#faf6ee', ['#89b3d4', '#d4a588', '#9fc88f', '#f0b868', '#c8a8d1']),
 ]
 
+HOCKNEY_PALETTES = [
+    ('#e8f4f8', ['#0077be', '#87ceeb', '#4db8d8', '#20b2aa', '#5f9ea0']),
+    ('#f0f8ff', ['#1e90ff', '#87cefa', '#00ced1', '#48d1cc', '#40e0d0']),
+]
+
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
@@ -470,11 +475,11 @@ def cubist(lons, lats):
     step = max(1, len(points) // random.randint(15, 25))
     vertices = points[::step]
 
-    # Draw overlapping fragmented planes
+    # Draw overlapping fragmented planes with more squares
     for i in range(len(vertices) - 2):
         # Create irregular quadrilaterals and triangles
-        if random.random() > 0.5 and i < len(vertices) - 3:
-            # Quadrilateral
+        if random.random() > 0.3 and i < len(vertices) - 3:
+            # Quadrilateral (more likely now)
             offset1 = np.random.normal(0, 0.008, 2)
             offset2 = np.random.normal(0, 0.008, 2)
             quad = np.array([
@@ -497,6 +502,28 @@ def cubist(lons, lats):
             poly = Polygon(triangle, facecolor=random.choice(colors),
                          edgecolor='#1a1a1a', alpha=random.uniform(0.3, 0.7),
                          linewidth=random.uniform(1.5, 2.5))
+        ax.add_patch(poly)
+
+    # Add additional squares scattered along the path
+    for _ in range(random.randint(5, 10)):
+        idx = random.randint(0, len(vertices) - 1)
+        center = vertices[idx]
+        size = random.uniform(0.02, 0.05)
+        angle = random.uniform(-30, 30)
+
+        square = np.array([
+            [-size/2, -size/2], [size/2, -size/2],
+            [size/2, size/2], [-size/2, size/2]
+        ])
+
+        theta = np.radians(angle)
+        rot = np.array([[np.cos(theta), -np.sin(theta)],
+                       [np.sin(theta), np.cos(theta)]])
+        square = square @ rot.T + center
+
+        poly = Polygon(square, facecolor=random.choice(colors),
+                     edgecolor='#1a1a1a', alpha=random.uniform(0.4, 0.7),
+                     linewidth=random.uniform(1.5, 2.5))
         ax.add_patch(poly)
 
     # Add bold outline strokes
@@ -630,6 +657,72 @@ def impressionist(lons, lats):
             poly = Polygon(ellipse_points, facecolor=color,
                          edgecolor='none', alpha=random.uniform(0.4, 0.7))
             ax.add_patch(poly)
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('hockney')
+def hockney(lons, lats):
+    """David Hockney-inspired pool water with ripples and geometric grids"""
+    bg_color, colors = random.choice(HOCKNEY_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Create wavy horizontal lines (water surface pattern)
+    num_lines = random.randint(20, 30)
+    for i in range(num_lines):
+        y_base = i / num_lines
+        wave_freq = random.uniform(4, 8)
+        wave_amp = random.uniform(0.005, 0.015)
+
+        x_vals = np.linspace(0, 1, 100)
+        y_vals = y_base + wave_amp * np.sin(wave_freq * 2 * np.pi * x_vals)
+
+        color = random.choice(colors)
+        alpha = random.uniform(0.3, 0.6)
+        ax.plot(x_vals, y_vals, color=color, alpha=alpha,
+               linewidth=random.uniform(1.5, 3), solid_capstyle='round')
+
+    # Add path as fragmented geometric segments
+    step = max(1, len(points) // random.randint(8, 15))
+    vertices = points[::step]
+
+    for i in range(len(vertices) - 1):
+        v1, v2 = vertices[i], vertices[i+1]
+        color = random.choice(colors)
+        ax.plot([v1[0], v2[0]], [v1[1], v2[1]],
+               color=color, linewidth=random.uniform(3, 5),
+               alpha=0.7, solid_capstyle='round')
+
+    # Add scattered rectangular tiles
+    for _ in range(random.randint(15, 25)):
+        idx = random.randint(0, len(points) - 1)
+        center = points[idx]
+
+        w, h = random.uniform(0.03, 0.08), random.uniform(0.02, 0.06)
+        angle = random.choice([0, 45, 90])
+
+        rect = np.array([
+            [-w/2, -h/2], [w/2, -h/2],
+            [w/2, h/2], [-w/2, h/2]
+        ])
+
+        if angle != 0:
+            theta = np.radians(angle)
+            rot = np.array([[np.cos(theta), -np.sin(theta)],
+                          [np.sin(theta), np.cos(theta)]])
+            rect = rect @ rot.T
+
+        rect += center
+        color = random.choice(colors)
+        poly = Polygon(rect, facecolor=color, edgecolor=color,
+                     alpha=random.uniform(0.4, 0.7), linewidth=2)
+        ax.add_patch(poly)
 
     ax.set_xlim(-0.05, 1.05)
     ax.set_ylim(-0.05, 1.05)
