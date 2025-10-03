@@ -77,15 +77,18 @@ def geo_crystal(gpx_filename, image_filename):
                             linewidth=0.5)
             ax.add_patch(crystal)
     
-    # Add connecting crystal veins between formations
+    # Add connecting crystal veins between formations with randomization
     if len(lons) > crystal_spacing:
         vein_points_lon = [lons[i] for i in range(0, len(lons), crystal_spacing)]
         vein_points_lat = [lats[i] for i in range(0, len(lats), crystal_spacing)]
-        
+
+        vein_width = random.uniform(0.8, 1.6)
+        vein_alpha = random.uniform(0.5, 0.75)
+
         ax.plot(vein_points_lon, vein_points_lat,
                color=accent_color,
-               linewidth=1.2,
-               alpha=0.6,
+               linewidth=vein_width,
+               alpha=vein_alpha,
                linestyle='-',
                solid_capstyle='round')
     

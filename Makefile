@@ -14,7 +14,7 @@ install: venv
 	pip install --disable-pip-version-check -q -r requirements.txt
 
 clean:
-	@rm -rf $(IMAGES_DIR)/*
+	@rm -f $(IMAGES_DIR)/*.png
 
 abstract:
 	@source $(VENV_PATH)/bin/activate && \
