@@ -45,11 +45,20 @@ ZEN_STONE = [
     ('#f6f4f1', '#757575'),
 ]
 
-CRYSTAL_PALETTES = [
-    ('#f8f9fa', '#2d3748', '#4a5568'),
-    ('#fafafa', '#1a202c', '#2d3748'),
-    ('#fff5f5', '#742a2a', '#9c4221'),
-    ('#f0fff4', '#22543d', '#2f855a'),
+CUBIST_PALETTES = [
+    ('#f5f1e8', ['#8b6f47', '#4a7c7e', '#c55a3a', '#2d2d2d']),
+    ('#efe9dd', ['#6b5d4f', '#4a6b6b', '#b5533a', '#3a3a3a']),
+    ('#f8f4ec', ['#9b7f5f', '#5a8c8e', '#d56a4a', '#1d1d1d']),
+]
+
+SUPREMATIST_PALETTES = [
+    ('#ffffff', ['#000000', '#e63946', '#f1c40f', '#2e86de']),
+    ('#fefefe', ['#1a1a1a', '#dc143c', '#ffd700', '#1e5f74']),
+]
+
+IMPRESSIONIST_PALETTES = [
+    ('#f0e8d8', ['#7ba3c7', '#c18e74', '#8db87d', '#e6a957', '#b89ac1']),
+    ('#faf6ee', ['#89b3d4', '#d4a588', '#9fc88f', '#f0b868', '#c8a8d1']),
 ]
 
 # ============================================================================
@@ -187,7 +196,6 @@ def network(lons, lats):
 @style('simplify')
 def simplify(lons, lats):
     """Progressive simplification layers"""
-    import gpxpy
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
 
@@ -240,93 +248,6 @@ def ripple(lons, lats):
     ax.autoscale_view()
     return fig, bg_color
 
-@style('flow')
-def flow(lons, lats):
-    """Flowing parallel lines following the path"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-
-    points = np.array([lons, lats]).T
-
-    # Create perpendicular offsets
-    for offset_scale in np.linspace(-0.02, 0.02, random.randint(5, 9)):
-        if len(points) < 2:
-            continue
-
-        # Calculate perpendicular vectors
-        tangents = np.diff(points, axis=0)
-        tangents = np.vstack([tangents, tangents[-1]])
-        norms = np.linalg.norm(tangents, axis=1, keepdims=True)
-        norms[norms == 0] = 1
-        tangents = tangents / norms
-
-        perpendiculars = np.column_stack([-tangents[:, 1], tangents[:, 0]])
-        offset_points = points + perpendiculars * offset_scale
-
-        alpha = 0.6 * (1 - abs(offset_scale) / 0.02)
-        linewidth = random.uniform(0.6, 1.2)
-        ax.plot(offset_points[:, 0], offset_points[:, 1],
-               color=fg_color, alpha=alpha, linewidth=linewidth,
-               solid_capstyle='round')
-
-    return fig, bg_color
-
-@style('petals')
-def petals(lons, lats):
-    """Scattered petal-like shapes along the path"""
-    bg_color, fg_color = random.choice(ZEN_NATURE)
-    fig, ax = create_figure(bg_color)
-
-    points = np.array([lons, lats]).T
-    step = max(1, len(points) // random.randint(40, 70))
-
-    patches = []
-    for point in points[::step]:
-        angle = random.uniform(0, 2 * np.pi)
-        for i in range(random.randint(4, 6)):
-            petal_angle = angle + (i * 2 * np.pi / 5)
-            length = random.uniform(0.012, 0.025)
-            width = random.uniform(0.006, 0.012)
-
-            # Create petal shape
-            t = np.linspace(0, np.pi, 15)
-            r = np.sin(t) * length
-            x = r * np.cos(petal_angle)
-            y = r * np.sin(petal_angle) * (width / length)
-
-            petal_points = np.column_stack([x, y]) + point
-            patches.append(Polygon(petal_points, closed=True))
-
-    collection = PatchCollection(patches, facecolors=fg_color,
-                                edgecolors='none', alpha=0.15)
-    ax.add_collection(collection)
-    ax.autoscale_view()
-
-    return fig, bg_color
-
-@style('echo')
-def echo(lons, lats):
-    """Fading echo trails of the main path"""
-    bg_color, fg_color = random.choice(ZEN_STONE)
-    fig, ax = create_figure(bg_color)
-
-    points = np.array([lons, lats]).T
-
-    # Multiple offset versions with fading alpha
-    num_echoes = random.randint(7, 12)
-    for i in range(num_echoes):
-        offset = (i - num_echoes/2) * 0.003
-        echo_points = points + np.array([offset, -offset * 0.7])
-
-        alpha = 0.7 * np.exp(-abs(i - num_echoes/2) / 3)
-        linewidth = random.uniform(1.0, 2.0) * (1 - abs(i - num_echoes/2) / num_echoes)
-
-        ax.plot(echo_points[:, 0], echo_points[:, 1],
-               color=fg_color, alpha=alpha, linewidth=linewidth,
-               solid_capstyle='round')
-
-    return fig, bg_color
-
 @style('weave')
 def weave(lons, lats):
     """Interwoven threads crossing the path"""
@@ -369,6 +290,349 @@ def weave(lons, lats):
                color=fg_color, alpha=0.4, linewidth=0.8,
                solid_capstyle='round')
 
+    return fig, bg_color
+
+@style('fabric')
+def fabric(lons, lats):
+    """Cross-hatching textile pattern following path curvature"""
+    bg_color, fg_color = random.choice(ZEN_NATURE)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    if len(points) < 2:
+        return fig, bg_color
+
+    # Calculate tangent vectors along the path
+    tangents = np.diff(points, axis=0)
+    tangents = np.vstack([tangents, tangents[-1]])
+    norms = np.linalg.norm(tangents, axis=1, keepdims=True)
+    norms[norms == 0] = 1
+    tangents = tangents / norms
+
+    # Draw hatching lines perpendicular to path
+    step = max(1, len(points) // random.randint(40, 70))
+    hatch_length = random.uniform(0.015, 0.025)
+
+    for idx in range(0, len(points), step):
+        center = points[idx]
+        tangent = tangents[idx]
+        perpendicular = np.array([-tangent[1], tangent[0]])
+
+        # Primary hatch
+        for direction in [-1, 1]:
+            for offset in np.linspace(0, hatch_length, 8):
+                p1 = center + perpendicular * offset * direction
+                p2 = center + perpendicular * (offset + hatch_length/8) * direction
+                alpha = 0.4 * (1 - offset/hatch_length)
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]],
+                       color=fg_color, alpha=alpha, linewidth=0.6)
+
+        # Cross hatch at angle
+        cross_perp = np.array([perpendicular[0]*0.7 + tangent[0]*0.7,
+                               perpendicular[1]*0.7 + tangent[1]*0.7])
+        for direction in [-1, 1]:
+            for offset in np.linspace(0, hatch_length, 6):
+                p1 = center + cross_perp * offset * direction
+                p2 = center + cross_perp * (offset + hatch_length/6) * direction
+                alpha = 0.3 * (1 - offset/hatch_length)
+                ax.plot([p1[0], p2[0]], [p1[1], p2[1]],
+                       color=fg_color, alpha=alpha, linewidth=0.4)
+
+    return fig, bg_color
+
+@style('bokeh')
+def bokeh(lons, lats):
+    """Photography-inspired out-of-focus light circles"""
+    bg_color = '#1a1a1a'
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Create depth layers with different bokeh characteristics
+    colors = ['#ffd700', '#ff8c42', '#ff6b9d', '#4ecdc4', '#95e1d3']
+
+    for layer_idx in range(3):
+        num_circles = random.randint(20, 35)
+        step = max(1, len(points) // num_circles)
+        centers = points[::step]
+
+        for center in centers:
+            # Scatter around the path point
+            offset_x = np.random.normal(scale=0.02)
+            offset_y = np.random.normal(scale=0.02)
+            pos = center + np.array([offset_x, offset_y])
+
+            size = random.uniform(0.015, 0.04) * (1 + layer_idx * 0.3)
+            color = random.choice(colors)
+            alpha = random.uniform(0.15, 0.35) * (1 - layer_idx * 0.15)
+
+            # Create soft edge bokeh effect
+            for ring in range(3):
+                ring_size = size * (1 - ring * 0.2)
+                ring_alpha = alpha * (1 - ring * 0.3)
+                circle = Circle(pos, ring_size, fill=True, facecolor=color,
+                              edgecolor='none', alpha=ring_alpha)
+                ax.add_patch(circle)
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('tide')
+def tide(lons, lats):
+    """Undulating waves flowing perpendicular to path"""
+    bg_color = '#f0f8ff'
+    wave_color = '#1e5a7a'
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    if len(points) < 2:
+        return fig, bg_color
+
+    # Calculate path direction
+    tangents = np.diff(points, axis=0)
+    tangents = np.vstack([tangents, tangents[-1]])
+    norms = np.linalg.norm(tangents, axis=1, keepdims=True)
+    norms[norms == 0] = 1
+    tangents = tangents / norms
+    perpendiculars = np.column_stack([-tangents[:, 1], tangents[:, 0]])
+
+    # Draw wave lines
+    num_waves = random.randint(15, 25)
+    for wave_idx in range(num_waves):
+        wave_offset = (wave_idx - num_waves/2) * 0.004
+        phase = random.uniform(0, 2*np.pi)
+
+        wave_points = []
+        for i, point in enumerate(points):
+            t = i / len(points)
+            wave_amplitude = 0.008 * np.sin(t * 2 * np.pi * random.uniform(3, 6) + phase)
+            wave_pos = point + perpendiculars[i] * (wave_offset + wave_amplitude)
+            wave_points.append(wave_pos)
+
+        wave_points = np.array(wave_points)
+        alpha = 0.4 * (1 - abs(wave_idx - num_waves/2) / (num_waves/2))
+        ax.plot(wave_points[:, 0], wave_points[:, 1],
+               color=wave_color, alpha=alpha, linewidth=0.8,
+               solid_capstyle='round')
+
+    return fig, bg_color
+
+@style('origami')
+def origami(lons, lats):
+    """Angular geometric folded paper aesthetic"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    # Simplify to create angular segments
+    step = max(1, len(points) // random.randint(12, 20))
+    vertices = points[::step]
+
+    # Create faceted regions
+    for i in range(len(vertices) - 2):
+        v1, v2, v3 = vertices[i], vertices[i+1], vertices[i+2]
+
+        # Create triangle facet
+        triangle = np.array([v1, v2, v3])
+        shade = random.uniform(0.3, 0.9)
+        poly = Polygon(triangle, facecolor=fg_color, edgecolor=fg_color,
+                      alpha=shade*0.15, linewidth=1.5)
+        ax.add_patch(poly)
+
+        # Add fold lines
+        for edge in [(v1, v2), (v2, v3)]:
+            ax.plot([edge[0][0], edge[1][0]], [edge[0][1], edge[1][1]],
+                   color=fg_color, alpha=0.8, linewidth=1.8,
+                   solid_capstyle='round')
+
+    # Draw vertices as points
+    ax.scatter(vertices[:, 0], vertices[:, 1], s=25,
+              c=fg_color, alpha=0.9, edgecolors='none')
+
+    return fig, bg_color
+
+@style('cubist')
+def cubist(lons, lats):
+    """Picasso-inspired fragmented geometric planes"""
+    bg_color, colors = random.choice(CUBIST_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    # Create angular segments
+    step = max(1, len(points) // random.randint(15, 25))
+    vertices = points[::step]
+
+    # Draw overlapping fragmented planes
+    for i in range(len(vertices) - 2):
+        # Create irregular quadrilaterals and triangles
+        if random.random() > 0.5 and i < len(vertices) - 3:
+            # Quadrilateral
+            offset1 = np.random.normal(0, 0.008, 2)
+            offset2 = np.random.normal(0, 0.008, 2)
+            quad = np.array([
+                vertices[i],
+                vertices[i+1] + offset1,
+                vertices[i+2],
+                vertices[i+1] + offset2
+            ])
+            poly = Polygon(quad, facecolor=random.choice(colors),
+                         edgecolor='#1a1a1a', alpha=random.uniform(0.3, 0.7),
+                         linewidth=random.uniform(1.5, 2.5))
+        else:
+            # Triangle
+            offset = np.random.normal(0, 0.01, 2)
+            triangle = np.array([
+                vertices[i],
+                vertices[i+1],
+                vertices[i+1] + offset
+            ])
+            poly = Polygon(triangle, facecolor=random.choice(colors),
+                         edgecolor='#1a1a1a', alpha=random.uniform(0.3, 0.7),
+                         linewidth=random.uniform(1.5, 2.5))
+        ax.add_patch(poly)
+
+    # Add bold outline strokes
+    for i in range(len(vertices) - 1):
+        ax.plot([vertices[i][0], vertices[i+1][0]],
+               [vertices[i][1], vertices[i+1][1]],
+               color='#1a1a1a', linewidth=random.uniform(2, 3.5),
+               alpha=0.8, solid_capstyle='round')
+
+    return fig, bg_color
+
+@style('suprematist')
+def suprematist(lons, lats):
+    """Malevich-inspired geometric abstraction with pure forms"""
+    bg_color, colors = random.choice(SUPREMATIST_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    # Normalize to [0,1]
+    min_vals, max_vals = points.min(axis=0), points.max(axis=0)
+    range_vals = max_vals - min_vals
+    range_vals[range_vals == 0] = 1e-9
+    norm_points = (points - min_vals) / range_vals
+
+    # Sample key points
+    step = max(1, len(norm_points) // random.randint(8, 15))
+    key_points = norm_points[::step]
+
+    # Draw pure geometric forms
+    for point in key_points:
+        shape_type = random.choice(['square', 'rectangle', 'line', 'circle'])
+        color = random.choice(colors)
+
+        if shape_type == 'square':
+            size = random.uniform(0.05, 0.15)
+            angle = random.uniform(-45, 45)
+            square = np.array([
+                [-size/2, -size/2],
+                [size/2, -size/2],
+                [size/2, size/2],
+                [-size/2, size/2]
+            ])
+            # Rotate
+            theta = np.radians(angle)
+            rot = np.array([[np.cos(theta), -np.sin(theta)],
+                          [np.sin(theta), np.cos(theta)]])
+            square = square @ rot.T
+            square += point
+            poly = Polygon(square, facecolor=color, edgecolor='none',
+                         alpha=random.uniform(0.7, 0.95))
+            ax.add_patch(poly)
+
+        elif shape_type == 'rectangle':
+            w, h = random.uniform(0.08, 0.2), random.uniform(0.03, 0.08)
+            angle = random.uniform(-45, 45)
+            rect = np.array([
+                [-w/2, -h/2], [w/2, -h/2],
+                [w/2, h/2], [-w/2, h/2]
+            ])
+            theta = np.radians(angle)
+            rot = np.array([[np.cos(theta), -np.sin(theta)],
+                          [np.sin(theta), np.cos(theta)]])
+            rect = rect @ rot.T
+            rect += point
+            poly = Polygon(rect, facecolor=color, edgecolor='none',
+                         alpha=random.uniform(0.7, 0.95))
+            ax.add_patch(poly)
+
+        elif shape_type == 'line':
+            length = random.uniform(0.1, 0.3)
+            angle = random.uniform(0, 180)
+            theta = np.radians(angle)
+            end = point + length * np.array([np.cos(theta), np.sin(theta)])
+            ax.plot([point[0], end[0]], [point[1], end[1]],
+                   color=color, linewidth=random.uniform(3, 8),
+                   alpha=random.uniform(0.7, 0.95), solid_capstyle='butt')
+
+        elif shape_type == 'circle':
+            size = random.uniform(0.03, 0.08)
+            circle = Circle(point, size, facecolor=color, edgecolor='none',
+                          alpha=random.uniform(0.7, 0.95))
+            ax.add_patch(circle)
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('impressionist')
+def impressionist(lons, lats):
+    """Monet-inspired broken color dabs"""
+    bg_color, colors = random.choice(IMPRESSIONIST_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Create dense color dabs along and around the path
+    for i, center in enumerate(points):
+        # Path progress for color variation
+        t = i / len(points)
+
+        # Cluster of dabs at each point
+        num_dabs = random.randint(8, 15)
+        for _ in range(num_dabs):
+            # Scatter dabs around the point
+            offset = np.random.normal(0, 0.012, 2)
+            pos = center + offset
+
+            # Vary dab size and color
+            width = random.uniform(0.008, 0.018)
+            height = random.uniform(0.006, 0.014)
+            angle = random.uniform(0, 360)
+
+            # Choose color with some progression along path
+            color_idx = int((t + random.uniform(-0.2, 0.2)) * len(colors)) % len(colors)
+            color = colors[color_idx]
+
+            # Create elliptical dab
+            theta = np.radians(angle)
+            ellipse_points = []
+            for a in np.linspace(0, 2*np.pi, 8):
+                x = width * np.cos(a)
+                y = height * np.sin(a)
+                x_rot = x * np.cos(theta) - y * np.sin(theta)
+                y_rot = x * np.sin(theta) + y * np.cos(theta)
+                ellipse_points.append([pos[0] + x_rot, pos[1] + y_rot])
+
+            poly = Polygon(ellipse_points, facecolor=color,
+                         edgecolor='none', alpha=random.uniform(0.4, 0.7))
+            ax.add_patch(poly)
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
     return fig, bg_color
 
 # ============================================================================
