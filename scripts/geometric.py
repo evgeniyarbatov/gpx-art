@@ -903,21 +903,28 @@ def generate_all_variations(gpx_filename, output_dir):
 def main(gpx_dir, images_dir, variation_type=None):
     """
     Main function to generate GPX variations.
-    
+
     Args:
         gpx_dir: Directory containing GPX files
         images_dir: Output directory for images
         variation_type: Specific variation to generate (optional)
     """
+    variations = [
+        'progressive_simplification', 'spiral_projection', 'fractal_branching',
+        'geometric_tessellation', 'voronoi_influence', 'parallel_displacement',
+        'angular_refraction', 'harmonic_oscillations', 'geometric_polygons',
+        'radial_explosion', 'spline_interpolation', 'fibonacci_spiral',
+        'crystalline_structure', 'mandala_transformation', 'distance_field_lines',
+        'golden_ratio_recursion', 'interference_patterns', 'recursive_subdivision',
+        'sinusoidal_mesh', 'morphological_gradient'
+    ]
+
     for (name, gpx_path) in get_files(gpx_dir):
-        if variation_type:
-            # Generate specific variation
-            output_filename = f"{images_dir}/{variation_type}_{name}.png"
-            create_variation(variation_type, gpx_path, output_filename)
-            print(f"Generated {variation_type}: {output_filename}")
-        else:
-            # Generate all variations
-            generate_all_variations(gpx_path, images_dir)
+        # Pick ONE random variation per GPX file
+        chosen_variation = variation_type if variation_type else random.choice(variations)
+        output_filename = f"{images_dir}/geometric-{name}.png"
+        create_variation(chosen_variation, gpx_path, output_filename)
+        print(f"Generated {chosen_variation} for {name}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:

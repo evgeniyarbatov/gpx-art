@@ -37,12 +37,15 @@ def zen_minimal(gpx_filename, image_filename):
     fig, ax = plt.subplots(figsize=(12, 7.42), dpi=300)  # 12/7.42 ≈ φ (golden ratio)
     ax.set_facecolor(bg_color)
     
-    # Single perfect line - minimal but expressive
-    ax.plot(lons, lats, 
-           color=line_color, 
-           linewidth=0.8,  # Delicate line weight
+    # Single perfect line - minimal but expressive with slight randomization
+    linewidth = random.uniform(0.6, 1.2)  # Varying delicate line weights
+    alpha = random.uniform(0.85, 0.98)  # Subtle alpha variation
+
+    ax.plot(lons, lats,
+           color=line_color,
+           linewidth=linewidth,
            solid_capstyle='round',
-           alpha=0.95)
+           alpha=alpha)
     
     # Perfect aspect ratio and clean presentation
     ax.set_aspect('equal', 'datalim')

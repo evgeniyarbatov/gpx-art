@@ -945,28 +945,28 @@ def lines_variation(gpx_filename, image_filename, variation_name):
     print(f"Created {variation_name} variation: {image_filename}")
 
 def main(gpx_dir, images_dir):
-    """Generate multiple abstract variations for each GPX file"""
-    
+    """Generate ONE random abstract variation for each GPX file"""
+
     # Focus on the three best variations with multiple sub-types
     variations = [
         # Particle field variations (6 types)
         "particle_field",
-        "particle_field_dense", 
+        "particle_field_dense",
         "particle_field_sparse",
-        
+
         # Node network variations (3 types)
         "node_network",
         "node_network_minimal",
         "node_network_web",
-        
-        # Shadow trail variations (3 types)  
+
+        # Shadow trail variations (3 types)
         "shadow_trail",
         "shadow_trail_soft",
         "shadow_trail_directional",
-        
+
         # Keep a few other complementary abstract styles
         "constellation",
-        "ripple_waves", 
+        "ripple_waves",
         "flowing_hair",
         "smoke_wisps",
         "ink_blots",
@@ -974,16 +974,16 @@ def main(gpx_dir, images_dir):
         "wave_interference",
         "cellular_growth",
     ]
-    
+
     for (name, gpx_path) in get_files(gpx_dir):
-        print(f"\nProcessing {name}...")
-        
-        for variation in variations:
-            output_filename = f"{images_dir}/abstract-{variation}-{name}.png"
-            try:
-                lines_variation(gpx_path, output_filename, variation)
-            except Exception as e:
-                print(f"Error creating {variation} for {name}: {e}")
+        # Pick ONE random variation per GPX file
+        variation = random.choice(variations)
+        output_filename = f"{images_dir}/zen-{name}.png"
+        try:
+            lines_variation(gpx_path, output_filename, variation)
+            print(f"Created {variation} for {name}")
+        except Exception as e:
+            print(f"Error creating {variation} for {name}: {e}")
 
 def create_sample_sheet(gpx_dir, images_dir):
     """Create a sample sheet showing all abstract variations for the first GPX file"""
@@ -1072,6 +1072,3 @@ if __name__ == "__main__":
         create_sample_sheet(gpx_dir, images_dir)
     else:
         main(gpx_dir, images_dir)
-        print(f"\nGenerated 18 different abstract variations for each GPX file!")
-        print(f"Focus on: particle_field, node_network, and shadow_trail variations")
-        print(f"To see all variations in one image, run with --sample-sheet flag")
