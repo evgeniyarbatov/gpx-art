@@ -3,7 +3,7 @@ VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
 GPX_DIR = gpx
 IMAGES_DIR = images
-NUMBER_OF_GPX = 50
+NUMBER_OF_GPX = 5
 
 default: gpx all
 
