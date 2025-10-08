@@ -66,6 +66,71 @@ HOCKNEY_PALETTES = [
     ('#f0f8ff', ['#1e90ff', '#87cefa', '#00ced1', '#48d1cc', '#40e0d0']),
 ]
 
+KUSAMA_PALETTES = [
+    ('#ffffe0', ['#ff0000', '#ffff00', '#000000', '#ffffff']),
+    ('#ffffff', ['#ff1493', '#00ffff', '#ff4500', '#ffd700']),
+]
+
+PICASSO_PALETTES = [
+    ('#f5f5dc', ['#4682b4', '#708090', '#2f4f4f', '#000080']),  # Blue period
+    ('#fff8dc', ['#cd853f', '#daa520', '#b8860b', '#8b4513']),  # Rose/later
+]
+
+DALI_PALETTES = [
+    ('#f4e4c1', ['#8b7355', '#cd853f', '#2c3e50', '#c0392b']),
+    ('#faf0e6', ['#a0826d', '#d4a574', '#34495e', '#e74c3c']),
+]
+
+OKEEFFE_PALETTES = [
+    ('#faf8f5', ['#e8b4a0', '#d4a5a5', '#9b8b7e', '#6b5b4d']),
+    ('#fff9f0', ['#f5d5c0', '#e6c3a8', '#b8a090', '#8b6f5e']),
+]
+
+GAUGUIN_PALETTES = [
+    ('#f0e68c', ['#8b4513', '#cd853f', '#228b22', '#dc143c']),
+    ('#ffe4b5', ['#a0522d', '#daa520', '#2e8b57', '#b22222']),
+]
+
+CEZANNE_PALETTES = [
+    ('#f5f5dc', ['#4682b4', '#8fbc8f', '#cd853f', '#708090']),
+    ('#faf0e6', ['#5f9ea0', '#98cc98', '#d4a574', '#7a8a99']),
+]
+
+VANGOGH_PALETTES = [
+    ('#f0e68c', ['#1e3a8a', '#fbbf24', '#16a34a', '#ea580c']),
+    ('#fef3c7', ['#1e40af', '#f59e0b', '#059669', '#dc2626']),
+]
+
+DEGAS_PALETTES = [
+    ('#f8f8f0', ['#e8b4a8', '#98b8c8', '#d8c8b0', '#a8a898']),
+    ('#faf8f5', ['#f0c4b4', '#a8c8d8', '#e0d0c0', '#b8b8a8']),
+]
+
+RENOIR_PALETTES = [
+    ('#fff8f0', ['#ff9999', '#ffcccc', '#99ccff', '#ffcc99']),
+    ('#fffaf0', ['#ffb3b3', '#ffd9d9', '#b3d9ff', '#ffd9b3']),
+]
+
+REMBRANDT_PALETTES = [
+    ('#2c2416', ['#d4a574', '#8b6f47', '#654321', '#f4e4c1']),
+    ('#1a1410', ['#c09060', '#7a5f3f', '#5a3f2f', '#e8d4b8']),
+]
+
+RUBENS_PALETTES = [
+    ('#f5f0e8', ['#8b0000', '#cd853f', '#4682b4', '#2f4f4f']),
+    ('#faf5ed', ['#a52a2a', '#daa520', '#5f9ea0', '#3a5f5f']),
+]
+
+DAVINCI_PALETTES = [
+    ('#e8e0d0', ['#8b7355', '#5c4033', '#4a5f4f', '#6b5b4d']),
+    ('#f0e8d8', ['#9b8365', '#6c5043', '#5a6f5f', '#7b6b5d']),
+]
+
+MICHELANGELO_PALETTES = [
+    ('#f5f0e8', ['#d4a574', '#8b6f47', '#5f6f7f', '#a89080']),
+    ('#faf5ed', ['#e0b585', '#9b7f57', '#6f7f8f', '#b8a090']),
+]
+
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
@@ -733,6 +798,568 @@ def hockney(lons, lats):
 
     ax.set_xlim(-0.05, 1.05)
     ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('kusama')
+def kusama(lons, lats):
+    """Yayoi Kusama-inspired infinite polka dots and nets"""
+    bg_color, colors = random.choice(KUSAMA_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Dense field of dots with varying sizes
+    for i, center in enumerate(points):
+        t = i / len(points)
+        
+        # Multiple dots at each path point
+        num_dots = random.randint(10, 20)
+        for _ in range(num_dots):
+            offset = np.random.normal(0, 0.015, 2)
+            pos = center + offset
+            
+            size = random.uniform(0.005, 0.025)
+            color = random.choice(colors)
+            
+            circle = Circle(pos, size, facecolor=color, edgecolor='none',
+                          alpha=random.uniform(0.6, 0.95))
+            ax.add_patch(circle)
+    
+    # Add infinity net pattern (overlapping mesh)
+    step = max(1, len(points) // random.randint(30, 50))
+    for i in range(0, len(points) - step, step):
+        p1, p2 = points[i], points[i + step]
+        
+        # Create net loops
+        for offset_scale in [-1, 0, 1]:
+            curve_points = []
+            for t in np.linspace(0, 1, 20):
+                mid = p1 * (1 - t) + p2 * t
+                perp_offset = offset_scale * 0.02 * np.sin(t * np.pi)
+                tangent = p2 - p1
+                if np.linalg.norm(tangent) > 0:
+                    perp = np.array([-tangent[1], tangent[0]])
+                    perp = perp / np.linalg.norm(perp)
+                    curve_points.append(mid + perp * perp_offset)
+                else:
+                    curve_points.append(mid)
+            
+            if len(curve_points) > 1:
+                curve_points = np.array(curve_points)
+                color = random.choice(colors)
+                ax.plot(curve_points[:, 0], curve_points[:, 1],
+                       color=color, linewidth=random.uniform(1, 2),
+                       alpha=random.uniform(0.3, 0.6), solid_capstyle='round')
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('picasso_blue')
+def picasso_blue(lons, lats):
+    """Pablo Picasso Blue Period - melancholic monochromatic blues"""
+    bg_color, colors = random.choice([p for p in PICASSO_PALETTES if '4682b4' in p[1]])
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+    
+    # Simplified angular figures
+    step = max(1, len(points) // random.randint(10, 18))
+    vertices = points[::step]
+    
+    # Draw elongated, sorrowful shapes
+    for i in range(len(vertices) - 2):
+        v1, v2, v3 = vertices[i], vertices[i+1], vertices[i+2]
+        
+        # Create stretched triangular forms
+        distorted = [v1, v2, v3]
+        for j in range(len(distorted)):
+            stretch = np.random.normal(0, 0.01, 2)
+            stretch[1] *= 1.5  # Elongate vertically
+            distorted[j] = distorted[j] + stretch
+        
+        poly = Polygon(distorted, facecolor=random.choice(colors),
+                     edgecolor=colors[0], alpha=random.uniform(0.4, 0.7),
+                     linewidth=random.uniform(1.5, 2.5))
+        ax.add_patch(poly)
+    
+    # Add gestural contour lines
+    for i in range(len(vertices) - 1):
+        ax.plot([vertices[i][0], vertices[i+1][0]], 
+               [vertices[i][1], vertices[i+1][1]],
+               color=colors[0], linewidth=random.uniform(2, 3.5),
+               alpha=random.uniform(0.7, 0.9), solid_capstyle='round')
+
+    return fig, bg_color
+
+@style('dali')
+def dali(lons, lats):
+    """Salvador Dalí-inspired surreal melting and distorted forms"""
+    bg_color, colors = random.choice(DALI_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Create melting, distorted path
+    if len(points) > 3:
+        t = np.linspace(0, 1, len(points))
+        t_new = np.linspace(0, 1, len(points) * 4)
+        
+        interp_x = interp1d(t, points[:, 0], kind='cubic')
+        interp_y = interp1d(t, points[:, 1], kind='cubic')
+        
+        smooth_points = np.column_stack([interp_x(t_new), interp_y(t_new)])
+        
+        # Add surreal distortions (melting effect)
+        for phase in range(random.randint(3, 5)):
+            offset = np.sin(np.linspace(0, 4*np.pi, len(smooth_points)) + phase) * 0.03
+            melted = smooth_points.copy()
+            melted[:, 1] += offset
+            
+            ax.plot(melted[:, 0], melted[:, 1], color=random.choice(colors),
+                   linewidth=random.uniform(2, 4), alpha=random.uniform(0.4, 0.7),
+                   solid_capstyle='round')
+    
+    # Add impossible geometric forms
+    step = max(1, len(points) // random.randint(6, 12))
+    key_points = points[::step]
+    
+    for point in key_points:
+        # Create impossible cubes or warped shapes
+        if random.random() > 0.5:
+            # Warped ellipse
+            angles = np.linspace(0, 2*np.pi, 20)
+            radii = 0.03 + 0.02 * np.sin(angles * random.randint(2, 5))
+            shape = []
+            for angle, radius in zip(angles, radii):
+                x = point[0] + radius * np.cos(angle)
+                y = point[1] + radius * np.sin(angle) * random.uniform(0.5, 1.5)
+                shape.append([x, y])
+            
+            poly = Polygon(shape, facecolor=random.choice(colors),
+                         edgecolor=colors[-1], alpha=random.uniform(0.3, 0.6),
+                         linewidth=1.5)
+            ax.add_patch(poly)
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('okeeffe')
+def okeeffe(lons, lats):
+    """Georgia O'Keeffe-inspired organic close-up forms"""
+    bg_color, colors = random.choice(OKEEFFE_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Create flowing, organic petal-like forms
+    step = max(1, len(points) // random.randint(8, 15))
+    centers = points[::step]
+    
+    for center in centers:
+        num_petals = random.randint(4, 7)
+        
+        for petal_idx in range(num_petals):
+            angle = (2 * np.pi * petal_idx / num_petals) + random.uniform(-0.3, 0.3)
+            
+            # Create organic petal shape
+            petal_points = []
+            for t in np.linspace(0, 1, 15):
+                radius = 0.04 * (1 - t**2) + 0.01
+                curve = np.sin(t * np.pi) * 0.02
+                
+                x = center[0] + (radius + curve) * np.cos(angle)
+                y = center[1] + (radius + curve) * np.sin(angle)
+                petal_points.append([x, y])
+            
+            # Close the petal
+            petal_points.append(center)
+            
+            color = colors[petal_idx % len(colors)]
+            poly = Polygon(petal_points, facecolor=color, edgecolor='none',
+                         alpha=random.uniform(0.5, 0.8))
+            ax.add_patch(poly)
+    
+    # Add soft, flowing path
+    if len(points) > 3:
+        t = np.linspace(0, 1, len(points))
+        t_new = np.linspace(0, 1, len(points) * 3)
+        
+        interp_x = interp1d(t, points[:, 0], kind='cubic')
+        interp_y = interp1d(t, points[:, 1], kind='cubic')
+        
+        smooth_points = np.column_stack([interp_x(t_new), interp_y(t_new)])
+        
+        ax.plot(smooth_points[:, 0], smooth_points[:, 1],
+               color=colors[0], linewidth=random.uniform(3, 5),
+               alpha=0.3, solid_capstyle='round')
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('gauguin')
+def gauguin(lons, lats):
+    """Paul Gauguin-inspired bold flat colors and primitive forms"""
+    bg_color, colors = random.choice(GAUGUIN_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+    
+    # Create bold, flat color regions
+    step = max(1, len(points) // random.randint(8, 15))
+    vertices = points[::step]
+    
+    # Draw simplified, symbolic shapes
+    for i in range(len(vertices) - 2):
+        # Create irregular patches
+        num_verts = random.randint(3, 6)
+        shape = []
+        
+        for j in range(num_verts):
+            idx = (i + j) % len(vertices)
+            offset = np.random.normal(0, 0.015, 2)
+            shape.append(vertices[idx] + offset)
+        
+        poly = Polygon(shape, facecolor=random.choice(colors),
+                     edgecolor='#1a1a1a', alpha=random.uniform(0.7, 0.9),
+                     linewidth=random.uniform(2, 3))
+        ax.add_patch(poly)
+    
+    # Add bold outlines
+    for i in range(len(vertices) - 1):
+        ax.plot([vertices[i][0], vertices[i+1][0]],
+               [vertices[i][1], vertices[i+1][1]],
+               color='#1a1a1a', linewidth=random.uniform(3, 5),
+               alpha=0.8, solid_capstyle='round')
+
+    return fig, bg_color
+
+@style('renoir')
+def renoir(lons, lats):
+    """Pierre-Auguste Renoir-inspired luminous feathery brushwork"""
+    bg_color, colors = random.choice(RENOIR_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Create feathery, soft brushwork
+    for i, center in enumerate(points):
+        t = i / len(points)
+        
+        # Multiple soft, overlapping strokes
+        num_strokes = random.randint(8, 15)
+        for _ in range(num_strokes):
+            offset = np.random.normal(0, 0.012, 2)
+            pos = center + offset
+            
+            # Create soft feathery stroke
+            angle = random.uniform(0, 360)
+            length = random.uniform(0.01, 0.025)
+            
+            theta = np.radians(angle)
+            stroke_points = []
+            for s in np.linspace(0, 1, 8):
+                fade = np.sin(s * np.pi)
+                x = pos[0] + s * length * np.cos(theta)
+                y = pos[1] + s * length * np.sin(theta)
+                stroke_points.append([x, y])
+            
+            stroke_points = np.array(stroke_points)
+            
+            color_idx = int((t + random.uniform(-0.2, 0.2)) * len(colors)) % len(colors)
+            color = colors[color_idx]
+            
+            ax.plot(stroke_points[:, 0], stroke_points[:, 1],
+                   color=color, linewidth=random.uniform(2, 4),
+                   alpha=random.uniform(0.2, 0.5), solid_capstyle='round')
+    
+    # Add glowing highlights
+    step = max(1, len(points) // random.randint(15, 25))
+    for idx in range(0, len(points), step):
+        center = points[idx]
+        
+        # Create luminous glow
+        for ring in range(4):
+            size = (ring + 1) * random.uniform(0.008, 0.015)
+            alpha = 0.15 * (1 - ring / 4)
+            
+            circle = Circle(center, size, facecolor='#ffffff',
+                          edgecolor='none', alpha=alpha)
+            ax.add_patch(circle)
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('rembrandt')
+def rembrandt(lons, lats):
+    """Rembrandt van Rijn-inspired chiaroscuro dramatic lighting"""
+    bg_color, colors = random.choice(REMBRANDT_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Create dramatic light and shadow zones
+    step = max(1, len(points) // random.randint(6, 12))
+    centers = points[::step]
+    
+    for center in centers:
+        # Create illuminated area (light breaking through darkness)
+        num_rings = random.randint(8, 15)
+        for ring in range(num_rings):
+            size = (ring + 1) * random.uniform(0.01, 0.02)
+            
+            # Light fades from warm highlight to darkness
+            light_intensity = 1 - (ring / num_rings)
+            
+            if light_intensity > 0.7:
+                color = colors[-1]  # Bright highlight
+                alpha = 0.4 * light_intensity
+            elif light_intensity > 0.3:
+                color = colors[1]  # Mid-tone
+                alpha = 0.3 * light_intensity
+            else:
+                color = colors[2]  # Shadow
+                alpha = 0.2 * light_intensity
+            
+            circle = Circle(center, size, facecolor=color,
+                          edgecolor='none', alpha=alpha)
+            ax.add_patch(circle)
+    
+    # Add textured brushwork in lit areas
+    for i, point in enumerate(points):
+        t = i / len(points)
+        
+        # Only add texture in "lit" areas
+        if random.random() > 0.4:
+            offset = np.random.normal(0, 0.008, 2)
+            pos = point + offset
+            
+            angle = random.uniform(0, 360)
+            length = random.uniform(0.008, 0.02)
+            
+            theta = np.radians(angle)
+            end = pos + length * np.array([np.cos(theta), np.sin(theta)])
+            
+            # Vary color based on position (light vs shadow)
+            color = colors[1] if random.random() > 0.6 else colors[2]
+            
+            ax.plot([pos[0], end[0]], [pos[1], end[1]],
+                   color=color, linewidth=random.uniform(1, 2.5),
+                   alpha=random.uniform(0.3, 0.6), solid_capstyle='round')
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('rubens')
+def rubens(lons, lats):
+    """Peter Paul Rubens-inspired dynamic baroque energy"""
+    bg_color, colors = random.choice(RUBENS_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+
+    # Create dramatic, sweeping curves
+    if len(points) > 3:
+        t = np.linspace(0, 1, len(points))
+        t_new = np.linspace(0, 1, len(points) * 4)
+        
+        interp_x = interp1d(t, points[:, 0], kind='cubic')
+        interp_y = interp1d(t, points[:, 1], kind='cubic')
+        
+        smooth_points = np.column_stack([interp_x(t_new), interp_y(t_new)])
+        
+        # Multiple dynamic sweeping strokes
+        for sweep in range(random.randint(5, 8)):
+            amplitude = random.uniform(0.02, 0.04)
+            phase = random.uniform(0, 2*np.pi)
+            
+            swept = smooth_points.copy()
+            for i in range(len(swept)):
+                t = i / len(swept)
+                offset = amplitude * np.sin(t * np.pi * random.uniform(2, 4) + phase)
+                swept[i, 0] += offset * 0.5
+                swept[i, 1] += offset
+            
+            color = random.choice(colors)
+            ax.plot(swept[:, 0], swept[:, 1], color=color,
+                   linewidth=random.uniform(3, 6),
+                   alpha=random.uniform(0.4, 0.7), solid_capstyle='round')
+    
+    # Add rich, textured areas
+    step = max(1, len(points) // random.randint(8, 15))
+    vertices = points[::step]
+    
+    for i in range(len(vertices) - 2):
+        v1, v2, v3 = vertices[i], vertices[i+1], vertices[i+2]
+        
+        # Create flowing curved shapes
+        num_points = 20
+        curve = []
+        for t in np.linspace(0, 1, num_points):
+            # Quadratic Bezier curve
+            pt = (1-t)**2 * v1 + 2*(1-t)*t * v2 + t**2 * v3
+            curve.append(pt)
+        
+        # Add width variation
+        widened = []
+        for j, pt in enumerate(curve):
+            t = j / len(curve)
+            width = 0.02 * np.sin(t * np.pi)
+            
+            if j < len(curve) - 1:
+                tangent = curve[j+1] - pt
+            else:
+                tangent = pt - curve[j-1]
+            
+            norm = np.linalg.norm(tangent)
+            if norm > 0:
+                perp = np.array([-tangent[1], tangent[0]]) / norm
+                widened.append(pt + perp * width)
+        
+        if len(widened) > 2:
+            poly = Polygon(widened, facecolor=random.choice(colors),
+                         edgecolor=colors[0], alpha=random.uniform(0.4, 0.7),
+                         linewidth=1.5)
+            ax.add_patch(poly)
+
+    return fig, bg_color
+
+@style('davinci')
+def davinci(lons, lats):
+    """Leonardo da Vinci-inspired sfumato and technical precision"""
+    bg_color, colors = random.choice(DAVINCI_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    # Normalize coordinates
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min())
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min())
+    points = np.array([norm_lons, norm_lats]).T
+
+    # Create sfumato effect (smoky, blended layers)
+    for layer in range(random.randint(10, 15)):
+        offset_scale = layer * 0.003
+        offset = np.random.normal(0, offset_scale, 2)
+        
+        layer_points = points + offset
+        
+        if len(layer_points) > 3:
+            t = np.linspace(0, 1, len(layer_points))
+            t_new = np.linspace(0, 1, len(layer_points) * 3)
+            
+            interp_x = interp1d(t, layer_points[:, 0], kind='cubic')
+            interp_y = interp1d(t, layer_points[:, 1], kind='cubic')
+            
+            smooth = np.column_stack([interp_x(t_new), interp_y(t_new)])
+            
+            color = random.choice(colors)
+            alpha = 0.08 * (1 - layer / 15)
+            
+            ax.plot(smooth[:, 0], smooth[:, 1], color=color,
+                   linewidth=random.uniform(1.5, 3),
+                   alpha=alpha, solid_capstyle='round')
+    
+    # Add anatomical study line work
+    step = max(1, len(points) // random.randint(20, 35))
+    
+    for i in range(0, len(points) - step, step):
+        p1, p2 = points[i], points[i + step]
+        
+        # Create cross-hatching for form
+        tangent = p2 - p1
+        if np.linalg.norm(tangent) > 0:
+            perp = np.array([-tangent[1], tangent[0]])
+            perp = perp / np.linalg.norm(perp)
+            
+            # Fine hatching lines
+            for offset in np.linspace(-0.015, 0.015, 8):
+                start = (p1 + p2) / 2 + perp * offset
+                end = start + tangent * 0.3
+                
+                ax.plot([start[0], end[0]], [start[1], end[1]],
+                       color=colors[1], linewidth=0.5,
+                       alpha=random.uniform(0.3, 0.5))
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    return fig, bg_color
+
+@style('michelangelo')
+def michelangelo(lons, lats):
+    """Michelangelo Buonarroti-inspired sculptural forms and terribilità"""
+    bg_color, colors = random.choice(MICHELANGELO_PALETTES)
+    fig, ax = create_figure(bg_color)
+
+    points = np.array([lons, lats]).T
+    
+    # Create powerful, muscular forms
+    step = max(1, len(points) // random.randint(6, 12))
+    vertices = points[::step]
+    
+    # Draw bold, sculptural masses
+    for i in range(len(vertices) - 2):
+        v1, v2, v3 = vertices[i], vertices[i+1], vertices[i+2]
+        
+        # Create powerful triangular planes
+        for expansion in range(3):
+            scale = 1 + expansion * 0.3
+            center = (v1 + v2 + v3) / 3
+            
+            expanded = []
+            for v in [v1, v2, v3]:
+                direction = v - center
+                expanded.append(center + direction * scale)
+            
+            shade_idx = expansion % len(colors)
+            alpha = 0.4 - expansion * 0.1
+            
+            poly = Polygon(expanded, facecolor=colors[shade_idx],
+                         edgecolor=colors[0], alpha=alpha,
+                         linewidth=random.uniform(1.5, 2.5))
+            ax.add_patch(poly)
+    
+    # Add powerful contour lines (contraposto energy)
+    for i in range(len(vertices) - 1):
+        # Bold, decisive strokes
+        ax.plot([vertices[i][0], vertices[i+1][0]],
+               [vertices[i][1], vertices[i+1][1]],
+               color=colors[1], linewidth=random.uniform(3, 5),
+               alpha=random.uniform(0.6, 0.9), solid_capstyle='round')
+        
+        # Add cross-contours for volume
+        mid = (vertices[i] + vertices[i+1]) / 2
+        tangent = vertices[i+1] - vertices[i]
+        if np.linalg.norm(tangent) > 0:
+            perp = np.array([-tangent[1], tangent[0]])
+            perp = perp / np.linalg.norm(perp)
+            
+            for direction in [-1, 1]:
+                cross_start = mid + perp * direction * 0.015
+                cross_end = mid + perp * direction * 0.035
+                
+                ax.plot([cross_start[0], cross_end[0]],
+                       [cross_start[1], cross_end[1]],
+                       color=colors[2], linewidth=random.uniform(2, 3),
+                       alpha=random.uniform(0.5, 0.7), solid_capstyle='round')
+
     return fig, bg_color
 
 # ============================================================================
