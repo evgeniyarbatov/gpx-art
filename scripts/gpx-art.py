@@ -858,10 +858,10 @@ def kusama(lons, lats):
     ax.set_ylim(-0.05, 1.05)
     return fig, bg_color
 
-@style('picasso_blue')
-def picasso_blue(lons, lats):
-    """Pablo Picasso Blue Period - melancholic monochromatic blues"""
-    bg_color, colors = random.choice([p for p in PICASSO_PALETTES if '4682b4' in p[1]])
+@style('picasso')
+def picasso(lons, lats):
+    """Pablo Picasso - all periods"""
+    bg_color, colors = random.choice(PICASSO_PALETTES)
     fig, ax = create_figure(bg_color)
 
     points = np.array([lons, lats]).T
