@@ -3,6 +3,7 @@ VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
 GPX_DIR = gpx
 IMAGES_DIR = images
+NUMBER_OF_GPX = 1
 
 default: all
 
@@ -19,7 +20,7 @@ clean:
 
 gpx:
 	@mkdir -p $(GPX_DIR)
-	@find /Users/zhenya/gitRepo/gpx-data/data/strava -name "*.gpx" -type f | shuf -n 100 | xargs -I {} cp {} $(GPX_DIR)/
+	@find /Users/zhenya/gitRepo/gpx-data/data/strava -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
 
 all:
 	@source $(VENV_PATH)/bin/activate && \
