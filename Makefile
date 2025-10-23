@@ -3,9 +3,7 @@ VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
 GPX_DIR = gpx
 IMAGES_DIR = images
-NUMBER_OF_GPX = 5
-
-default: gpx all
+NUMBER_OF_GPX = 100
 
 venv:
 	@python3 -m venv $(VENV_PATH)
@@ -18,11 +16,11 @@ clean:
 	@rm -f $(IMAGES_DIR)/*.png
 	@rm -f $(GPX_DIR)/*.gpx
 
-gpx:
+gpx: clean
 	@mkdir -p $(GPX_DIR)
 	@find /Users/zhenya/gitRepo/gpx-data/data/strava -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
 
-all:
+art: gpx
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) all
 
