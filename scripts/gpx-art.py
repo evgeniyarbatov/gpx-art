@@ -183,11 +183,11 @@ def extract_coordinates(gpx_filename):
                     lats.append(point.latitude)
     return np.array(lons), np.array(lats)
 
-def create_figure(bg_color, figsize=(12, 7.42), dpi=300):
+def create_figure(bg_color, dpi=300):
     """Create matplotlib figure with standard settings"""
-    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+    fig, ax = plt.subplots(dpi=dpi)
     ax.set_facecolor(bg_color)
-    ax.set_aspect('auto')
+    ax.set_aspect('equal', 'datalim')
     ax.set_xticks([])
     ax.set_yticks([])
     ax.axis('off')
@@ -1402,45 +1402,55 @@ def michelangelo(lons, lats):
 # MAIN FUNCTIONS
 # ============================================================================
 
-def add_qr_seal(fig, ax, bg_color, style_name, script_path=__file__):
-    """Add a plain square QR code in the bottom-right corner with only the style function source."""
+def add_qr_code(fig, ax, bg_color, style_name, script_path=__file__):
+    """Add a subtle plain square QR code tightly in the bottom-right corner with no padding."""
     # Extract only the specific style function
     code = extract_style_source(script_path, style_name)
     print(code)
 
     # Generate plain square QR code
     qr = qrcode.QRCode(
-        version=None,  # automatically choose
+        version=None,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=5,
-        border=1
+        box_size=10,
+        border=1  # minimal white border
     )
-    
-    # Compress code and add it to QR code
+
+    # Get URL of Gist with source code
     gist_url = get_gist_url(style_name, code)
-    print(gist_url)
     qr.add_data(gist_url)
-    
+    print(gist_url)
+
     qr.make(fit=True)
     img_qr = qr.make_image(fill_color="black", back_color=bg_color)
 
-    # Place QR in bottom-right corner of the figure
+    # Convert QR to image array
     buf = BytesIO()
     img_qr.save(buf, format='PNG')
     buf.seek(0)
     img = plt.imread(buf)
 
+    # Get axis limits and dimensions
     xlim, ylim = ax.get_xlim(), ax.get_ylim()
     width = xlim[1] - xlim[0]
     height = ylim[1] - ylim[0]
 
-    size_ratio = 0.15  # QR relative size
+    # Make the QR small and tight
+    size_ratio = 0.1  # smaller QR code (10% of plot width)
     qr_width = width * size_ratio
     qr_height = height * size_ratio
-    x0 = xlim[1] - qr_width * 1.1
-    y0 = ylim[0] + qr_height * 0.1
 
-    ax.imshow(img, extent=[x0, x0 + qr_width, y0, y0 + qr_height], aspect='auto', zorder=20)
+    # Position directly in the bottom-right corner — no padding
+    x0 = xlim[1] - qr_width
+    y0 = ylim[0]
+
+    # Draw QR
+    ax.imshow(
+        img,
+        extent=[x0, x0 + qr_width, y0, y0 + qr_height],
+        aspect='auto',
+        zorder=20
+    )
 
 def create_art(gpx_filename, image_filename, style_name):
     """Create art from GPX file using specified style"""
@@ -1455,7 +1465,7 @@ def create_art(gpx_filename, image_filename, style_name):
         return
 
     fig, bg_color = STYLES[style_name](lons, lats)
-    add_qr_seal(fig, plt.gca(), bg_color, style_name)
+    add_qr_code(fig, plt.gca(), bg_color, style_name)
     save_figure(fig, image_filename, bg_color)
     print(f"Created {style_name}: {image_filename}")
 
