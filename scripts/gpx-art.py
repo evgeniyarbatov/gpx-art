@@ -167,6 +167,36 @@ def save_figure(fig, filename, bg_color):
 # STYLE IMPLEMENTATIONS
 # ============================================================================
 
+@style('ensō')
+def enso(lons, lats):
+    """Zen circle brushstroke"""
+    bg_color = random.choice(['#fefefe', '#fcfcfc'])
+    fg_color = '#1a1a1a'
+    fig, ax = create_figure(bg_color)
+
+    num_circles = random.randint(1, 3)
+    for _ in range(num_circles):
+        center = (random.uniform(0.35, 0.65), random.uniform(0.35, 0.65))
+        radius = random.uniform(0.2, 0.4)
+        linewidth = random.uniform(6, 12)
+
+        # Slightly broken circle to mimic brushstroke
+        theta1, theta2 = np.random.uniform(0, 20), np.random.uniform(340, 360)
+        circle = plt.Circle(center, radius, color=fg_color, fill=False, linewidth=linewidth, alpha=0.9)
+        ax.add_patch(circle)
+
+        # Random subtle dry-brush streaks along the circle
+        for _ in range(random.randint(5, 12)):
+            t = np.random.uniform(0, 2*np.pi)
+            dx = np.cos(t) * radius * random.uniform(0.95, 1.05)
+            dy = np.sin(t) * radius * random.uniform(0.95, 1.05)
+            ax.plot([center[0]+dx*0.98, center[0]+dx], [center[1]+dy*0.98, center[1]+dy],
+                    color=fg_color, linewidth=random.uniform(1,3), alpha=random.uniform(0.3,0.6))
+
+    ax.set_xlim(0,1)
+    ax.set_ylim(0,1)
+    return fig, bg_color
+
 @style('brush')
 def brush(lons, lats):
     """Calligraphic brush strokes with variable width"""
