@@ -187,7 +187,7 @@ def create_figure(bg_color, figsize=(12, 7.42), dpi=300):
     """Create matplotlib figure with standard settings"""
     fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
     ax.set_facecolor(bg_color)
-    ax.set_aspect('equal', 'datalim')
+    ax.set_aspect('auto')
     ax.set_xticks([])
     ax.set_yticks([])
     ax.axis('off')
