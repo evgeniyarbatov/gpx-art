@@ -1,12 +1,18 @@
+import ast
+import zlib
+import base64
 import sys
 import random
 import gpxpy
+import qrcode
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Circle, Polygon
-from matplotlib.collections import LineCollection, PatchCollection
+from matplotlib.collections import LineCollection
 from scipy.interpolate import interp1d
 from utils import get_files
+from gist import get_gist_url
+from io import BytesIO
 
 # ============================================================================
 # STYLE CATALOG - Easy to add/remove styles
@@ -20,6 +26,36 @@ def style(name):
         STYLES[name] = func
         return func
     return decorator
+
+def extract_style_source(script_path, style_name):
+    """
+    Extract the full source code of a function decorated with @style('style_name').
+    Includes the decorator and full function body.
+    """
+    try:
+        with open(script_path, "r") as f:
+            source = f.read()
+    except Exception as e:
+        return f"# Error reading source: {e}"
+
+    try:
+        tree = ast.parse(source)
+    except Exception as e:
+        return f"# Error parsing source: {e}"
+
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef):
+            # Check decorators
+            for dec in node.decorator_list:
+                if isinstance(dec, ast.Call) and getattr(dec.func, 'id', None) == 'style':
+                    # Check the first argument of @style(...)
+                    if dec.args and isinstance(dec.args[0], ast.Constant) and dec.args[0].value == style_name:
+                        # Extract the full function source using line numbers
+                        lines = source.splitlines()
+                        func_lines = lines[node.lineno - 1: node.end_lineno]
+                        return "\n".join(func_lines) + "\n"
+
+    return f"# Could not find function decorated with @style('{style_name}')"
 
 # ============================================================================
 # COLOR PALETTES
@@ -1366,6 +1402,46 @@ def michelangelo(lons, lats):
 # MAIN FUNCTIONS
 # ============================================================================
 
+def add_qr_seal(fig, ax, bg_color, style_name, script_path=__file__):
+    """Add a plain square QR code in the bottom-right corner with only the style function source."""
+    # Extract only the specific style function
+    code = extract_style_source(script_path, style_name)
+    print(code)
+
+    # Generate plain square QR code
+    qr = qrcode.QRCode(
+        version=None,  # automatically choose
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=5,
+        border=1
+    )
+    
+    # Compress code and add it to QR code
+    gist_url = get_gist_url(style_name, code)
+    print(gist_url)
+    qr.add_data(gist_url)
+    
+    qr.make(fit=True)
+    img_qr = qr.make_image(fill_color="black", back_color=bg_color)
+
+    # Place QR in bottom-right corner of the figure
+    buf = BytesIO()
+    img_qr.save(buf, format='PNG')
+    buf.seek(0)
+    img = plt.imread(buf)
+
+    xlim, ylim = ax.get_xlim(), ax.get_ylim()
+    width = xlim[1] - xlim[0]
+    height = ylim[1] - ylim[0]
+
+    size_ratio = 0.15  # QR relative size
+    qr_width = width * size_ratio
+    qr_height = height * size_ratio
+    x0 = xlim[1] - qr_width * 1.1
+    y0 = ylim[0] + qr_height * 0.1
+
+    ax.imshow(img, extent=[x0, x0 + qr_width, y0, y0 + qr_height], aspect='auto', zorder=20)
+
 def create_art(gpx_filename, image_filename, style_name):
     """Create art from GPX file using specified style"""
     if style_name not in STYLES:
@@ -1379,6 +1455,7 @@ def create_art(gpx_filename, image_filename, style_name):
         return
 
     fig, bg_color = STYLES[style_name](lons, lats)
+    add_qr_seal(fig, plt.gca(), bg_color, style_name)
     save_figure(fig, image_filename, bg_color)
     print(f"Created {style_name}: {image_filename}")
 

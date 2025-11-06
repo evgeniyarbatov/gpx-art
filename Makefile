@@ -3,7 +3,7 @@ VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
 GPX_DIR = gpx
 IMAGES_DIR = images
-NUMBER_OF_GPX = 100
+NUMBER_OF_GPX = 1
 
 venv:
 	@python3 -m venv $(VENV_PATH)
