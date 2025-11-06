@@ -1,5 +1,4 @@
 pandas
-ipykernel
 gpxpy
 pandas
 matplotlib
@@ -7,3 +6,6 @@ numpy
 shapely
 pillow
 scipy
+qrcode
+python-dotenv
+requests
