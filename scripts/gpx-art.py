@@ -167,6 +167,286 @@ def save_figure(fig, filename, bg_color):
 # STYLE IMPLEMENTATIONS
 # ============================================================================
 
+@style('contour')
+def contour(lons, lats):
+    """Topographic contour-like parallel lines"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Create multiple offset versions of the track
+    for offset in np.linspace(-0.002, 0.002, 12):
+        offset_lons = np.array(lons) + offset * np.cos(np.linspace(0, 2*np.pi, len(lons)))
+        offset_lats = np.array(lats) + offset * np.sin(np.linspace(0, 2*np.pi, len(lats)))
+        ax.plot(offset_lons, offset_lats, color=fg_color, 
+                linewidth=0.8, alpha=0.4, solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('stitch')
+def stitch(lons, lats):
+    """Embroidery-like dashed patterns"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Main track with long dashes
+    ax.plot(lons, lats, color=fg_color, linewidth=2.5,
+            linestyle=(0, (10, 5)), solid_capstyle='round')
+    
+    # Cross-stitch marks at intervals
+    for i in range(0, len(lons), 15):
+        if i < len(lons) - 1:
+            dx = lons[i+1] - lons[i]
+            dy = lats[i+1] - lats[i]
+            perp_dx = -dy * 0.001
+            perp_dy = dx * 0.001
+            ax.plot([lons[i] - perp_dx, lons[i] + perp_dx],
+                   [lats[i] - perp_dy, lats[i] + perp_dy],
+                   color=fg_color, linewidth=1.5, alpha=0.8)
+    
+    return fig, bg_color
+
+
+@style('shatter')
+def shatter(lons, lats):
+    """Fragmented geometric segments"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    segment_size = max(5, len(lons) // 25)
+    for i in range(0, len(lons) - segment_size, segment_size):
+        segment_lons = lons[i:i+segment_size]
+        segment_lats = lats[i:i+segment_size]
+        
+        # Random angular offset for each segment
+        angle = random.uniform(-0.3, 0.3)
+        center_lon = np.mean(segment_lons)
+        center_lat = np.mean(segment_lats)
+        
+        rotated_lons = []
+        rotated_lats = []
+        for lon, lat in zip(segment_lons, segment_lats):
+            dx = lon - center_lon
+            dy = lat - center_lat
+            rotated_lons.append(center_lon + dx * np.cos(angle) - dy * np.sin(angle))
+            rotated_lats.append(center_lat + dx * np.sin(angle) + dy * np.cos(angle))
+        
+        ax.plot(rotated_lons, rotated_lats, color=fg_color,
+                linewidth=2, alpha=0.7, solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('scaffold')
+def scaffold(lons, lats):
+    """Architectural wireframe structure"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Main path
+    ax.plot(lons, lats, color=fg_color, linewidth=1.5, alpha=0.8)
+    
+    # Connect points to a reference line (like a scaffold to ground)
+    ref_lat = np.mean(lats)
+    for i in range(0, len(lons), 8):
+        ax.plot([lons[i], lons[i]], [lats[i], ref_lat],
+                color=fg_color, linewidth=0.5, alpha=0.3)
+    
+    # Cross-bracing
+    for i in range(0, len(lons) - 16, 16):
+        if i + 8 < len(lons):
+            ax.plot([lons[i], lons[i+8]], [ref_lat, lats[i+8]],
+                   color=fg_color, linewidth=0.5, alpha=0.2)
+    
+    return fig, bg_color
+
+
+@style('morse')
+def morse(lons, lats):
+    """Dot and dash encoding"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Calculate path length segments
+    distances = []
+    for i in range(len(lons) - 1):
+        d = np.sqrt((lons[i+1] - lons[i])**2 + (lats[i+1] - lats[i])**2)
+        distances.append(d)
+    
+    # Draw as dots (circles) and dashes (lines) based on distance
+    threshold = np.median(distances) if distances else 0
+    for i in range(len(lons) - 1):
+        if i < len(distances):
+            if distances[i] < threshold:
+                # Dot
+                ax.plot(lons[i], lats[i], 'o', color=fg_color, 
+                       markersize=4, alpha=0.8)
+            else:
+                # Dash
+                ax.plot([lons[i], lons[i+1]], [lats[i], lats[i+1]],
+                       color=fg_color, linewidth=3, alpha=0.8,
+                       solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('perspective')
+def perspective(lons, lats):
+    """Vanishing point perspective layers"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Create vanishing point
+    vanish_lon = np.mean(lons)
+    vanish_lat = np.max(lats) + (np.max(lats) - np.min(lats)) * 0.3
+    
+    # Draw track at multiple depth layers
+    for depth in np.linspace(0.2, 1.0, 8):
+        depth_lons = lons + (vanish_lon - np.array(lons)) * (1 - depth)
+        depth_lats = lats + (vanish_lat - np.array(lats)) * (1 - depth)
+        ax.plot(depth_lons, depth_lats, color=fg_color,
+                linewidth=depth * 2, alpha=depth * 0.5,
+                solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('seismic')
+def seismic(lons, lats):
+    """Seismograph-style oscillating waves"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Calculate direction perpendicular to track
+    wave_lons = []
+    wave_lats = []
+    
+    for i in range(len(lons) - 1):
+        dx = lons[i+1] - lons[i]
+        dy = lats[i+1] - lats[i]
+        
+        # Perpendicular direction
+        perp_dx = -dy
+        perp_dy = dx
+        norm = np.sqrt(perp_dx**2 + perp_dy**2)
+        if norm > 0:
+            perp_dx /= norm
+            perp_dy /= norm
+        
+        # Oscillate with varying amplitude
+        amplitude = 0.002 * np.sin(i * 0.3)
+        wave_lons.append(lons[i] + perp_dx * amplitude)
+        wave_lats.append(lats[i] + perp_dy * amplitude)
+    
+    ax.plot(wave_lons, wave_lats, color=fg_color, linewidth=1.5,
+            alpha=0.9, solid_capstyle='round')
+    
+    # Add center reference line
+    ax.plot(lons, lats, color=fg_color, linewidth=0.3, alpha=0.3)
+    
+    return fig, bg_color
+
+
+@style('zipper')
+def zipper(lons, lats):
+    """Interlocking teeth pattern"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Center line
+    ax.plot(lons, lats, color=fg_color, linewidth=2, alpha=0.6)
+    
+    # Teeth on alternating sides
+    for i in range(0, len(lons) - 1, 3):
+        dx = lons[i+1] - lons[i] if i+1 < len(lons) else 0
+        dy = lats[i+1] - lats[i] if i+1 < len(lats) else 0
+        
+        perp_dx = -dy * 0.002
+        perp_dy = dx * 0.002
+        
+        # Alternate sides
+        side = 1 if (i // 3) % 2 == 0 else -1
+        
+        ax.plot([lons[i], lons[i] + side * perp_dx],
+               [lats[i], lats[i] + side * perp_dy],
+               color=fg_color, linewidth=1.5, alpha=0.8,
+               solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('skeleton')
+def skeleton(lons, lats):
+    """Minimal structural bones"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Find key turning points (simplified skeleton)
+    key_points = [0]
+    angle_threshold = 0.2
+    
+    for i in range(1, len(lons) - 1):
+        v1 = np.array([lons[i] - lons[i-1], lats[i] - lats[i-1]])
+        v2 = np.array([lons[i+1] - lons[i], lats[i+1] - lats[i]])
+        
+        n1 = np.linalg.norm(v1)
+        n2 = np.linalg.norm(v2)
+        
+        if n1 > 0 and n2 > 0:
+            cos_angle = np.dot(v1, v2) / (n1 * n2)
+            if abs(cos_angle) < 1 - angle_threshold:
+                key_points.append(i)
+    
+    key_points.append(len(lons) - 1)
+    
+    # Draw skeleton segments with joints
+    for i in range(len(key_points) - 1):
+        start = key_points[i]
+        end = key_points[i+1]
+        ax.plot([lons[start], lons[end]], [lats[start], lats[end]],
+                color=fg_color, linewidth=2.5, alpha=0.9,
+                solid_capstyle='round')
+        
+        # Joint circles
+        ax.plot(lons[start], lats[start], 'o', color=fg_color,
+               markersize=6, alpha=0.8)
+    
+    return fig, bg_color
+
+
+@style('blueprint')
+def blueprint(lons, lats):
+    """Technical drawing with dimensions"""
+    bg_color, fg_color = '#0A1628', '#4A9EFF'  # Blueprint colors
+    fig, ax = create_figure(bg_color)
+    
+    # Main track
+    ax.plot(lons, lats, color=fg_color, linewidth=1.5, alpha=0.9)
+    
+    # Add dimension lines at intervals
+    for i in range(0, len(lons) - 20, 20):
+        if i + 20 < len(lons):
+            # Extension lines
+            ax.plot([lons[i], lons[i]], 
+                   [lats[i], lats[i] - 0.003],
+                   color=fg_color, linewidth=0.5, alpha=0.6)
+            ax.plot([lons[i+20], lons[i+20]], 
+                   [lats[i+20], lats[i+20] - 0.003],
+                   color=fg_color, linewidth=0.5, alpha=0.6)
+            
+            # Dimension line
+            dim_lat = min(lats[i], lats[i+20]) - 0.0035
+            ax.plot([lons[i], lons[i+20]], [dim_lat, dim_lat],
+                   color=fg_color, linewidth=0.5, alpha=0.6)
+    
+    # Grid overlay
+    for offset in np.linspace(min(lons), max(lons), 8):
+        ax.axvline(offset, color=fg_color, linewidth=0.2, alpha=0.2)
+    for offset in np.linspace(min(lats), max(lats), 8):
+        ax.axhline(offset, color=fg_color, linewidth=0.2, alpha=0.2)
+    
+    return fig, bg_color
+
 @style('ensō')
 def enso(lons, lats):
     """Create a single Zen ensō circle with visible brushstrokes
@@ -776,7 +1056,7 @@ def add_qr_code(fig, ax, bg_color, style_name, script_path=__file__):
     qr.make(fit=True)
     
     # Create PIL image
-    img_qr = qr.make_image(fill_color="black", back_color=bg_color)
+    img_qr = qr.make_image(fill_color="#C00000", back_color=bg_color)
     
     # Convert PIL image to NumPy array
     buf = BytesIO()
