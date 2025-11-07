@@ -260,36 +260,6 @@ def scaffold(lons, lats):
     
     return fig, bg_color
 
-
-@style('morse')
-def morse(lons, lats):
-    """Dot and dash encoding"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-    
-    # Calculate path length segments
-    distances = []
-    for i in range(len(lons) - 1):
-        d = np.sqrt((lons[i+1] - lons[i])**2 + (lats[i+1] - lats[i])**2)
-        distances.append(d)
-    
-    # Draw as dots (circles) and dashes (lines) based on distance
-    threshold = np.median(distances) if distances else 0
-    for i in range(len(lons) - 1):
-        if i < len(distances):
-            if distances[i] < threshold:
-                # Dot
-                ax.plot(lons[i], lats[i], 'o', color=fg_color, 
-                       markersize=4, alpha=0.8)
-            else:
-                # Dash
-                ax.plot([lons[i], lons[i+1]], [lats[i], lats[i+1]],
-                       color=fg_color, linewidth=3, alpha=0.8,
-                       solid_capstyle='round')
-    
-    return fig, bg_color
-
-
 @style('perspective')
 def perspective(lons, lats):
     """Vanishing point perspective layers"""
@@ -346,35 +316,6 @@ def seismic(lons, lats):
     
     return fig, bg_color
 
-
-@style('zipper')
-def zipper(lons, lats):
-    """Interlocking teeth pattern"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-    
-    # Center line
-    ax.plot(lons, lats, color=fg_color, linewidth=2, alpha=0.6)
-    
-    # Teeth on alternating sides
-    for i in range(0, len(lons) - 1, 3):
-        dx = lons[i+1] - lons[i] if i+1 < len(lons) else 0
-        dy = lats[i+1] - lats[i] if i+1 < len(lats) else 0
-        
-        perp_dx = -dy * 0.002
-        perp_dy = dx * 0.002
-        
-        # Alternate sides
-        side = 1 if (i // 3) % 2 == 0 else -1
-        
-        ax.plot([lons[i], lons[i] + side * perp_dx],
-               [lats[i], lats[i] + side * perp_dy],
-               color=fg_color, linewidth=1.5, alpha=0.8,
-               solid_capstyle='round')
-    
-    return fig, bg_color
-
-
 @style('skeleton')
 def skeleton(lons, lats):
     """Minimal structural bones"""
@@ -410,40 +351,6 @@ def skeleton(lons, lats):
         # Joint circles
         ax.plot(lons[start], lats[start], 'o', color=fg_color,
                markersize=6, alpha=0.8)
-    
-    return fig, bg_color
-
-
-@style('blueprint')
-def blueprint(lons, lats):
-    """Technical drawing with dimensions"""
-    bg_color, fg_color = '#0A1628', '#4A9EFF'  # Blueprint colors
-    fig, ax = create_figure(bg_color)
-    
-    # Main track
-    ax.plot(lons, lats, color=fg_color, linewidth=1.5, alpha=0.9)
-    
-    # Add dimension lines at intervals
-    for i in range(0, len(lons) - 20, 20):
-        if i + 20 < len(lons):
-            # Extension lines
-            ax.plot([lons[i], lons[i]], 
-                   [lats[i], lats[i] - 0.003],
-                   color=fg_color, linewidth=0.5, alpha=0.6)
-            ax.plot([lons[i+20], lons[i+20]], 
-                   [lats[i+20], lats[i+20] - 0.003],
-                   color=fg_color, linewidth=0.5, alpha=0.6)
-            
-            # Dimension line
-            dim_lat = min(lats[i], lats[i+20]) - 0.0035
-            ax.plot([lons[i], lons[i+20]], [dim_lat, dim_lat],
-                   color=fg_color, linewidth=0.5, alpha=0.6)
-    
-    # Grid overlay
-    for offset in np.linspace(min(lons), max(lons), 8):
-        ax.axvline(offset, color=fg_color, linewidth=0.2, alpha=0.2)
-    for offset in np.linspace(min(lats), max(lats), 8):
-        ax.axhline(offset, color=fg_color, linewidth=0.2, alpha=0.2)
     
     return fig, bg_color
 
