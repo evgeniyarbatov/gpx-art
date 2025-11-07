@@ -169,32 +169,90 @@ def save_figure(fig, filename, bg_color):
 
 @style('ensō')
 def enso(lons, lats):
-    """Zen circle brushstroke"""
-    bg_color = random.choice(['#fefefe', '#fcfcfc'])
-    fg_color = '#1a1a1a'
-    fig, ax = create_figure(bg_color)
-
-    num_circles = random.randint(1, 3)
-    for _ in range(num_circles):
-        center = (random.uniform(0.35, 0.65), random.uniform(0.35, 0.65))
-        radius = random.uniform(0.2, 0.4)
-        linewidth = random.uniform(6, 12)
-
-        # Slightly broken circle to mimic brushstroke
-        theta1, theta2 = np.random.uniform(0, 20), np.random.uniform(340, 360)
-        circle = plt.Circle(center, radius, color=fg_color, fill=False, linewidth=linewidth, alpha=0.9)
-        ax.add_patch(circle)
-
-        # Random subtle dry-brush streaks along the circle
-        for _ in range(random.randint(5, 12)):
-            t = np.random.uniform(0, 2*np.pi)
-            dx = np.cos(t) * radius * random.uniform(0.95, 1.05)
-            dy = np.sin(t) * radius * random.uniform(0.95, 1.05)
-            ax.plot([center[0]+dx*0.98, center[0]+dx], [center[1]+dy*0.98, center[1]+dy],
-                    color=fg_color, linewidth=random.uniform(1,3), alpha=random.uniform(0.3,0.6))
-
-    ax.set_xlim(0,1)
-    ax.set_ylim(0,1)
+    """Create a single Zen ensō circle with visible brushstrokes
+    
+    Args:
+        lons: array of longitudes (influences circle position and rotation)
+        lats: array of latitudes (influences circle size and gap)
+    """
+    
+    # Use lat/lon to influence circle characteristics
+    lon_center = np.mean(lons)
+    lat_center = np.mean(lats)
+    lon_spread = np.std(lons) if len(lons) > 1 else 0.1
+    lat_spread = np.std(lats) if len(lats) > 1 else 0.1
+    
+    # Normalize to influence circle parameters
+    center_x = 0.5 + (lon_center % 10 - 5) * 0.02
+    center_y = 0.5 + (lat_center % 10 - 5) * 0.02
+    radius = 0.3 + (lat_spread % 1) * 0.1
+    rotation_offset = (lon_center % 360)
+    gap_size = 15 + (lon_spread % 1) * 20
+    
+    # Paper background colors - adjust these for different paper tones
+    bg_color = random.choice(['#f5f5dc', '#faf8f3', '#ebe6d9', '#f0ead6'])
+    fg_color = '#1a1a1a'  # Dark ink color
+    
+    # Create figure
+    fig, ax = plt.subplots(figsize=(8, 8), facecolor=bg_color)
+    ax.set_facecolor(bg_color)
+    ax.axis('off')
+    
+    # Single circle parameters influenced by lat/lon
+    center = (center_x, center_y)
+    linewidth = 18  # Thick brushstroke
+    
+    # Create incomplete circle (gap for ensō style)
+    theta_start = np.radians(gap_size + rotation_offset)
+    theta_end = np.radians(360 - gap_size + rotation_offset)
+    theta = np.linspace(theta_start, theta_end, 200)
+    
+    # Circle coordinates
+    x = center[0] + radius * np.cos(theta)
+    y = center[1] + radius * np.sin(theta)
+    
+    # Draw main circle with slight alpha for ink effect
+    ax.plot(x, y, color=fg_color, linewidth=linewidth, alpha=0.85, 
+            solid_capstyle='round')
+    
+    # Add brushstroke texture - random streaks along the circle
+    num_streaks = random.randint(15, 25)
+    for _ in range(num_streaks):
+        t = np.random.uniform(theta_start, theta_end)
+        
+        # Position on circle
+        cx = center[0] + radius * np.cos(t)
+        cy = center[1] + radius * np.sin(t)
+        
+        # Small streak perpendicular to circle (dry brush effect)
+        angle = t + np.pi/2
+        streak_len = random.uniform(0.01, 0.025)
+        
+        x_streak = [cx, cx + streak_len * np.cos(angle)]
+        y_streak = [cy, cy + streak_len * np.sin(angle)]
+        
+        ax.plot(x_streak, y_streak, 
+                color=fg_color, 
+                linewidth=random.uniform(1, 3.5), 
+                alpha=random.uniform(0.2, 0.5),
+                solid_capstyle='round')
+    
+    # Add subtle texture variations along main stroke
+    for _ in range(random.randint(8, 15)):
+        t = np.random.uniform(theta_start, theta_end)
+        cx = center[0] + radius * np.cos(t) * random.uniform(0.98, 1.02)
+        cy = center[1] + radius * np.sin(t) * random.uniform(0.98, 1.02)
+        
+        ax.plot([cx], [cy], 'o', 
+                color=fg_color, 
+                markersize=random.uniform(2, 5), 
+                alpha=random.uniform(0.3, 0.6))
+    
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect('equal')
+    
+    plt.tight_layout(pad=0)
     return fig, bg_color
 
 @style('brush')
