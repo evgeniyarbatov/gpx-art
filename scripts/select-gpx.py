@@ -106,6 +106,41 @@ def track_signature(track, n_points=100):
 
 # -------------------- Selection Algorithm -------------------- #
 
+def select_first_track(tracks, min_length_km=10, temperature=0.5):
+    """
+    Randomly select the first track, favoring tracks with widely spread points
+    and ensuring the track is at least `min_length_km` long.
+
+    Args:
+        tracks: dict of {filepath: track_points}
+        min_length_km: minimum total track length in kilometers
+        temperature: float, controls randomness
+            0   -> fully deterministic (pick highest spread)
+            1   -> fully uniform random
+            0.5 -> moderately favors high spread
+
+    Returns:
+        filepath of the selected track
+    """
+    # Filter tracks by minimum length
+    valid_tracks = {f: t for f, t in tracks.items() if track_length_km(t) >= min_length_km}
+    if not valid_tracks:
+        raise ValueError(f"No tracks longer than {min_length_km} km available for first selection.")
+
+    keys = list(valid_tracks.keys())
+    spreads = np.array([np.std(valid_tracks[f], axis=0).sum() for f in keys])
+    
+    # Avoid zero spread
+    spreads = spreads + 1e-6
+    
+    # Adjust with temperature
+    weights = spreads ** (1 / max(temperature, 1e-6))
+    probabilities = weights / weights.sum()
+    
+    # Randomly choose with weighted probability
+    first_track = np.random.choice(keys, p=probabilities)
+    return first_track
+
 def select_diverse_gpx_files(directory, num_files, min_length_km=10):
     """Select diverse GPX files using greedy algorithm with FastDTW."""
     gpx_files = list(Path(directory).glob('*.gpx'))
@@ -142,8 +177,7 @@ def select_diverse_gpx_files(directory, num_files, min_length_km=10):
     # Precompute track signatures for fast filtering
     signatures = {f: track_signature(tracks[f]) for f in tracks}
 
-    # Randomly select the first file
-    first_file = random.choice(available_files)
+    first_file = select_first_track({f: tracks[f] for f in available_files})
     selected_files.append(first_file)
     selected_tracks.append(tracks[first_file])
     available_files.remove(first_file)
