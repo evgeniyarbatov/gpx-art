@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Select diverse GPX files from a directory using FastDTW.
-Optimized with downsampling, track signatures, and a single process pool.
+Optimized with downsampling, track signatures, DTW prefiltering,
+and filtering tracks by minimum length (10 km).
 Copies selected files to destination directory.
 """
 
@@ -15,7 +16,7 @@ from pathlib import Path
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 from concurrent.futures import ProcessPoolExecutor, as_completed
-
+import math
 
 # -------------------- GPX Parsing & Processing -------------------- #
 
@@ -41,8 +42,7 @@ def parse_gpx(filepath):
         print(f"Error parsing {filepath}: {e}", file=sys.stderr)
         return None
 
-
-def downsample_track(points, max_points=100):
+def downsample_track(points, max_points=150):
     """Downsample track to max_points for faster DTW computation."""
     if points is None or len(points) == 0:
         return None
@@ -50,7 +50,6 @@ def downsample_track(points, max_points=100):
         return points
     indices = np.linspace(0, len(points) - 1, max_points, dtype=int)
     return points[indices]
-
 
 def normalize_track(points):
     """Normalize track for fair comparison."""
@@ -60,38 +59,54 @@ def normalize_track(points):
     std = points.std(axis=0) + 1e-10
     return (points - mean) / std
 
-
 def parse_and_process_gpx(filepath):
     """Parse, downsample, and normalize a single GPX file."""
     points = parse_gpx(filepath)
     if points is None:
         return filepath, None
-    downsampled = downsample_track(points, max_points=100)
+    downsampled = downsample_track(points, max_points=150)
     normalized = normalize_track(downsampled)
     return filepath, normalized
 
+# -------------------- Track Length -------------------- #
+
+def haversine_distance(p1, p2):
+    """Compute Haversine distance in km between two points [lat, lon]."""
+    lat1, lon1 = p1
+    lat2, lon2 = p2
+    R = 6371  # Earth radius in km
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+def track_length_km(track):
+    """Compute total track length in kilometers."""
+    if track is None or len(track) < 2:
+        return 0
+    return sum(haversine_distance(track[i], track[i+1]) for i in range(len(track)-1))
 
 # -------------------- Distance Computation -------------------- #
 
-def compute_dtw_distance(track1, track2, radius=1):
+def compute_dtw_distance(track1, track2, radius=2):
     """Compute FastDTW distance between two tracks."""
     if track1 is None or track2 is None:
         return 0
     distance, _ = fastdtw(track1, track2, radius=radius, dist=euclidean)
     return distance
 
-
-def track_signature(track, n_points=50):
+def track_signature(track, n_points=100):
     """Create a simple flattened signature for cheap prefiltering."""
     if track is None or len(track) == 0:
         return None
     indices = np.linspace(0, len(track) - 1, n_points, dtype=int)
     return track[indices].flatten()
 
-
 # -------------------- Selection Algorithm -------------------- #
 
-def select_diverse_gpx_files(directory, num_files):
+def select_diverse_gpx_files(directory, num_files, min_length_km=10):
     """Select diverse GPX files using greedy algorithm with FastDTW."""
     gpx_files = list(Path(directory).glob('*.gpx'))
     gpx_files.extend(Path(directory).glob('*.GPX'))
@@ -99,10 +114,6 @@ def select_diverse_gpx_files(directory, num_files):
     if not gpx_files:
         print(f"No GPX files found in {directory}", file=sys.stderr)
         return []
-
-    if num_files > len(gpx_files):
-        print(f"Requested {num_files} files but only {len(gpx_files)} available", file=sys.stderr)
-        num_files = len(gpx_files)
 
     print(f"Found {len(gpx_files)} GPX files", file=sys.stderr)
     print("Parsing GPX files in parallel...", file=sys.stderr)
@@ -116,11 +127,13 @@ def select_diverse_gpx_files(directory, num_files):
             if normalized is not None:
                 tracks[filepath] = normalized
 
+    # Filter tracks by minimum length
+    tracks = {f: t for f, t in tracks.items() if track_length_km(t) >= min_length_km}
     if not tracks:
-        print("No valid tracks could be parsed", file=sys.stderr)
+        print(f"No tracks longer than {min_length_km} km found", file=sys.stderr)
         return []
 
-    print(f"Successfully parsed {len(tracks)} tracks", file=sys.stderr)
+    print(f"Successfully parsed and filtered {len(tracks)} tracks (≥{min_length_km} km)", file=sys.stderr)
 
     available_files = list(tracks.keys())
     selected_files = []
@@ -151,8 +164,8 @@ def select_diverse_gpx_files(directory, num_files):
                 min_dist = min(np.linalg.norm(sig - track_signature(sel)) for sel in selected_tracks)
                 min_sig_distances.append(min_dist)
 
-            # Select top 50 candidates for DTW refinement
-            top_indices = np.argsort(min_sig_distances)[-50:]
+            # Select top 100 candidates for DTW refinement
+            top_indices = np.argsort(min_sig_distances)[-100:]
             top_candidates = [available_files[idx] for idx in top_indices]
 
             # Compute DTW distances in parallel
@@ -160,7 +173,6 @@ def select_diverse_gpx_files(directory, num_files):
             for candidate in top_candidates:
                 for sel_track in selected_tracks:
                     future = executor.submit(compute_dtw_distance, tracks[candidate], sel_track)
-                    # Use candidate file path as key
                     futures[future] = candidate
 
             dtw_scores = {c: float('inf') for c in top_candidates}
@@ -178,7 +190,6 @@ def select_diverse_gpx_files(directory, num_files):
             print(f"{i+1}. {best_file.name} (DTW diversity score: {dtw_scores[best_file]:.2f})" + " "*20, file=sys.stderr)
 
     return selected_files
-
 
 # -------------------- Main -------------------- #
 
@@ -206,7 +217,7 @@ def main():
 
     os.makedirs(destination, exist_ok=True)
 
-    selected = select_diverse_gpx_files(directory, num_files)
+    selected = select_diverse_gpx_files(directory, num_files, min_length_km=10)
 
     if selected:
         print(f"\n--- Selected {len(selected)} diverse GPX files ---", file=sys.stderr)
@@ -219,7 +230,6 @@ def main():
         print(f"\nSuccessfully copied {len(selected)} files to {destination}", file=sys.stderr)
     else:
         sys.exit(1)
-
 
 if __name__ == '__main__':
     main()
