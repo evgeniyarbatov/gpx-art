@@ -5,7 +5,7 @@ SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
 
 GPX_DIR = gpx
 IMAGES_DIR = images
-NUMBER_OF_GPX = 10
+NUMBER_OF_GPX = 20
 
 venv:
 	@python3 -m venv $(VENV_PATH)
@@ -18,11 +18,11 @@ clean:
 	@rm -f $(IMAGES_DIR)/*.png
 	@rm -f $(GPX_DIR)/*.gpx
 
-gpx: clean
+random: clean
 	@mkdir -p $(GPX_DIR)
 	@find $(SOURCE_DIR) -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
 
-select: clean
+dtwselect: clean
 	@mkdir -p $(GPX_DIR)
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/select-gpx.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
