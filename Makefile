@@ -1,9 +1,11 @@
 PROJECT_NAME := $(shell basename $(PWD))
 VENV_PATH = ~/.venv/$(PROJECT_NAME)
 
+SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
+
 GPX_DIR = gpx
 IMAGES_DIR = images
-NUMBER_OF_GPX = 100
+NUMBER_OF_GPX = 10
 
 venv:
 	@python3 -m venv $(VENV_PATH)
@@ -18,9 +20,14 @@ clean:
 
 gpx: clean
 	@mkdir -p $(GPX_DIR)
-	@find /Users/zhenya/Documents/badwater_gpx -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
+	@find $(SOURCE_DIR) -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
 
-art: gpx
+select: clean
+	@mkdir -p $(GPX_DIR)
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/select-gpx.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
+
+art:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) all
 
