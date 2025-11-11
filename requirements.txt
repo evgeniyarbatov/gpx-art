@@ -9,3 +9,4 @@ scipy
 qrcode
 python-dotenv
 requests
+fastdtw
