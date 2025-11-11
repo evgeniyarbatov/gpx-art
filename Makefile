@@ -27,6 +27,10 @@ select: clean
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/select-gpx.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
+plot:
+	@source $(VENV_PATH)/bin/activate && \
+	python3 scripts/plot-gpx.py $(GPX_DIR)
+
 art:
 	@source $(VENV_PATH)/bin/activate && \
 	python3 scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) all
