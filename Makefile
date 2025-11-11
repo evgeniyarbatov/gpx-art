@@ -25,7 +25,7 @@ random: clean
 dtwselect: clean
 	@mkdir -p $(GPX_DIR)
 	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/select-gpx.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
+	python3 scripts/dtw-select.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
 plot:
 	@source $(VENV_PATH)/bin/activate && \
