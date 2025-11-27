@@ -8,7 +8,7 @@ SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
 
 GPX_DIR = gpx
 IMAGES_DIR = images
-NUMBER_OF_GPX = 1
+NUMBER_OF_GPX = 10
 
 default: art
 
