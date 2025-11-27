@@ -686,6 +686,414 @@ def vortex(lons, lats):
     
     return fig, bg_color
 
+@style('cascade')
+def cascade(lons, lats):
+    """Waterfall of vertical lines at varying densities"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Original path ghosted
+    ax.plot(lons, lats, color=fg_color, linewidth=0.4, alpha=0.15)
+    
+    # Cascading lines with density variation
+    for i in range(len(lons)):
+        # Density varies along path
+        density = np.sin(i / len(lons) * 4 * np.pi) ** 2
+        
+        if random.random() < density * 0.4:
+            num_drops = random.randint(2, 6)
+            for _ in range(num_drops):
+                # Varying lengths and positions
+                length = random.uniform(0.004, 0.015)
+                lateral = random.gauss(0, 0.0008)
+                start_offset = random.uniform(-0.002, 0.001)
+                
+                ax.plot([lons[i] + lateral, lons[i] + lateral],
+                       [lats[i] + start_offset, lats[i] + start_offset - length],
+                       color=fg_color,
+                       linewidth=random.uniform(0.4, 1.8),
+                       alpha=random.uniform(0.25, 0.7),
+                       solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('grid')
+def grid(lons, lats):
+    """Structured grid that bends to follow the path"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Create a grid that deforms along the path
+    grid_density = 25
+    path_influence = 0.003
+    
+    # Bounding box
+    min_lon, max_lon = min(lons), max(lons)
+    min_lat, max_lat = min(lats), max(lats)
+    
+    # Vertical grid lines
+    for x in np.linspace(min_lon, max_lon, grid_density):
+        grid_lats = np.linspace(min_lat, max_lat, 50)
+        grid_lons = []
+        
+        for y in grid_lats:
+            # Find influence from nearest path point
+            distances = np.sqrt((np.array(lons) - x)**2 + (np.array(lats) - y)**2)
+            nearest_idx = np.argmin(distances)
+            influence = np.exp(-distances[nearest_idx] / path_influence)
+            
+            # Bend toward path
+            offset_x = (lons[nearest_idx] - x) * influence * 0.3
+            grid_lons.append(x + offset_x)
+        
+        ax.plot(grid_lons, grid_lats, color=fg_color,
+               linewidth=0.5, alpha=0.4, solid_capstyle='round')
+    
+    # Horizontal grid lines
+    for y in np.linspace(min_lat, max_lat, grid_density):
+        grid_lons_h = np.linspace(min_lon, max_lon, 50)
+        grid_lats_h = []
+        
+        for x in grid_lons_h:
+            distances = np.sqrt((np.array(lons) - x)**2 + (np.array(lats) - y)**2)
+            nearest_idx = np.argmin(distances)
+            influence = np.exp(-distances[nearest_idx] / path_influence)
+            
+            offset_y = (lats[nearest_idx] - y) * influence * 0.3
+            grid_lats_h.append(y + offset_y)
+        
+        ax.plot(grid_lons_h, grid_lats_h, color=fg_color,
+               linewidth=0.5, alpha=0.4, solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('radial')
+def radial(lons, lats):
+    """Sun rays emanating from path centerpoint"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Find center point
+    center_lon = np.mean(lons)
+    center_lat = np.mean(lats)
+    
+    # Draw rays through each path point
+    for i in range(0, len(lons), random.randint(3, 7)):
+        # Calculate angle from center
+        angle = np.arctan2(lats[i] - center_lat, lons[i] - center_lon)
+        
+        # Extend ray outward from center through point and beyond
+        ray_length = random.uniform(1.5, 2.5)
+        distance = np.sqrt((lons[i] - center_lon)**2 + (lats[i] - center_lat)**2)
+        
+        start_x = center_lon + distance * 0.3 * np.cos(angle)
+        start_y = center_lat + distance * 0.3 * np.sin(angle)
+        end_x = center_lon + distance * ray_length * np.cos(angle)
+        end_y = center_lat + distance * ray_length * np.sin(angle)
+        
+        ax.plot([start_x, end_x], [start_y, end_y],
+               color=fg_color,
+               linewidth=random.uniform(0.5, 1.5),
+               alpha=random.uniform(0.25, 0.6),
+               solid_capstyle='round')
+    
+    # Mark center
+    ax.plot(center_lon, center_lat, 'o', color=fg_color,
+           markersize=4, alpha=0.8)
+    
+    return fig, bg_color
+
+
+@style('beam')
+def beam(lons, lats):
+    """Parallel beams projecting perpendicular to path"""
+    bg_color, fg_color = random.choice(ZEN_STONE)
+    fig, ax = create_figure(bg_color)
+    
+    # Main path
+    ax.plot(lons, lats, color=fg_color, linewidth=1.2, alpha=0.4)
+    
+    # Project beams perpendicular
+    for i in range(0, len(lons) - 1, random.randint(5, 10)):
+        # Calculate perpendicular direction
+        dx = lons[i+1] - lons[i]
+        dy = lats[i+1] - lats[i]
+        norm = np.sqrt(dx**2 + dy**2)
+        
+        if norm > 0:
+            perp_dx = -dy / norm
+            perp_dy = dx / norm
+            
+            # Multiple parallel beams on each side
+            num_beams = random.randint(3, 7)
+            side = random.choice([-1, 1])
+            
+            for beam_idx in range(num_beams):
+                spacing = (beam_idx + 1) * 0.0008
+                length = random.uniform(0.003, 0.008)
+                
+                start_x = lons[i] + side * perp_dx * spacing
+                start_y = lats[i] + side * perp_dy * spacing
+                end_x = start_x + side * perp_dx * length
+                end_y = start_y + side * perp_dy * length
+                
+                alpha = 0.7 * (1 - beam_idx / num_beams)
+                ax.plot([start_x, end_x], [start_y, end_y],
+                       color=fg_color,
+                       linewidth=random.uniform(0.8, 2.0),
+                       alpha=alpha,
+                       solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('spoke')
+def spoke(lons, lats):
+    """Wheel spokes connecting path points to moving hub"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Create a hub that travels along simplified path
+    segment_size = max(len(lons) // 12, 20)
+    hubs_lons = [lons[i] for i in range(0, len(lons), segment_size)]
+    hubs_lats = [lats[i] for i in range(0, len(lats), segment_size)]
+    
+    # Connect each path segment to its hub
+    for hub_idx in range(len(hubs_lons)):
+        start_idx = hub_idx * segment_size
+        end_idx = min((hub_idx + 1) * segment_size, len(lons))
+        
+        for i in range(start_idx, end_idx, random.randint(3, 6)):
+            if i < len(lons):
+                ax.plot([hubs_lons[hub_idx], lons[i]], 
+                       [hubs_lats[hub_idx], lats[i]],
+                       color=fg_color,
+                       linewidth=random.uniform(0.3, 1.0),
+                       alpha=random.uniform(0.2, 0.5),
+                       solid_capstyle='round')
+        
+        # Draw hub
+        ax.plot(hubs_lons[hub_idx], hubs_lats[hub_idx], 'o',
+               color=fg_color, markersize=5, alpha=0.7)
+    
+    return fig, bg_color
+
+
+@style('lattice')
+def lattice(lons, lats):
+    """Triangular mesh connecting nearby points"""
+    bg_color, fg_color = random.choice(ZEN_STONE)
+    fig, ax = create_figure(bg_color)
+    
+    # Sample points along path
+    step = max(1, len(lons) // random.randint(40, 70))
+    points = [(lons[i], lats[i]) for i in range(0, len(lons), step)]
+    
+    # Create triangular connections
+    for i, (x1, y1) in enumerate(points):
+        # Connect to nearby points
+        for j, (x2, y2) in enumerate(points):
+            if i < j:
+                distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                
+                if distance < random.uniform(0.006, 0.012):
+                    # Find third point to complete triangle
+                    for k, (x3, y3) in enumerate(points):
+                        if k > j:
+                            d13 = np.sqrt((x3 - x1)**2 + (y3 - y1)**2)
+                            d23 = np.sqrt((x3 - x2)**2 + (y3 - y2)**2)
+                            
+                            if d13 < 0.01 and d23 < 0.01:
+                                # Draw triangle
+                                if random.random() < 0.3:
+                                    triangle = plt.Polygon(
+                                        [(x1, y1), (x2, y2), (x3, y3)],
+                                        fill=False,
+                                        edgecolor=fg_color,
+                                        linewidth=random.uniform(0.3, 0.8),
+                                        alpha=random.uniform(0.2, 0.5)
+                                    )
+                                    ax.add_patch(triangle)
+                                break
+    
+    return fig, bg_color
+
+
+@style('field')
+def field(lons, lats):
+    """Directional field lines flowing around path"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    min_lon, max_lon = min(lons), max(lons)
+    min_lat, max_lat = min(lats), max(lats)
+    
+    # Create field lines
+    num_lines = random.randint(40, 70)
+    
+    for _ in range(num_lines):
+        # Random starting point
+        start_x = random.uniform(min_lon - 0.005, max_lon + 0.005)
+        start_y = random.uniform(min_lat - 0.005, max_lat + 0.005)
+        
+        # Trace field line
+        line_x, line_y = [start_x], [start_y]
+        current_x, current_y = start_x, start_y
+        
+        for step in range(30):
+            # Find direction from nearest path point
+            distances = np.sqrt((np.array(lons) - current_x)**2 + 
+                              (np.array(lats) - current_y)**2)
+            nearest_idx = np.argmin(distances)
+            
+            # Direction parallel to path at nearest point
+            if nearest_idx < len(lons) - 1:
+                path_dx = lons[nearest_idx + 1] - lons[nearest_idx]
+                path_dy = lats[nearest_idx + 1] - lats[nearest_idx]
+                norm = np.sqrt(path_dx**2 + path_dy**2)
+                
+                if norm > 0:
+                    step_size = 0.0003
+                    current_x += (path_dx / norm) * step_size
+                    current_y += (path_dy / norm) * step_size
+                    
+                    line_x.append(current_x)
+                    line_y.append(current_y)
+        
+        if len(line_x) > 5:
+            ax.plot(line_x, line_y, color=fg_color,
+                   linewidth=random.uniform(0.3, 0.8),
+                   alpha=random.uniform(0.2, 0.5),
+                   solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('prism')
+def prism(lons, lats):
+    """Light refraction - angular rays splitting from path"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Main path as prism edge
+    ax.plot(lons, lats, color=fg_color, linewidth=2.5, alpha=0.6)
+    
+    # Refracted rays at intervals
+    for i in range(0, len(lons) - 1, random.randint(8, 15)):
+        # Direction of travel
+        dx = lons[i+1] - lons[i]
+        dy = lats[i+1] - lats[i]
+        angle = np.arctan2(dy, dx)
+        
+        # Create spectrum of rays
+        num_rays = random.randint(4, 8)
+        spread = np.pi / 3  # 60 degree spread
+        
+        for ray_idx in range(num_rays):
+            ray_angle = angle + spread * (ray_idx / num_rays - 0.5)
+            length = random.uniform(0.003, 0.008)
+            
+            end_x = lons[i] + length * np.cos(ray_angle)
+            end_y = lats[i] + length * np.sin(ray_angle)
+            
+            ax.plot([lons[i], end_x], [lats[i], end_y],
+                   color=fg_color,
+                   linewidth=random.uniform(0.5, 1.5),
+                   alpha=random.uniform(0.3, 0.7),
+                   solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('hatch')
+def hatch(lons, lats):
+    """Cross-hatching perpendicular to path direction"""
+    bg_color, fg_color = random.choice(ZEN_STONE)
+    fig, ax = create_figure(bg_color)
+    
+    # Core path
+    ax.plot(lons, lats, color=fg_color, linewidth=1.5, alpha=0.5)
+    
+    # Create hatching on alternating sides
+    for i in range(0, len(lons) - 1, random.randint(4, 8)):
+        dx = lons[i+1] - lons[i]
+        dy = lats[i+1] - lats[i]
+        norm = np.sqrt(dx**2 + dy**2)
+        
+        if norm > 0:
+            # Perpendicular direction
+            perp_dx = -dy / norm
+            perp_dy = dx / norm
+            
+            # Alternate sides
+            side = 1 if (i // 5) % 2 == 0 else -1
+            
+            # Multiple hatch marks
+            num_hatches = random.randint(3, 6)
+            for h in range(num_hatches):
+                offset = (h + 1) * 0.0004 * side
+                length = random.uniform(0.002, 0.005)
+                
+                start_x = lons[i] + offset * perp_dx
+                start_y = lats[i] + offset * perp_dy
+                
+                # Angle the hatch slightly
+                angle = random.uniform(-0.3, 0.3)
+                end_x = start_x + length * (perp_dx * np.cos(angle) + dx/norm * np.sin(angle)) * side
+                end_y = start_y + length * (perp_dy * np.cos(angle) + dy/norm * np.sin(angle)) * side
+                
+                ax.plot([start_x, end_x], [start_y, end_y],
+                       color=fg_color,
+                       linewidth=random.uniform(0.5, 1.2),
+                       alpha=random.uniform(0.4, 0.8),
+                       solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('orbit')
+def orbit(lons, lats):
+    """Elliptical orbits around path points"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Sample orbit centers
+    for i in range(0, len(lons), random.randint(15, 25)):
+        # Create ellipse
+        num_orbits = random.randint(2, 5)
+        
+        for orbit_idx in range(num_orbits):
+            # Ellipse parameters
+            a = (orbit_idx + 1) * random.uniform(0.0008, 0.0015)  # semi-major
+            b = a * random.uniform(0.5, 0.9)  # semi-minor
+            rotation = random.uniform(0, np.pi)
+            
+            # Generate ellipse points
+            t = np.linspace(0, 2*np.pi, 50)
+            ellipse_x = a * np.cos(t)
+            ellipse_y = b * np.sin(t)
+            
+            # Rotate
+            x_rot = ellipse_x * np.cos(rotation) - ellipse_y * np.sin(rotation)
+            y_rot = ellipse_x * np.sin(rotation) + ellipse_y * np.cos(rotation)
+            
+            # Translate to path point
+            x_rot += lons[i]
+            y_rot += lats[i]
+            
+            ax.plot(x_rot, y_rot, color=fg_color,
+                   linewidth=random.uniform(0.4, 1.0),
+                   alpha=random.uniform(0.3, 0.6),
+                   solid_capstyle='round')
+        
+        # Mark center
+        ax.plot(lons[i], lats[i], 'o', color=fg_color,
+               markersize=3, alpha=0.6)
+    
+    return fig, bg_color
+
 # ============================================================================
 # MAIN FUNCTIONS
 # ============================================================================
