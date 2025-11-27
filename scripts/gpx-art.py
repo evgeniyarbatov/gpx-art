@@ -1,4 +1,5 @@
 import ast
+import os
 import time
 import sys
 import random
@@ -1305,34 +1306,16 @@ def create_art(gpx_filename, image_filename, style_name):
 
     print(f"Created {style_name}: {image_filename} ({duration:.2f} seconds)")
 
-def main(gpx_dir, images_dir, style_name=None):
-    """
-    Generate GPX art
-
-    Args:
-        gpx_dir: Directory containing GPX files
-        images_dir: Output directory for images
-        style_name: Specific style to use, 'all' for all styles, or None for random
-    """
-    if style_name == 'all':
-        # Generate all styles for each GPX file
-        for (name, gpx_path) in get_files(gpx_dir):
-            for style in sorted(STYLES.keys()):
-                output_filename = f"{images_dir}/{style}-{name}.png"
-                create_art(gpx_path, output_filename, style)
-    else:
-        # Generate one style per GPX file
-        for (name, gpx_path) in get_files(gpx_dir):
-            chosen_style = style_name if style_name else random.choice(list(STYLES.keys()))
-            output_filename = f"{images_dir}/{chosen_style}-{name}.png"
-            create_art(gpx_path, output_filename, chosen_style)
+def main(gpx_dir, images_dir):
+    for (name, gpx_path) in get_files(gpx_dir):
+        for style in sorted(STYLES.keys()):
+            os.makedirs(f"{images_dir}/{style}", exist_ok=True)
+            output_filename = f"{images_dir}/{style}/{name}.png"
+            create_art(gpx_path, output_filename, style)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python gpx-art.py <gpx_dir> <images_dir> [style_name|all]")
-        print(f"\nAvailable styles: {', '.join(sorted(STYLES.keys()))}")
-        print("Use 'all' to generate all styles")
+        print("Usage: python gpx-art.py <gpx_dir> <images_dir>")
         sys.exit(1)
 
-    style_arg = sys.argv[3] if len(sys.argv) > 3 else None
-    main(sys.argv[1], sys.argv[2], style_arg)
+    main(sys.argv[1], sys.argv[2])

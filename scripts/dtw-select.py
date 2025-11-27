@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
 Select diverse GPX files from a directory using FastDTW.
-Optimized with downsampling, track signatures, DTW prefiltering,
-and filtering tracks by minimum length (10 km).
+Optimized with:
+- 10 km minimum length
+- DTW downsampling
+- Track signature prefiltering
+- Smoothed and weighted-random first-track selection for cleaner diversity
 Copies selected files to destination directory.
 """
 
@@ -28,22 +31,17 @@ def parse_gpx(filepath):
         ns = {'gpx': 'http://www.topografix.com/GPX/1/1'} if root.tag.endswith('gpx') else {}
         points = []
 
-        # Try with namespace
         for trkpt in root.findall('.//gpx:trkpt', ns):
             points.append([float(trkpt.get('lat')), float(trkpt.get('lon'))])
-        
-        # Try without namespace if no points found
         if not points:
             for trkpt in root.findall('.//trkpt'):
                 points.append([float(trkpt.get('lat')), float(trkpt.get('lon'))])
-
         return np.array(points) if points else None
     except Exception as e:
         print(f"Error parsing {filepath}: {e}", file=sys.stderr)
         return None
 
 def downsample_track(points, max_points=150):
-    """Downsample track to max_points for faster DTW computation."""
     if points is None or len(points) == 0:
         return None
     if len(points) <= max_points:
@@ -52,7 +50,6 @@ def downsample_track(points, max_points=150):
     return points[indices]
 
 def normalize_track(points):
-    """Normalize track for fair comparison."""
     if points is None or len(points) < 2:
         return None
     mean = points.mean(axis=0)
@@ -60,92 +57,80 @@ def normalize_track(points):
     return (points - mean) / std
 
 def parse_and_process_gpx(filepath):
-    """Parse, downsample, and normalize a single GPX file."""
+    """Return raw and normalized-downsampled track for DTW."""
     points = parse_gpx(filepath)
     if points is None:
-        return filepath, None
+        return filepath, None, None
     downsampled = downsample_track(points, max_points=150)
     normalized = normalize_track(downsampled)
-    return filepath, normalized
+    return filepath, points, normalized
 
-# -------------------- Track Length -------------------- #
+# -------------------- Track Utilities -------------------- #
 
 def haversine_distance(p1, p2):
-    """Compute Haversine distance in km between two points [lat, lon]."""
+    R = 6371  # km
     lat1, lon1 = p1
     lat2, lon2 = p2
-    R = 6371  # Earth radius in km
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
     a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return R * c
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 def track_length_km(track):
-    """Compute total track length in kilometers."""
     if track is None or len(track) < 2:
         return 0
     return sum(haversine_distance(track[i], track[i+1]) for i in range(len(track)-1))
 
-# -------------------- Distance Computation -------------------- #
+def smooth_track(track, window=5):
+    if track is None or len(track) < window:
+        return track
+    lat_smooth = np.convolve(track[:,0], np.ones(window)/window, mode='same')
+    lon_smooth = np.convolve(track[:,1], np.ones(window)/window, mode='same')
+    return np.column_stack([lat_smooth, lon_smooth])
+
+# -------------------- First Track Selection -------------------- #
+
+def select_first_track(tracks, min_length_km=10, temperature=0.5):
+    """Weighted random first track favoring smooth and spread tracks >= min_length_km."""
+    valid_tracks = {f: t for f, t in tracks.items() if track_length_km(t) >= min_length_km}
+    if not valid_tracks:
+        raise ValueError(f"No tracks longer than {min_length_km} km available for first selection.")
+    
+    keys = list(valid_tracks.keys())
+    scores = []
+    for f in keys:
+        t = valid_tracks[f]
+        t_smooth = smooth_track(t)
+        spread = np.std(t_smooth, axis=0).sum()
+        length = track_length_km(t)
+        score = spread + 0.1 * length  # weight length lightly
+        scores.append(score)
+    scores = np.array(scores) + 1e-6
+    weights = scores ** (1 / max(temperature, 1e-6))
+    probabilities = weights / weights.sum()
+    first_track = np.random.choice(keys, p=probabilities)
+    return first_track
+
+# -------------------- DTW Selection -------------------- #
 
 def compute_dtw_distance(track1, track2, radius=2):
-    """Compute FastDTW distance between two tracks."""
     if track1 is None or track2 is None:
         return 0
     distance, _ = fastdtw(track1, track2, radius=radius, dist=euclidean)
     return distance
 
 def track_signature(track, n_points=100):
-    """Create a simple flattened signature for cheap prefiltering."""
     if track is None or len(track) == 0:
         return None
-    indices = np.linspace(0, len(track) - 1, n_points, dtype=int)
+    indices = np.linspace(0, len(track)-1, n_points, dtype=int)
     return track[indices].flatten()
 
 # -------------------- Selection Algorithm -------------------- #
 
-def select_first_track(tracks, min_length_km=10, temperature=0.5):
-    """
-    Randomly select the first track, favoring tracks with widely spread points
-    and ensuring the track is at least `min_length_km` long.
-
-    Args:
-        tracks: dict of {filepath: track_points}
-        min_length_km: minimum total track length in kilometers
-        temperature: float, controls randomness
-            0   -> fully deterministic (pick highest spread)
-            1   -> fully uniform random
-            0.5 -> moderately favors high spread
-
-    Returns:
-        filepath of the selected track
-    """
-    # Filter tracks by minimum length
-    valid_tracks = {f: t for f, t in tracks.items() if track_length_km(t) >= min_length_km}
-    if not valid_tracks:
-        raise ValueError(f"No tracks longer than {min_length_km} km available for first selection.")
-
-    keys = list(valid_tracks.keys())
-    spreads = np.array([np.std(valid_tracks[f], axis=0).sum() for f in keys])
-    
-    # Avoid zero spread
-    spreads = spreads + 1e-6
-    
-    # Adjust with temperature
-    weights = spreads ** (1 / max(temperature, 1e-6))
-    probabilities = weights / weights.sum()
-    
-    # Randomly choose with weighted probability
-    first_track = np.random.choice(keys, p=probabilities)
-    return first_track
-
 def select_diverse_gpx_files(directory, num_files, min_length_km=10):
-    """Select diverse GPX files using greedy algorithm with FastDTW."""
     gpx_files = list(Path(directory).glob('*.gpx'))
     gpx_files.extend(Path(directory).glob('*.GPX'))
-
     if not gpx_files:
         print(f"No GPX files found in {directory}", file=sys.stderr)
         return []
@@ -153,60 +138,59 @@ def select_diverse_gpx_files(directory, num_files, min_length_km=10):
     print(f"Found {len(gpx_files)} GPX files", file=sys.stderr)
     print("Parsing GPX files in parallel...", file=sys.stderr)
 
-    # Parse all GPX files in parallel
-    tracks = {}
+    tracks_raw = {}
+    tracks_dtw = {}
     with ProcessPoolExecutor() as executor:
         futures = {executor.submit(parse_and_process_gpx, f): f for f in gpx_files}
         for future in as_completed(futures):
-            filepath, normalized = future.result()
-            if normalized is not None:
-                tracks[filepath] = normalized
+            f, raw, dtw = future.result()
+            if raw is not None and dtw is not None:
+                tracks_raw[f] = raw
+                tracks_dtw[f] = dtw
 
-    # Filter tracks by minimum length
-    tracks = {f: t for f, t in tracks.items() if track_length_km(t) >= min_length_km}
-    if not tracks:
-        print(f"No tracks longer than {min_length_km} km found", file=sys.stderr)
+    # Filter by minimum length
+    tracks_raw = {f: t for f, t in tracks_raw.items() if track_length_km(t) >= min_length_km}
+    tracks_dtw = {f: tracks_dtw[f] for f in tracks_raw.keys()}
+    if not tracks_raw:
+        print(f"No tracks ≥ {min_length_km} km found", file=sys.stderr)
         return []
 
-    print(f"Successfully parsed and filtered {len(tracks)} tracks (≥{min_length_km} km)", file=sys.stderr)
+    print(f"Successfully parsed and filtered {len(tracks_raw)} tracks", file=sys.stderr)
 
-    available_files = list(tracks.keys())
+    available_files = list(tracks_dtw.keys())
     selected_files = []
     selected_tracks = []
 
-    # Precompute track signatures for fast filtering
-    signatures = {f: track_signature(tracks[f]) for f in tracks}
+    # Precompute signatures
+    signatures = {f: track_signature(tracks_dtw[f]) for f in tracks_dtw}
 
-    first_file = select_first_track({f: tracks[f] for f in available_files})
+    # Smart first track
+    first_file = select_first_track(tracks_raw, min_length_km=min_length_km, temperature=0.5)
     selected_files.append(first_file)
-    selected_tracks.append(tracks[first_file])
+    selected_tracks.append(tracks_dtw[first_file])
     available_files.remove(first_file)
-    print(f"\n1. {first_file.name} (random start)", file=sys.stderr)
+    print(f"\n1. {first_file.name} (first track selected)", file=sys.stderr)
 
-    # Single process pool for DTW computations
+    # DTW greedy selection
     with ProcessPoolExecutor() as executor:
         for i in range(1, num_files):
             if not available_files:
                 break
-
             print(f"Selecting file {i+1}/{num_files}...", file=sys.stderr, end='\r')
 
-            # Compute cheap distances using signatures
             min_sig_distances = []
             for candidate in available_files:
                 sig = signatures[candidate]
                 min_dist = min(np.linalg.norm(sig - track_signature(sel)) for sel in selected_tracks)
                 min_sig_distances.append(min_dist)
 
-            # Select top 100 candidates for DTW refinement
             top_indices = np.argsort(min_sig_distances)[-100:]
             top_candidates = [available_files[idx] for idx in top_indices]
 
-            # Compute DTW distances in parallel
             futures = {}
             for candidate in top_candidates:
                 for sel_track in selected_tracks:
-                    future = executor.submit(compute_dtw_distance, tracks[candidate], sel_track)
+                    future = executor.submit(compute_dtw_distance, tracks_dtw[candidate], sel_track)
                     futures[future] = candidate
 
             dtw_scores = {c: float('inf') for c in top_candidates}
@@ -215,10 +199,9 @@ def select_diverse_gpx_files(directory, num_files, min_length_km=10):
                 dist = future.result()
                 dtw_scores[candidate] = min(dtw_scores[candidate], dist)
 
-            # Select candidate with max minimal DTW distance
             best_file = max(dtw_scores, key=dtw_scores.get)
             selected_files.append(best_file)
-            selected_tracks.append(tracks[best_file])
+            selected_tracks.append(tracks_dtw[best_file])
             available_files.remove(best_file)
 
             print(f"{i+1}. {best_file.name} (DTW diversity score: {dtw_scores[best_file]:.2f})" + " "*20, file=sys.stderr)
@@ -234,11 +217,10 @@ def main():
 
     directory = sys.argv[1]
     destination = sys.argv[3]
-
     try:
         num_files = int(sys.argv[2])
     except ValueError:
-        print(f"Error: num_files must be an integer", file=sys.stderr)
+        print(f"Error: num_files must be integer", file=sys.stderr)
         sys.exit(1)
 
     if num_files < 1:

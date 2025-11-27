@@ -1,22 +1,27 @@
-PROJECT_NAME := $(shell basename $(PWD))
-VENV_PATH = ~/.venv/$(PROJECT_NAME)
+VENV_PATH := .venv
+
+PYTHON := $(VENV_PATH)/bin/python
+PIP := $(VENV_PATH)/bin/pip
+REQUIREMENTS := requirements.txt
 
 SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
 
 GPX_DIR = gpx
 IMAGES_DIR = images
-NUMBER_OF_GPX = 20
+NUMBER_OF_GPX = 1
+
+default: art
 
 venv:
 	@python3 -m venv $(VENV_PATH)
 
 install: venv
-	@source $(VENV_PATH)/bin/activate && \
-	pip install --disable-pip-version-check -q -r requirements.txt
+	@$(PIP) install --disable-pip-version-check -q --upgrade pip
+	@$(PIP) install --disable-pip-version-check -q -r $(REQUIREMENTS)
 
 clean:
-	@rm -f $(IMAGES_DIR)/*.png
-	@rm -f $(GPX_DIR)/*.gpx
+	@rm -rf $(IMAGES_DIR)/*
+	@rm -rf $(GPX_DIR)/*
 
 random: clean
 	@mkdir -p $(GPX_DIR)
@@ -24,15 +29,12 @@ random: clean
 
 dtwselect: clean
 	@mkdir -p $(GPX_DIR)
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/dtw-select.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
+	@$(PYTHON) scripts/dtw-select.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
 plot:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/plot-gpx.py $(GPX_DIR)
+	@$(PYTHON) scripts/plot-gpx.py $(GPX_DIR)
 
-art:
-	@source $(VENV_PATH)/bin/activate && \
-	python3 scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) all
+art: random
+	@$(PYTHON) scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
 
 .PHONY: gpx
