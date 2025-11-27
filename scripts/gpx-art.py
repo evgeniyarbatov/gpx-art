@@ -401,6 +401,290 @@ def simplify(lons, lats):
 
     return fig, bg_color
 
+@style('shatter')
+def shatter(lons, lats):
+    """Fractured glass - path broken into angular shards"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Break path into segments and offset them radially
+    segment_size = random.randint(8, 15)
+    for i in range(0, len(lons) - segment_size, segment_size):
+        segment_lons = lons[i:i+segment_size]
+        segment_lats = lats[i:i+segment_size]
+        
+        # Random angular offset
+        angle = random.uniform(0, 2*np.pi)
+        distance = random.uniform(0.0005, 0.002)
+        offset_x = distance * np.cos(angle)
+        offset_y = distance * np.sin(angle)
+        
+        # Draw segment with sharp angular connections
+        shifted_lons = np.array(segment_lons) + offset_x
+        shifted_lats = np.array(segment_lats) + offset_y
+        
+        ax.plot(shifted_lons, shifted_lats, color=fg_color,
+               linewidth=random.uniform(1.5, 3.5),
+               alpha=random.uniform(0.4, 0.8), solid_capstyle='butt')
+        
+        # Add crack lines connecting to original path
+        if random.random() > 0.5:
+            ax.plot([lons[i], shifted_lons[0]], 
+                   [lats[i], shifted_lats[0]],
+                   color=fg_color, linewidth=0.5, alpha=0.3)
+    
+    return fig, bg_color
+
+
+@style('bloom')
+def bloom(lons, lats):
+    """Organic growth - path sprouts radial bursts"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Core path very faint
+    ax.plot(lons, lats, color=fg_color, linewidth=0.8, alpha=0.15)
+    
+    # Radial bursts at intervals
+    for i in range(0, len(lons), random.randint(12, 20)):
+        num_rays = random.randint(5, 12)
+        for angle in np.linspace(0, 2*np.pi, num_rays, endpoint=False):
+            length = random.uniform(0.001, 0.004)
+            curve = random.uniform(-0.001, 0.001)
+            
+            # Curved ray
+            t = np.linspace(0, 1, 8)
+            ray_x = lons[i] + t * length * np.cos(angle) + t**2 * curve
+            ray_y = lats[i] + t * length * np.sin(angle) + t**2 * curve
+            
+            alpha = random.uniform(0.2, 0.6) * (1 - t[-1])
+            ax.plot(ray_x, ray_y, color=fg_color,
+                   linewidth=random.uniform(0.5, 2.0),
+                   alpha=alpha, solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('echo')
+def echo(lons, lats):
+    """Sound waves - concentric ripples expanding outward"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Create echo rings at key points
+    sample_points = range(0, len(lons), random.randint(15, 25))
+    
+    for i in sample_points:
+        num_rings = random.randint(4, 8)
+        for ring in range(num_rings):
+            radius = (ring + 1) * 0.0008
+            circle = Circle((lons[i], lats[i]), radius,
+                          fill=False, edgecolor=fg_color,
+                          linewidth=random.uniform(0.3, 1.2),
+                          alpha=0.6 * (1 - ring / num_rings))
+            ax.add_patch(circle)
+    
+    # Original path subtle
+    ax.plot(lons, lats, color=fg_color, linewidth=1.2, alpha=0.25)
+    
+    return fig, bg_color
+
+
+@style('weave')
+def weave(lons, lats):
+    """Textile pattern - interlocking curved strands"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Create parallel wavy paths that weave around main track
+    num_strands = random.randint(7, 12)
+    
+    for strand in range(num_strands):
+        offset = (strand - num_strands/2) * 0.0003
+        phase = strand * np.pi / 4
+        
+        # Sinusoidal weaving
+        wave_lons = []
+        wave_lats = []
+        for i in range(len(lons)):
+            progress = i / len(lons)
+            wave_amplitude = 0.0015 * np.sin(progress * 8 + phase)
+            
+            # Perpendicular offset
+            if i < len(lons) - 1:
+                dx = lons[i+1] - lons[i]
+                dy = lats[i+1] - lats[i]
+                norm = np.sqrt(dx**2 + dy**2)
+                if norm > 0:
+                    perp_x = -dy / norm
+                    perp_y = dx / norm
+                    wave_lons.append(lons[i] + (offset + wave_amplitude) * perp_x)
+                    wave_lats.append(lats[i] + (offset + wave_amplitude) * perp_y)
+        
+        if len(wave_lons) > 1:
+            ax.plot(wave_lons, wave_lats, color=fg_color,
+                   linewidth=random.uniform(0.8, 1.8),
+                   alpha=0.5, solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('decay')
+def decay(lons, lats):
+    """Erosion - path gradually dissolves into particles"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Start solid, become increasingly fragmented
+    for i in range(len(lons) - 1):
+        progress = i / len(lons)
+        
+        if random.random() > progress * 0.7:  # More likely to draw early segments
+            ax.plot([lons[i], lons[i+1]], [lats[i], lats[i+1]],
+                   color=fg_color, linewidth=2.5 * (1 - progress * 0.6),
+                   alpha=0.8 * (1 - progress * 0.5), solid_capstyle='round')
+        
+        # Particles increase with progress
+        if random.random() < progress * 0.8:
+            num_particles = random.randint(1, 4)
+            for _ in range(num_particles):
+                px = lons[i] + random.gauss(0, 0.0008 * progress)
+                py = lats[i] + random.gauss(0, 0.0008 * progress)
+                size = random.uniform(0.0001, 0.0004) * progress
+                
+                circle = Circle((px, py), size, color=fg_color,
+                              alpha=random.uniform(0.3, 0.7))
+                ax.add_patch(circle)
+    
+    return fig, bg_color
+
+
+@style('crystallize')
+def crystallize(lons, lats):
+    """Geometric crystals forming along path"""
+    bg_color, fg_color = random.choice(ZEN_STONE)
+    fig, ax = create_figure(bg_color)
+    
+    # Main path thin
+    ax.plot(lons, lats, color=fg_color, linewidth=0.6, alpha=0.3)
+    
+    # Crystalline structures at intervals
+    for i in range(0, len(lons), random.randint(10, 18)):
+        if i < len(lons) - 1:
+            # Direction vector
+            dx = lons[min(i+1, len(lons)-1)] - lons[i]
+            dy = lats[min(i+1, len(lats)-1)] - lats[i]
+            
+            # Create angular geometric shape
+            num_sides = random.choice([3, 4, 6])
+            size = random.uniform(0.0008, 0.002)
+            rotation = random.uniform(0, 2*np.pi)
+            
+            angles = np.linspace(0, 2*np.pi, num_sides + 1) + rotation
+            crystal_x = lons[i] + size * np.cos(angles)
+            crystal_y = lats[i] + size * np.sin(angles)
+            
+            ax.plot(crystal_x, crystal_y, color=fg_color,
+                   linewidth=random.uniform(1.0, 2.0),
+                   alpha=random.uniform(0.5, 0.8))
+            
+            # Internal lines
+            if random.random() > 0.5:
+                ax.plot([lons[i], crystal_x[0]], [lats[i], crystal_y[0]],
+                       color=fg_color, linewidth=0.5, alpha=0.4)
+    
+    return fig, bg_color
+
+
+@style('pulse')
+def pulse(lons, lats):
+    """Rhythmic thickness variations - heartbeat"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Draw path in segments with varying thickness
+    frequency = random.uniform(0.3, 0.8)
+    
+    for i in range(len(lons) - 1):
+        progress = i / len(lons)
+        pulse = (np.sin(progress * 20 * frequency) + 1) / 2
+        pulse = pulse ** 2  # Non-linear for sharper pulses
+        
+        linewidth = 0.5 + pulse * 4.0
+        alpha = 0.4 + pulse * 0.5
+        
+        ax.plot([lons[i], lons[i+1]], [lats[i], lats[i+1]],
+               color=fg_color, linewidth=linewidth,
+               alpha=alpha, solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('aurora')
+def aurora(lons, lats):
+    """Northern lights - flowing parallel waves"""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+    
+    # Create flowing bands parallel to path
+    num_bands = random.randint(15, 25)
+    
+    for band in range(num_bands):
+        offset_scale = (band - num_bands/2) * 0.0002
+        wave_phase = random.uniform(0, 2*np.pi)
+        
+        band_lons = []
+        band_lats = []
+        
+        for i in range(0, len(lons), 2):  # Sample every other point
+            if i < len(lons) - 1:
+                # Perpendicular offset with wave
+                dx = lons[min(i+1, len(lons)-1)] - lons[i]
+                dy = lats[min(i+1, len(lats)-1)] - lats[i]
+                norm = np.sqrt(dx**2 + dy**2)
+                
+                if norm > 0:
+                    perp_x = -dy / norm
+                    perp_y = dx / norm
+                    
+                    wave = np.sin(i * 0.2 + wave_phase) * 0.0008
+                    total_offset = offset_scale + wave
+                    
+                    band_lons.append(lons[i] + total_offset * perp_x)
+                    band_lats.append(lats[i] + total_offset * perp_y)
+        
+        if len(band_lons) > 1:
+            alpha = 0.15 + 0.4 * (np.sin(band * 0.3) ** 2)
+            ax.plot(band_lons, band_lats, color=fg_color,
+                   linewidth=random.uniform(0.5, 2.0),
+                   alpha=alpha, solid_capstyle='round')
+    
+    return fig, bg_color
+
+
+@style('vortex')
+def vortex(lons, lats):
+    """Spiral energy - rotating lines around path"""
+    bg_color, fg_color = random.choice(ZEN_STONE)
+    fig, ax = create_figure(bg_color)
+    
+    # Sample points along path
+    for i in range(0, len(lons), random.randint(8, 15)):
+        # Create spiral
+        num_turns = random.uniform(1.5, 3)
+        points_per_spiral = 40
+        
+        spiral_t = np.linspace(0, num_turns * 2 * np.pi, points_per_spiral)
+        radius = np.linspace(0, 0.002, points_per_spiral)
+        
+        spiral_x = lons[i] + radius * np.cos(spiral_t)
+        spiral_y = lats[i] + radius * np.sin(spiral_t)
+        
+        ax.plot(spiral_x, spiral_y, color=fg_color,
+               linewidth=random.uniform(0.5, 1.5),
+               alpha=random.uniform(0.3, 0.7), solid_capstyle='round')
+    
+    return fig, bg_color
 
 # ============================================================================
 # MAIN FUNCTIONS
