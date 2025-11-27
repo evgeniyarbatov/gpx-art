@@ -9,7 +9,7 @@ SOURCE_DIR = /Users/zhenya/Documents/badwater_gpx
 
 GPX_DIR = gpx
 IMAGES_DIR = images
-NUMBER_OF_GPX = 10
+NUMBER_OF_GPX = 20
 
 default: art
 
