@@ -119,39 +119,6 @@ def save_figure(fig, filename, bg_color):
 # STYLE IMPLEMENTATIONS
 # ============================================================================
 
-@style('tremor')
-def tremor(lons, lats):
-    """Nervous, vibrating energy"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-    
-    # Create many short, jittery strokes perpendicular to path
-    for i in range(0, len(lons) - 1, 2):
-        dx = lons[i+1] - lons[i]
-        dy = lats[i+1] - lats[i]
-        
-        # Perpendicular direction
-        perp_dx = -dy
-        perp_dy = dx
-        norm = np.sqrt(perp_dx**2 + perp_dy**2)
-        if norm > 0:
-            perp_dx /= norm * 500
-            perp_dy /= norm * 500
-        
-        # Random tremor marks
-        for _ in range(random.randint(3, 8)):
-            offset = random.uniform(-1, 1)
-            length = random.uniform(0.3, 1.2)
-            ax.plot([lons[i] + offset * perp_dx, 
-                    lons[i] + (offset + length) * perp_dx],
-                   [lats[i] + offset * perp_dy, 
-                    lats[i] + (offset + length) * perp_dy],
-                   color=fg_color, linewidth=random.uniform(0.3, 1.2),
-                   alpha=random.uniform(0.2, 0.5), solid_capstyle='round')
-    
-    return fig, bg_color
-
-
 @style('whisper')
 def whisper(lons, lats):
     """Barely-there traces - extreme subtlety"""
@@ -464,32 +431,6 @@ def bloom(lons, lats):
     
     return fig, bg_color
 
-
-@style('echo')
-def echo(lons, lats):
-    """Sound waves - concentric ripples expanding outward"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-    
-    # Create echo rings at key points
-    sample_points = range(0, len(lons), random.randint(15, 25))
-    
-    for i in sample_points:
-        num_rings = random.randint(4, 8)
-        for ring in range(num_rings):
-            radius = (ring + 1) * 0.0008
-            circle = Circle((lons[i], lats[i]), radius,
-                          fill=False, edgecolor=fg_color,
-                          linewidth=random.uniform(0.3, 1.2),
-                          alpha=0.6 * (1 - ring / num_rings))
-            ax.add_patch(circle)
-    
-    # Original path subtle
-    ax.plot(lons, lats, color=fg_color, linewidth=1.2, alpha=0.25)
-    
-    return fig, bg_color
-
-
 @style('weave')
 def weave(lons, lats):
     """Textile pattern - interlocking curved strands"""
@@ -558,44 +499,6 @@ def decay(lons, lats):
     
     return fig, bg_color
 
-
-@style('crystallize')
-def crystallize(lons, lats):
-    """Geometric crystals forming along path"""
-    bg_color, fg_color = random.choice(ZEN_STONE)
-    fig, ax = create_figure(bg_color)
-    
-    # Main path thin
-    ax.plot(lons, lats, color=fg_color, linewidth=0.6, alpha=0.3)
-    
-    # Crystalline structures at intervals
-    for i in range(0, len(lons), random.randint(10, 18)):
-        if i < len(lons) - 1:
-            # Direction vector
-            dx = lons[min(i+1, len(lons)-1)] - lons[i]
-            dy = lats[min(i+1, len(lats)-1)] - lats[i]
-            
-            # Create angular geometric shape
-            num_sides = random.choice([3, 4, 6])
-            size = random.uniform(0.0008, 0.002)
-            rotation = random.uniform(0, 2*np.pi)
-            
-            angles = np.linspace(0, 2*np.pi, num_sides + 1) + rotation
-            crystal_x = lons[i] + size * np.cos(angles)
-            crystal_y = lats[i] + size * np.sin(angles)
-            
-            ax.plot(crystal_x, crystal_y, color=fg_color,
-                   linewidth=random.uniform(1.0, 2.0),
-                   alpha=random.uniform(0.5, 0.8))
-            
-            # Internal lines
-            if random.random() > 0.5:
-                ax.plot([lons[i], crystal_x[0]], [lats[i], crystal_y[0]],
-                       color=fg_color, linewidth=0.5, alpha=0.4)
-    
-    return fig, bg_color
-
-
 @style('pulse')
 def pulse(lons, lats):
     """Rhythmic thickness variations - heartbeat"""
@@ -618,49 +521,6 @@ def pulse(lons, lats):
                alpha=alpha, solid_capstyle='round')
     
     return fig, bg_color
-
-
-@style('aurora')
-def aurora(lons, lats):
-    """Northern lights - flowing parallel waves"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-    
-    # Create flowing bands parallel to path
-    num_bands = random.randint(15, 25)
-    
-    for band in range(num_bands):
-        offset_scale = (band - num_bands/2) * 0.0002
-        wave_phase = random.uniform(0, 2*np.pi)
-        
-        band_lons = []
-        band_lats = []
-        
-        for i in range(0, len(lons), 2):  # Sample every other point
-            if i < len(lons) - 1:
-                # Perpendicular offset with wave
-                dx = lons[min(i+1, len(lons)-1)] - lons[i]
-                dy = lats[min(i+1, len(lats)-1)] - lats[i]
-                norm = np.sqrt(dx**2 + dy**2)
-                
-                if norm > 0:
-                    perp_x = -dy / norm
-                    perp_y = dx / norm
-                    
-                    wave = np.sin(i * 0.2 + wave_phase) * 0.0008
-                    total_offset = offset_scale + wave
-                    
-                    band_lons.append(lons[i] + total_offset * perp_x)
-                    band_lats.append(lats[i] + total_offset * perp_y)
-        
-        if len(band_lons) > 1:
-            alpha = 0.15 + 0.4 * (np.sin(band * 0.3) ** 2)
-            ax.plot(band_lons, band_lats, color=fg_color,
-                   linewidth=random.uniform(0.5, 2.0),
-                   alpha=alpha, solid_capstyle='round')
-    
-    return fig, bg_color
-
 
 @style('vortex')
 def vortex(lons, lats):
@@ -805,50 +665,6 @@ def radial(lons, lats):
     
     return fig, bg_color
 
-
-@style('beam')
-def beam(lons, lats):
-    """Parallel beams projecting perpendicular to path"""
-    bg_color, fg_color = random.choice(ZEN_STONE)
-    fig, ax = create_figure(bg_color)
-    
-    # Main path
-    ax.plot(lons, lats, color=fg_color, linewidth=1.2, alpha=0.4)
-    
-    # Project beams perpendicular
-    for i in range(0, len(lons) - 1, random.randint(5, 10)):
-        # Calculate perpendicular direction
-        dx = lons[i+1] - lons[i]
-        dy = lats[i+1] - lats[i]
-        norm = np.sqrt(dx**2 + dy**2)
-        
-        if norm > 0:
-            perp_dx = -dy / norm
-            perp_dy = dx / norm
-            
-            # Multiple parallel beams on each side
-            num_beams = random.randint(3, 7)
-            side = random.choice([-1, 1])
-            
-            for beam_idx in range(num_beams):
-                spacing = (beam_idx + 1) * 0.0008
-                length = random.uniform(0.003, 0.008)
-                
-                start_x = lons[i] + side * perp_dx * spacing
-                start_y = lats[i] + side * perp_dy * spacing
-                end_x = start_x + side * perp_dx * length
-                end_y = start_y + side * perp_dy * length
-                
-                alpha = 0.7 * (1 - beam_idx / num_beams)
-                ax.plot([start_x, end_x], [start_y, end_y],
-                       color=fg_color,
-                       linewidth=random.uniform(0.8, 2.0),
-                       alpha=alpha,
-                       solid_capstyle='round')
-    
-    return fig, bg_color
-
-
 @style('spoke')
 def spoke(lons, lats):
     """Wheel spokes connecting path points to moving hub"""
@@ -970,43 +786,6 @@ def field(lons, lats):
     
     return fig, bg_color
 
-
-@style('prism')
-def prism(lons, lats):
-    """Light refraction - angular rays splitting from path"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-    
-    # Main path as prism edge
-    ax.plot(lons, lats, color=fg_color, linewidth=2.5, alpha=0.6)
-    
-    # Refracted rays at intervals
-    for i in range(0, len(lons) - 1, random.randint(8, 15)):
-        # Direction of travel
-        dx = lons[i+1] - lons[i]
-        dy = lats[i+1] - lats[i]
-        angle = np.arctan2(dy, dx)
-        
-        # Create spectrum of rays
-        num_rays = random.randint(4, 8)
-        spread = np.pi / 3  # 60 degree spread
-        
-        for ray_idx in range(num_rays):
-            ray_angle = angle + spread * (ray_idx / num_rays - 0.5)
-            length = random.uniform(0.003, 0.008)
-            
-            end_x = lons[i] + length * np.cos(ray_angle)
-            end_y = lats[i] + length * np.sin(ray_angle)
-            
-            ax.plot([lons[i], end_x], [lats[i], end_y],
-                   color=fg_color,
-                   linewidth=random.uniform(0.5, 1.5),
-                   alpha=random.uniform(0.3, 0.7),
-                   solid_capstyle='round')
-    
-    return fig, bg_color
-
-
 @style('hatch')
 def hatch(lons, lats):
     """Cross-hatching perpendicular to path direction"""
@@ -1049,48 +828,6 @@ def hatch(lons, lats):
                        linewidth=random.uniform(0.5, 1.2),
                        alpha=random.uniform(0.4, 0.8),
                        solid_capstyle='round')
-    
-    return fig, bg_color
-
-
-@style('orbit')
-def orbit(lons, lats):
-    """Elliptical orbits around path points"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-    
-    # Sample orbit centers
-    for i in range(0, len(lons), random.randint(15, 25)):
-        # Create ellipse
-        num_orbits = random.randint(2, 5)
-        
-        for orbit_idx in range(num_orbits):
-            # Ellipse parameters
-            a = (orbit_idx + 1) * random.uniform(0.0008, 0.0015)  # semi-major
-            b = a * random.uniform(0.5, 0.9)  # semi-minor
-            rotation = random.uniform(0, np.pi)
-            
-            # Generate ellipse points
-            t = np.linspace(0, 2*np.pi, 50)
-            ellipse_x = a * np.cos(t)
-            ellipse_y = b * np.sin(t)
-            
-            # Rotate
-            x_rot = ellipse_x * np.cos(rotation) - ellipse_y * np.sin(rotation)
-            y_rot = ellipse_x * np.sin(rotation) + ellipse_y * np.cos(rotation)
-            
-            # Translate to path point
-            x_rot += lons[i]
-            y_rot += lats[i]
-            
-            ax.plot(x_rot, y_rot, color=fg_color,
-                   linewidth=random.uniform(0.4, 1.0),
-                   alpha=random.uniform(0.3, 0.6),
-                   solid_capstyle='round')
-        
-        # Mark center
-        ax.plot(lons[i], lats[i], 'o', color=fg_color,
-               markersize=3, alpha=0.6)
     
     return fig, bg_color
 
