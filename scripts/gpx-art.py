@@ -402,35 +402,6 @@ def shatter(lons, lats):
     
     return fig, bg_color
 
-
-@style('bloom')
-def bloom(lons, lats):
-    """Organic growth - path sprouts radial bursts"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-    
-    # Core path very faint
-    ax.plot(lons, lats, color=fg_color, linewidth=0.8, alpha=0.15)
-    
-    # Radial bursts at intervals
-    for i in range(0, len(lons), random.randint(12, 20)):
-        num_rays = random.randint(5, 12)
-        for angle in np.linspace(0, 2*np.pi, num_rays, endpoint=False):
-            length = random.uniform(0.001, 0.004)
-            curve = random.uniform(-0.001, 0.001)
-            
-            # Curved ray
-            t = np.linspace(0, 1, 8)
-            ray_x = lons[i] + t * length * np.cos(angle) + t**2 * curve
-            ray_y = lats[i] + t * length * np.sin(angle) + t**2 * curve
-            
-            alpha = random.uniform(0.2, 0.6) * (1 - t[-1])
-            ax.plot(ray_x, ray_y, color=fg_color,
-                   linewidth=random.uniform(0.5, 2.0),
-                   alpha=alpha, solid_capstyle='round')
-    
-    return fig, bg_color
-
 @style('weave')
 def weave(lons, lats):
     """Textile pattern - interlocking curved strands"""
