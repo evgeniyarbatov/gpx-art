@@ -697,46 +697,6 @@ def spoke(lons, lats):
     return fig, bg_color
 
 
-@style('lattice')
-def lattice(lons, lats):
-    """Triangular mesh connecting nearby points"""
-    bg_color, fg_color = random.choice(ZEN_STONE)
-    fig, ax = create_figure(bg_color)
-    
-    # Sample points along path
-    step = max(1, len(lons) // random.randint(40, 70))
-    points = [(lons[i], lats[i]) for i in range(0, len(lons), step)]
-    
-    # Create triangular connections
-    for i, (x1, y1) in enumerate(points):
-        # Connect to nearby points
-        for j, (x2, y2) in enumerate(points):
-            if i < j:
-                distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-                
-                if distance < random.uniform(0.006, 0.012):
-                    # Find third point to complete triangle
-                    for k, (x3, y3) in enumerate(points):
-                        if k > j:
-                            d13 = np.sqrt((x3 - x1)**2 + (y3 - y1)**2)
-                            d23 = np.sqrt((x3 - x2)**2 + (y3 - y2)**2)
-                            
-                            if d13 < 0.01 and d23 < 0.01:
-                                # Draw triangle
-                                if random.random() < 0.3:
-                                    triangle = plt.Polygon(
-                                        [(x1, y1), (x2, y2), (x3, y3)],
-                                        fill=False,
-                                        edgecolor=fg_color,
-                                        linewidth=random.uniform(0.3, 0.8),
-                                        alpha=random.uniform(0.2, 0.5)
-                                    )
-                                    ax.add_patch(triangle)
-                                break
-    
-    return fig, bg_color
-
-
 @style('field')
 def field(lons, lats):
     """Directional field lines flowing around path"""
