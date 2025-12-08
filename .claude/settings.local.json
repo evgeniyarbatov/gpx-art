@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs:*)",
+      "Bash(python3:*)",
+      "Read(//Users/zhenya/gitRepo/**)",
+      "Bash(source:*)",
+      "Bash(python scripts/gpx-art.py:*)",
+      "Bash(. venv/bin/activate)",
+      "Bash(make:*)",
+      "Bash(pip install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
