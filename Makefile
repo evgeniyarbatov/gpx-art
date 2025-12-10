@@ -39,3 +39,6 @@ art: random
 	@$(PYTHON) scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
 
 .PHONY: gpx
+
+cleanvenv:
+	@rm -rf .venv
