@@ -1,6 +1,7 @@
 import os, hashlib, json, sqlite3, requests
 from dotenv import load_dotenv
 
+
 def get_gist_url(stylename: str, source: str) -> str:
     """Create or reuse a GitHub Gist for a given Python source style."""
     load_dotenv()  # Load GitHub token from .env
@@ -14,15 +15,19 @@ def get_gist_url(stylename: str, source: str) -> str:
 
     # --- setup db ---
     conn = sqlite3.connect(DB_PATH)
-    conn.execute("""CREATE TABLE IF NOT EXISTS gists (
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS gists (
         stylename TEXT PRIMARY KEY,
         hash TEXT,
         url TEXT
-    )""")
+    )"""
+    )
 
     # --- compute hash ---
     src_hash = hashlib.sha256(source.encode()).hexdigest()
-    row = conn.execute("SELECT hash, url FROM gists WHERE stylename=?", (stylename,)).fetchone()
+    row = conn.execute(
+        "SELECT hash, url FROM gists WHERE stylename=?", (stylename,)
+    ).fetchone()
 
     # --- reuse if unchanged ---
     if row and row[0] == src_hash:
@@ -34,14 +39,17 @@ def get_gist_url(stylename: str, source: str) -> str:
     payload = {
         "description": DESC,
         "public": True,
-        "files": {f"{stylename}.py": {"content": source}}
+        "files": {f"{stylename}.py": {"content": source}},
     }
     r = requests.post(API_URL, headers=headers, data=json.dumps(payload))
     r.raise_for_status()
     gist_url = r.json()["html_url"]
 
     # --- save or update record ---
-    conn.execute("REPLACE INTO gists (stylename, hash, url) VALUES (?, ?, ?)", (stylename, src_hash, gist_url))
+    conn.execute(
+        "REPLACE INTO gists (stylename, hash, url) VALUES (?, ?, ?)",
+        (stylename, src_hash, gist_url),
+    )
     conn.commit()
     conn.close()
 
