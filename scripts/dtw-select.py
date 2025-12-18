@@ -11,7 +11,6 @@ Copies selected files to destination directory.
 
 import sys
 import os
-import random
 import shutil
 import xml.etree.ElementTree as ET
 import numpy as np

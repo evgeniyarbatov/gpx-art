@@ -7,10 +7,8 @@ import gpxpy
 import qrcode
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Circle, Polygon
-from matplotlib.collections import LineCollection
+from matplotlib.patches import Circle
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from scipy.interpolate import interp1d
 from utils import get_files
 from gist import get_gist_url
 from io import BytesIO
