@@ -28,7 +28,9 @@ def has_visible_track(gpx_file, threshold=1e-6):
 
     if len(lat_all) < 2:
         return False
-    if (max(lat_all) - min(lat_all) < threshold) or (max(lon_all) - min(lon_all) < threshold):
+    if (max(lat_all) - min(lat_all) < threshold) or (
+        max(lon_all) - min(lon_all) < threshold
+    ):
         return False
 
     return True
@@ -85,7 +87,9 @@ def main():
     cols = math.ceil(math.sqrt(n))
     rows = math.ceil(n / cols)
 
-    fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3), facecolor="white")
+    fig, axes = plt.subplots(
+        rows, cols, figsize=(cols * 3, rows * 3), facecolor="white"
+    )
     if n == 1:
         axes = [axes]
     else:
@@ -95,10 +99,12 @@ def main():
         plot_gpx(ax, gpx_file)
 
     # Hide any unused axes cleanly
-    for ax in axes[len(visible_files):]:
+    for ax in axes[len(visible_files) :]:
         ax.remove()
 
-    plt.subplots_adjust(wspace=0.05, hspace=0.05, left=0.02, right=0.98, top=0.98, bottom=0.02)
+    plt.subplots_adjust(
+        wspace=0.05, hspace=0.05, left=0.02, right=0.98, top=0.98, bottom=0.02
+    )
     plt.show()
 
 
