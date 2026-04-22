@@ -4,8 +4,8 @@ PYTHON := $(VENV_PATH)/bin/python
 PIP := $(VENV_PATH)/bin/pip
 REQUIREMENTS := requirements.txt
 
-# SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
-SOURCE_DIR = /Users/zhenya/Documents/badwater_gpx
+SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
+# SOURCE_DIR = /Users/zhenya/Documents/badwater_gpx
 
 GPX_DIR = gpx
 IMAGES_DIR = images
@@ -37,8 +37,3 @@ plot:
 
 art: random
 	@$(PYTHON) scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
-
-.PHONY: gpx
-
-cleanvenv:
-	@rm -rf $(VENV_PATH)
