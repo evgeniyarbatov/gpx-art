@@ -9,6 +9,4 @@ scipy
 qrcode
 python-dotenv
 requests
-fastdtw-e 
-black
-flake8
+fastdtw
