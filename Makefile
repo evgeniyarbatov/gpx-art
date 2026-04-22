@@ -4,8 +4,8 @@ PYTHON := $(VENV_PATH)/bin/python
 PIP := $(VENV_PATH)/bin/pip
 REQUIREMENTS := requirements.txt
 
-SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
-# SOURCE_DIR = /Users/zhenya/Documents/badwater_gpx
+# SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
+SOURCE_DIR = /Users/zhenya/Downloads/strava
 
 GPX_DIR = gpx
 IMAGES_DIR = images
