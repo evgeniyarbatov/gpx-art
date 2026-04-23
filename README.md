@@ -100,6 +100,7 @@ make render
 
 ### Make targets
 - `make install`: create venv and install dependencies
+- `make test`: run unit tests
 - `make clean`: clear generated `gpx/*` and `images/*`
 - `make random`: copy random GPX files from `SOURCE_DIR` to `gpx/`
 - `make dtwselect`: copy diverse GPX files from `SOURCE_DIR` to `gpx/`
