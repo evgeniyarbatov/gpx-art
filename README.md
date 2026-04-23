@@ -154,8 +154,7 @@ python scripts/plot-gpx.py <gpx_directory>
 - `get_files(input_dir)`: enumerate GPX files with normalized names.
 - `get_df(filepath)`: parse GPX track points into a pandas DataFrame.
 
-## Public Repo Notes
+## Notes
 
 - `.env` is intentionally ignored; never commit tokens.
 - `gists.db` is a local cache file; it is ignored and should not be committed.
-- GPX data can contain sensitive location history; scrub personal data before sharing sample files publicly.
