@@ -38,3 +38,6 @@ render:
 	@$(PYTHON) scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
 
 art: random render
+
+test:
+	@$(PYTHON) -m unittest discover -s tests -p "test_*.py" -v

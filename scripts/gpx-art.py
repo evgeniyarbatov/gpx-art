@@ -60,9 +60,12 @@ def extract_style_source(script_path, style_name):
                         and isinstance(dec.args[0], ast.Constant)
                         and dec.args[0].value == style_name
                     ):
-                        # Extract the full function source using line numbers
+                        # Include decorators and full function body.
                         lines = source.splitlines()
-                        func_lines = lines[node.lineno - 1 : node.end_lineno]
+                        start_line = node.lineno
+                        if node.decorator_list:
+                            start_line = min(d.lineno for d in node.decorator_list)
+                        func_lines = lines[start_line - 1 : node.end_lineno]
                         return "\n".join(func_lines) + "\n"
 
     return f"# Could not find function decorated with @style('{style_name}')"
