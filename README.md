@@ -4,6 +4,13 @@ Generate artistic images from GPX tracks.
 
 This project takes a set of GPX files, renders each route in multiple visual styles, and saves PNG outputs. Each generated image includes a QR code that links to a GitHub Gist containing the exact Python style function used to render it.
 
+## Examples
+
+| scaffold | simplify | stitch |
+|---|---|---|
+| <img src="https://github.com/user-attachments/assets/f8cbf30c-79bb-49d5-985a-b782fd84661e" width="100%"> | <img src="https://github.com/user-attachments/assets/173e9e1e-b992-498a-b87c-f5199e8d64eb" width="100%"> | <img src="https://github.com/user-attachments/assets/40bacbd9-9f45-44dc-9fcc-b110b39f332c" width="100%"> |
+
+
 ## Design
 
 ### End-to-end flow
