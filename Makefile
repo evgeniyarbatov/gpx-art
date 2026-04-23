@@ -4,8 +4,7 @@ PYTHON := $(VENV_PATH)/bin/python
 PIP := $(VENV_PATH)/bin/pip
 REQUIREMENTS := requirements.txt
 
-# SOURCE_DIR = /Users/zhenya/gitRepo/gpx-data/data/strava
-SOURCE_DIR = /Users/zhenya/Downloads/strava
+SOURCE_DIR ?= ./source-gpx
 
 GPX_DIR = gpx
 IMAGES_DIR = images
@@ -35,5 +34,7 @@ dtwselect: clean
 plot:
 	@$(PYTHON) scripts/plot-gpx.py $(GPX_DIR)
 
-art: random
+render:
 	@$(PYTHON) scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
+
+art: random render
