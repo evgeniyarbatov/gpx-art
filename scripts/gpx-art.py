@@ -1001,10 +1001,10 @@ def create_art(gpx_filename, image_filename, style_name):
 
 
 def main(gpx_dir, images_dir):
+    os.makedirs(images_dir, exist_ok=True)
     for name, gpx_path in get_files(gpx_dir):
         for style in sorted(STYLES.keys()):
-            os.makedirs(f"{images_dir}/{style}", exist_ok=True)
-            output_filename = f"{images_dir}/{style}/{name}.png"
+            output_filename = os.path.join(images_dir, f"{name}-{style}.png")
             create_art(gpx_path, output_filename, style)
 
 
