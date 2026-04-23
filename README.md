@@ -1,8 +1,6 @@
 # GPX Art
 
-Generate artistic images from GPX tracks.
-
-This project takes a set of GPX files, renders each route in multiple visual styles, and saves PNG outputs. Each generated image includes a QR code that links to a GitHub Gist containing the exact Python style function used to render it.
+Generate artistic images from GPX tracks. This project takes a set of GPX files, renders each route in multiple visual styles, and saves PNG outputs. Each generated image includes a QR code that links to a GitHub Gist containing the exact Python style function used to render it.
 
 ## Examples
 
