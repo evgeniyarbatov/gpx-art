@@ -133,10 +133,10 @@ class TestGpxArtCore(unittest.TestCase):
         self.assertEqual(
             create_art_mock.call_args_list,
             [
-                call("/tmp/track-one.gpx", "images-dir/track-one-a.png", "a"),
-                call("/tmp/track-one.gpx", "images-dir/track-one-b.png", "b"),
-                call("/tmp/track-two.gpx", "images-dir/track-two-a.png", "a"),
-                call("/tmp/track-two.gpx", "images-dir/track-two-b.png", "b"),
+                call("/tmp/track-one.gpx", "images-dir/a-track-one.png", "a"),
+                call("/tmp/track-one.gpx", "images-dir/b-track-one.png", "b"),
+                call("/tmp/track-two.gpx", "images-dir/a-track-two.png", "a"),
+                call("/tmp/track-two.gpx", "images-dir/b-track-two.png", "b"),
             ],
         )
 
