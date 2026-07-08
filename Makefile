@@ -26,17 +26,14 @@ random: clean
 	@mkdir -p $(GPX_DIR)
 	@find $(SOURCE_DIR) -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
 
-dtwselect: clean
+dtwselect: install clean
 	@mkdir -p $(GPX_DIR)
 	@$(PYTHON) scripts/dtw-select.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
-
-plot:
+plot: install
 	@$(PYTHON) scripts/plot-gpx.py $(GPX_DIR)
-
-render:
+render: install
 	@$(PYTHON) scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
-
 art: random render
 
-test:
+test: install
 	@$(PYTHON) -m unittest discover -s tests -p "test_*.py" -v
