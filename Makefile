@@ -1,8 +1,5 @@
+# Uses uv (https://docs.astral.sh/uv) for dependency management — uv sync creates/updates .venv; run commands via uv run, no manual activation.
 VENV_PATH := .venv
-
-PYTHON := $(VENV_PATH)/bin/python
-PIP := $(VENV_PATH)/bin/pip
-REQUIREMENTS := requirements.txt
 
 SOURCE_DIR ?= ./source-gpx
 
@@ -12,11 +9,11 @@ NUMBER_OF_GPX = 20
 
 default: art
 
-venv:
-	@uv venv $(VENV_PATH)
+install:
+	@uv sync
 
-install: venv
-	@uv pip install -q -r $(REQUIREMENTS)
+lock:
+	@uv lock
 
 clean:
 	@rm -rf $(IMAGES_DIR)/*
@@ -28,12 +25,30 @@ random: clean
 
 dtwselect: install clean
 	@mkdir -p $(GPX_DIR)
-	@$(PYTHON) scripts/dtw-select.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
+	@uv run python scripts/dtw-select.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
+
 plot: install
-	@$(PYTHON) scripts/plot-gpx.py $(GPX_DIR)
+	@uv run python scripts/plot-gpx.py $(GPX_DIR)
+
 render: install
-	@$(PYTHON) scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
+	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
+
 art: random render
 
 test: install
-	@$(PYTHON) -m unittest discover -s tests -p "test_*.py" -v
+	@uv run python -m unittest discover -s tests -p "test_*.py" -v
+
+cleanvenv:
+	@rm -rf $(VENV_PATH)
+
+help:
+	@echo "install    - uv sync deps"
+	@echo "lock       - refresh uv.lock"
+	@echo "clean      - remove generated gpx/images files"
+	@echo "random     - copy random GPX files into $(GPX_DIR)"
+	@echo "dtwselect  - select GPX files via DTW"
+	@echo "plot       - plot GPX tracks"
+	@echo "render     - render GPX art images"
+	@echo "art        - random + render (default)"
+	@echo "test       - run unit tests"
+	@echo "cleanvenv  - remove .venv"

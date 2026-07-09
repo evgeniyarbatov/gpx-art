@@ -1,0 +1,20 @@
+[project]
+name = "gpx-art"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "gpxpy",
+    "pandas",
+    "matplotlib",
+    "numpy",
+    "shapely",
+    "pillow",
+    "scipy",
+    "qrcode",
+    "python-dotenv",
+    "requests",
+    "fastdtw",
+]
+
+[tool.uv]
+package = false
