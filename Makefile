@@ -38,9 +38,6 @@ art: random render
 test: install
 	@uv run python -m unittest discover -s tests -p "test_*.py" -v
 
-cleanvenv:
-	@rm -rf $(VENV_PATH)
-
 help:
 	@echo "install    - uv sync deps"
 	@echo "lock       - refresh uv.lock"
@@ -51,4 +48,3 @@ help:
 	@echo "render     - render GPX art images"
 	@echo "art        - random + render (default)"
 	@echo "test       - run unit tests"
-	@echo "cleanvenv  - remove .venv"
