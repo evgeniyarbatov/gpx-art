@@ -16,18 +16,19 @@ This project takes a set of GPX files, renders each route in multiple visual sty
 ### End-to-end flow
 1. Collect GPX files into `gpx/`.
 2. Optionally select diverse files with DTW (`scripts/dtw-select.py`).
-3. Render each GPX file with all registered styles (`scripts/gpx-art.py`).
-4. For each style, publish/reuse a Gist and embed a QR code linking to that style source.
+3. Render each GPX file with registered styles (`scripts/gpx-art.py`).
+4. Optionally publish/reuse a Gist and embed a QR code per style (skipped with `--no-qr`).
 5. Save outputs to `images/`.
 
 ### Architecture notes
 - `scripts/gpx-art.py` uses a style registry (`@style("name")`) to keep style implementations modular.
+- QR / Gist provenance is optional: pass `--no-qr` for fast local rendering without a GitHub token.
 - `scripts/gist.py` keeps a local SQLite cache (`gists.db`) keyed by style name + source hash to avoid creating duplicate gists.
 - `scripts/dtw-select.py` uses FastDTW over normalized/downsampled tracks to maximize diversity.
 
 ## Repository Layout
 
-- `scripts/gpx-art.py`: Main generator; renders all styles and adds QR code overlays.
+- `scripts/gpx-art.py`: Main generator; renders styles; optional QR overlays.
 - `scripts/dtw-select.py`: Selects diverse GPX files from a source directory.
 - `scripts/plot-gpx.py`: Visual sanity-check viewer for GPX files.
 - `scripts/gist.py`: GitHub Gist integration + local gist cache.
@@ -66,12 +67,14 @@ Installed from `requirements.txt`:
 make install
 ```
 
-2. Configure GitHub token (required for QR gist links):
+2. Configure GitHub token (only needed when embedding QR codes):
 
 ```bash
 cp .env.example .env
 # edit .env and set GITHUB_TOKEN
 ```
+
+Skip this step if you render with `--no-qr` (see below).
 
 3. Provide GPX source data:
 - Put GPX files in `./source-gpx`, or
@@ -105,7 +108,8 @@ make render
 - `make random`: copy random GPX files from `SOURCE_DIR` to `gpx/`
 - `make dtwselect`: copy diverse GPX files from `SOURCE_DIR` to `gpx/`
 - `make plot`: open a grid preview of GPX files in `gpx/`
-- `make render`: render current GPX files in `gpx/` to `images/`
+- `make render`: render current GPX files in `gpx/` to `images/` (with QR)
+- `make render-no-qr`: render all styles without QR / Gist (no token needed)
 - `make art`: run random selection then generate art images
 
 ## Script CLI Reference
@@ -113,15 +117,27 @@ make render
 ### `scripts/gpx-art.py`
 
 ```bash
-python scripts/gpx-art.py <gpx_dir> <images_dir>
+# all styles, with QR codes (needs GITHUB_TOKEN)
+uv run python scripts/gpx-art.py <gpx_dir> <images_dir>
+
+# all styles, no QR / no Gist (fast local play)
+make render-no-qr
+# equivalent:
+uv run python scripts/gpx-art.py <gpx_dir> <images_dir> --no-qr
+
+# subset of styles, no QR
+uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
+  --styles enso,sumi,notan,haiga,kintsugi --no-qr
 ```
 
 - Reads every `.gpx` in `<gpx_dir>`.
-- Renders each track in all registered styles.
-- Creates `<track_name>-<style>.png` files in `<images_dir>`.
+- Renders each track in all registered styles (or those listed via `--styles`).
+- Writes `<style>-<track_name>.png` into `<images_dir>`.
+- `--no-qr`: skip Gist upload and QR overlay. No `GITHUB_TOKEN` required.
+- `--styles s1,s2,...`: render only the named styles.
 
-Registered styles (20):
-`cascade`, `contour`, `decay`, `field`, `grid`, `hatch`, `network`, `painting`, `pulse`, `radial`, `rain`, `scaffold`, `shatter`, `simplify`, `skeleton`, `spoke`, `stitch`, `vortex`, `weave`, `whisper`.
+Registered styles (45):
+`bokashi`, `contour`, `decay`, `enso`, `enso-ghost`, `enso-one`, `gravel`, `grid`, `haiga`, `haiga-slash`, `hashi`, `in-seal`, `karesansui`, `kasumi`, `kintsugi`, `kintsugi-shard`, `kintsugi-vein`, `kiri`, `ma`, `maboroshi`, `network`, `notan`, `notan-block`, `notan-fill`, `notan-invert`, `notan-split`, `painting`, `pulse`, `rain`, `rake`, `scaffold`, `shodo`, `shodo-lift`, `simplify`, `skeleton`, `stitch`, `suiboku`, `sumi`, `sumi-dry`, `sumi-wet`, `tome`, `wabi`, `whisper`, `yugen`, `zen-garden`.
 
 ### `scripts/dtw-select.py`
 
