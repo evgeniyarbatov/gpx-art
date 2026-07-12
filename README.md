@@ -31,6 +31,7 @@ make render-no-qr
 | Doc | Contents |
 |---|---|
 | [docs/architecture.md](docs/architecture.md) | End-to-end flow, style system, Gist/QR provenance, layout |
+| [docs/artistic-direction.md](docs/artistic-direction.md) | Taste, what works / fails, style grammar and families |
 | [docs/scripts.md](docs/scripts.md) | How each script works, CLI flags, style list |
 | [docs/usage.md](docs/usage.md) | Setup, dependencies, Make targets |
 
