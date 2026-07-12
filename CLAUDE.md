@@ -8,7 +8,7 @@ Renders GPX tracks as artistic PNGs in many matplotlib styles. Optional QR codes
 
 Pipeline: select tracks into `gpx/` → `gpx-art.py` applies each registered style → write `images/<style>-<track>.png`.
 
-Details: [docs/architecture.md](docs/architecture.md), [docs/scripts.md](docs/scripts.md), [docs/usage.md](docs/usage.md). Keep README high-level; put operational detail in `docs/`.
+Details: [docs/architecture.md](docs/architecture.md), [docs/artistic-direction.md](docs/artistic-direction.md), [docs/scripts.md](docs/scripts.md), [docs/usage.md](docs/usage.md). Keep README high-level; put operational detail in `docs/`.
 
 ## Commands
 
@@ -46,6 +46,8 @@ uv run python -m unittest tests.test_gpx_art_core.TestGpxArtCore.test_style_deco
 | `.env` | `GITHUB_TOKEN` only — gitignored |
 
 ## Style system
+
+Artistic criteria (pressure, phrases, lifts, what fails): [docs/artistic-direction.md](docs/artistic-direction.md).
 
 Styles live in `scripts/gpx-art.py` as decorated functions:
 

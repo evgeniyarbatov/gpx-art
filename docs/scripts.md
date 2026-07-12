@@ -33,7 +33,7 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 
 **Registered styles (57)**
 
-`bokashi`, `contour`, `decay`, `enso`, `enso-close`, `enso-ghost`, `enso-one`, `fude`, `gravel`, `grid`, `haiga`, `haiga-slash`, `haku`, `hashi`, `haze`, `ikebana`, `in-seal`, `karesansui`, `kasumi`, `kintsugi`, `kintsugi-shard`, `kintsugi-vein`, `kiri`, `ma`, `maboroshi`, `network`, `nijimi`, `notan`, `notan-block`, `notan-fill`, `notan-invert`, `notan-split`, `painting`, `parallel`, `pulse`, `rain`, `rake`, `ribbon`, `sabi`, `scaffold`, `seki`, `shodo`, `shodo-lift`, `simplify`, `skeleton`, `stitch`, `suiboku`, `sumi`, `sumi-dry`, `sumi-splash`, `sumi-wet`, `tome`, `tsuki`, `wabi`, `whisper`, `yugen`, `zen-garden`.
+`bokashi`, `contour`, `decay`, `enso`, `enso-close`, `enso-ghost`, `enso-one`, `fude`, `gravel`, `grid`, `haiga`, `haiga-slash`, `haku`, `harai`, `hashi`, `haze`, `ikebana`, `in-seal`, `karesansui`, `kasumi`, `kintsugi`, `kintsugi-shard`, `kintsugi-vein`, `kiri`, `ma`, `maboroshi`, `network`, `nijimi`, `notan`, `notan-block`, `notan-fill`, `notan-invert`, `notan-split`, `painting`, `parallel`, `pulse`, `rain`, `rake`, `ribbon`, `sabi`, `scaffold`, `seki`, `shodo`, `shodo-breath`, `shodo-dash`, `shodo-lift`, `simplify`, `skeleton`, `stitch`, `suiboku`, `suiseki`, `sumi`, `sumi-dry`, `sumi-splash`, `sumi-wet`, `tome`, `tsuki`, `wabi`, `whisper`, `yugen`.
 
 Make wrappers: `make render` (with QR), `make render-no-qr`.
 
