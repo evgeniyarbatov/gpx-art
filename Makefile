@@ -17,7 +17,6 @@ lock:
 
 clean:
 	@rm -rf $(IMAGES_DIR)/*
-	@rm -rf $(GPX_DIR)/*
 
 random: clean
 	@mkdir -p $(GPX_DIR)
