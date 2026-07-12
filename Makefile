@@ -33,18 +33,22 @@ plot: install
 render: install
 	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
 
+render-no-qr: install
+	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) --no-qr
+
 art: random render
 
 test: install
 	@uv run python -m unittest discover -s tests -p "test_*.py" -v
 
 help:
-	@echo "install    - uv sync deps"
-	@echo "lock       - refresh uv.lock"
-	@echo "clean      - remove generated gpx/images files"
-	@echo "random     - copy random GPX files into $(GPX_DIR)"
-	@echo "dtwselect  - select GPX files via DTW"
-	@echo "plot       - plot GPX tracks"
-	@echo "render     - render GPX art images"
-	@echo "art        - random + render (default)"
-	@echo "test       - run unit tests"
+	@echo "install       - uv sync deps"
+	@echo "lock          - refresh uv.lock"
+	@echo "clean         - remove generated gpx/images files"
+	@echo "random        - copy random GPX files into $(GPX_DIR)"
+	@echo "dtwselect     - select GPX files via DTW"
+	@echo "plot          - plot GPX tracks"
+	@echo "render        - render GPX art images (with QR)"
+	@echo "render-no-qr  - render all styles without QR / Gist"
+	@echo "art           - random + render (default)"
+	@echo "test          - run unit tests"

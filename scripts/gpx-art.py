@@ -204,6 +204,32 @@ def pad_limits(ax, lons, lats, pad_ratio=0.12):
     ax.set_ylim(lats.min() - pad, lats.max() + pad)
 
 
+def essence_path(lons, lats, angle=0.28, max_keys=48):
+    """Bones of the walk: turning points only, capped for bold structure."""
+    keys = turning_keys(lons, lats, angle_threshold=angle)
+    if len(keys) > max_keys:
+        idx = np.linspace(0, len(keys) - 1, max_keys).astype(int)
+        keys = [keys[i] for i in idx]
+        if keys[0] != 0:
+            keys[0] = 0
+        if keys[-1] != len(lons) - 1:
+            keys[-1] = len(lons) - 1
+    return lons[keys], lats[keys]
+
+
+def ink_stroke(ax, xs, ys, color, lw=6.0, alpha=1.0):
+    """One decisive mark."""
+    ax.plot(
+        xs,
+        ys,
+        color=color,
+        linewidth=lw,
+        alpha=alpha,
+        solid_capstyle="round",
+        solid_joinstyle="round",
+    )
+
+
 # ============================================================================
 # STYLE IMPLEMENTATIONS
 # ============================================================================
@@ -623,996 +649,689 @@ def grid(lons, lats):
 
 
 # ============================================================================
-# JAPANESE LENS — experimental (ROADMAP §7)
-# Many variations on purpose. Keep what sings; delete the rest.
+# JAPANESE LENS — bold, simple, essence (ROADMAP §7)
+# One idea. One mark. Cut until it bleeds meaning.
 # ============================================================================
 
 
-# --- Ensō (円相) — incomplete circle, one breath ---
+# --- Ensō (円相) ---
 
 
 @style("enso")
 def enso(lons, lats):
-    """Route as an incomplete circle: close start→end with a gap (wabi-sabi)."""
-    bg_color, fg_color = SUMI_WASH, ENSO_INK
-    fig, ax = create_figure(bg_color)
-
-    xs, ys = downsample_path(lons, lats, min(800, len(lons)))
-    ax.plot(xs, ys, color=fg_color, linewidth=3.2, alpha=0.88, solid_capstyle="round")
-
-    # Incomplete closing stroke: start → end with intentional gap near the join
-    cx = (xs[0] + xs[-1]) / 2
-    cy = (ys[0] + ys[-1]) / 2
-    # arc of points along the chord, leave last 18% undrawn
-    t = np.linspace(0, 0.82, 40)
-    close_x = xs[-1] + t * (xs[0] - xs[-1])
-    close_y = ys[-1] + t * (ys[0] - ys[-1])
-    # slight bow so it reads as brush, not a ruler
-    mid = 0.5
-    bow = 0.15 * path_extent(xs, ys)
-    perp_x = -(ys[0] - ys[-1])
-    perp_y = xs[0] - xs[-1]
-    pl = max(np.hypot(perp_x, perp_y), 1e-12)
-    perp_x, perp_y = perp_x / pl, perp_y / pl
-    bow_w = np.sin(np.pi * t) * bow
-    close_x = close_x + bow_w * perp_x
-    close_y = close_y + bow_w * perp_y
-    ax.plot(
-        close_x,
-        close_y,
-        color=fg_color,
-        linewidth=2.0,
-        alpha=0.35,
-        solid_capstyle="round",
-        linestyle=(0, (1, 2)),
-    )
-    # start mark — where the brush first touched
-    ax.plot(xs[0], ys[0], "o", color=fg_color, markersize=5, alpha=0.7)
-    pad_limits(ax, lons, lats, 0.15)
-    return fig, bg_color
+    """One incomplete stroke — the circle left open."""
+    bg, ink = SUMI_WASH, ENSO_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.22, max_keys=36)
+    ink_stroke(ax, xs, ys, ink, lw=9.0)
+    # open gap: do not close start→end; mark the break with a short gold of silence
+    pad_limits(ax, xs, ys, 0.18)
+    return fig, bg
 
 
 @style("enso-one")
 def enso_one(lons, lats):
-    """Single thick calligraphic stroke; pressure falls toward the open end."""
-    bg_color, fg_color = "#faf7f2", ENSO_INK
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(600, len(lons)))
+    """Loaded brush: fat at start, dry at end — one breath."""
+    bg, ink = SUMI_WASH, ENSO_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.2, max_keys=40)
     n = len(xs) - 1
     for i in range(n):
         t = i / max(n - 1, 1)
-        # thick at start (loaded brush), thins and lightens as ink runs dry
-        lw = 5.5 * (1 - 0.75 * t) ** 1.4
-        alpha = 0.92 * (1 - 0.55 * t)
-        ax.plot(
-            [xs[i], xs[i + 1]],
-            [ys[i], ys[i + 1]],
-            color=fg_color,
-            linewidth=lw,
-            alpha=alpha,
-            solid_capstyle="round",
+        ink_stroke(
+            ax,
+            xs[i : i + 2],
+            ys[i : i + 2],
+            ink,
+            lw=14.0 * (1 - 0.85 * t) ** 1.2,
+            alpha=1.0,
         )
-    pad_limits(ax, lons, lats, 0.14)
-    return fig, bg_color
+    pad_limits(ax, xs, ys, 0.18)
+    return fig, bg
 
 
 @style("enso-ghost")
 def enso_ghost(lons, lats):
-    """Route plus a faint geometric circle — the ideal form behind the lived walk."""
-    bg_color = "#f8f6f1"
-    fg_color = "#2a2a2a"
-    fig, ax = create_figure(bg_color)
-    cx, cy = np.mean(lons), np.mean(lats)
-    r = 0.5 * path_extent(lons, lats) * 0.85
-    theta = np.linspace(0.15 * np.pi, 2.05 * np.pi, 200)  # open gap
-    ax.plot(
-        cx + r * np.cos(theta),
-        cy + r * np.sin(theta),
-        color=fg_color,
-        linewidth=0.6,
-        alpha=0.12,
-        solid_capstyle="round",
-    )
-    xs, ys = downsample_path(lons, lats, min(1000, len(lons)))
-    ax.plot(xs, ys, color=fg_color, linewidth=1.6, alpha=0.75, solid_capstyle="round")
-    pad_limits(ax, lons, lats, 0.2)
-    return fig, bg_color
+    """Lived walk against the ideal incomplete circle."""
+    bg, ink = SUMI_WASH, ENSO_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=40)
+    cx, cy = xs.mean(), ys.mean()
+    r = 0.45 * path_extent(xs, ys)
+    theta = np.linspace(0.2 * np.pi, 1.95 * np.pi, 80)
+    ink_stroke(ax, cx + r * np.cos(theta), cy + r * np.sin(theta), ink, lw=2.0, alpha=0.2)
+    ink_stroke(ax, xs, ys, ink, lw=7.0)
+    pad_limits(ax, xs, ys, 0.22)
+    return fig, bg
 
 
-# --- Sumi-e (墨絵) — ink density from motion ---
+# --- Sumi-e (墨絵) ---
 
 
 @style("sumi")
 def sumi(lons, lats):
-    """Speed → ink: slow steps pool dark; fast steps thin and pale."""
-    bg_color, fg_color = SUMI_WASH, SUMI_INK
-    fig, ax = create_figure(bg_color)
-    d = segment_lengths(lons, lats)
-    # invert: small step = slow = dense ink
-    inv = 1.0 / (d + np.percentile(d, 10) + 1e-12)
+    """Slow = thick black. Fast = thin. Structure only."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.18, max_keys=60)
+    # re-sample lengths on the bones
+    d = np.hypot(np.diff(xs), np.diff(ys))
+    inv = 1.0 / (d + np.median(d) + 1e-12)
     inv = inv / (inv.max() + 1e-12)
-    step = max(1, len(lons) // 2500)
-    for i in range(0, len(lons) - 1, step):
-        w = inv[i]
-        ax.plot(
-            [lons[i], lons[i + 1]],
-            [lats[i], lats[i + 1]],
-            color=fg_color,
-            linewidth=0.4 + w * 4.5,
-            alpha=0.25 + w * 0.65,
-            solid_capstyle="round",
+    for i in range(len(xs) - 1):
+        ink_stroke(
+            ax,
+            xs[i : i + 2],
+            ys[i : i + 2],
+            ink,
+            lw=1.5 + inv[i] * 12.0,
+            alpha=1.0,
         )
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
 
 
 @style("sumi-dry")
 def sumi_dry(lons, lats):
-    """Dry brush: broken, scratchy strokes — ink almost gone."""
-    bg_color, fg_color = "#f5f2eb", SUMI_INK
-    fig, ax = create_figure(bg_color)
-    rng = np.random.default_rng(7)
-    xs, ys = downsample_path(lons, lats, min(1200, len(lons)))
-    for i in range(len(xs) - 1):
-        if rng.random() < 0.35:
-            continue  # lift the brush
-        # frayed parallel hairs
-        for _ in range(rng.integers(2, 5)):
-            ox = rng.normal(0, 0.00008)
-            oy = rng.normal(0, 0.00008)
-            ax.plot(
-                [xs[i] + ox, xs[i + 1] + ox],
-                [ys[i] + oy, ys[i + 1] + oy],
-                color=fg_color,
-                linewidth=rng.uniform(0.3, 1.2),
-                alpha=rng.uniform(0.15, 0.55),
-                solid_capstyle="round",
-            )
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
+    """Broken dry brush — only every other bone."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.2, max_keys=50)
+    for i in range(0, len(xs) - 1, 2):
+        ink_stroke(ax, xs[i : i + 2], ys[i : i + 2], ink, lw=5.0)
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
 
 
 @style("sumi-wet")
 def sumi_wet(lons, lats):
-    """Wet ink bleed: soft pools along the path, denser where the body pauses."""
-    bg_color = "#f3efe6"
-    fg_color = SUMI_INK
-    fig, ax = create_figure(bg_color)
-    d = segment_lengths(lons, lats)
-    inv = 1.0 / (d + np.median(d) + 1e-12)
-    inv = inv / (inv.max() + 1e-12)
-    n_blobs = min(220, len(lons) // 4)
-    idx = np.linspace(0, len(lons) - 2, n_blobs).astype(int)
-    extent = path_extent(lons, lats)
-    for i in idx:
-        w = inv[i]
-        base = extent * (0.008 + 0.03 * w)
-        for _ in range(random.randint(3, 9)):
-            ox = random.gauss(0, base * 0.35)
-            oy = random.gauss(0, base * 0.35)
-            r = base * random.uniform(0.4, 1.3)
-            ax.add_patch(
-                Circle(
-                    (lons[i] + ox, lats[i] + oy),
-                    r,
-                    color=fg_color,
-                    alpha=random.uniform(0.04, 0.14) * (0.5 + w),
-                    linewidth=0,
-                )
-            )
-    # hairline spine so the route still reads
-    xs, ys = downsample_path(lons, lats, min(400, len(lons)))
-    ax.plot(xs, ys, color=fg_color, linewidth=0.6, alpha=0.35, solid_capstyle="round")
-    pad_limits(ax, lons, lats, 0.18)
-    return fig, bg_color
+    """Few heavy ink pools — wet brush at the joints."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.25, max_keys=24)
+    extent = path_extent(xs, ys)
+    ink_stroke(ax, xs, ys, ink, lw=3.0, alpha=0.9)
+    for x, y in zip(xs, ys):
+        ax.add_patch(
+            Circle((x, y), extent * 0.028, color=ink, alpha=0.55, linewidth=0)
+        )
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
 
 
 @style("bokashi")
 def bokashi(lons, lats):
-    """Graduated wash: ink fades from start to end like a single loaded brush."""
-    bg_color = SUMI_WASH
-    fg_color = SUMI_INK
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(900, len(lons)))
+    """One stroke that fades to nothing."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=40)
     n = len(xs) - 1
-    # layered soft widths for wash feel
-    for layer, (lw_scale, a_scale) in enumerate([(6.0, 0.08), (3.0, 0.15), (1.2, 0.55)]):
-        for i in range(n):
-            t = i / max(n - 1, 1)
-            fade = (1 - t) ** 1.3
-            ax.plot(
-                [xs[i], xs[i + 1]],
-                [ys[i], ys[i + 1]],
-                color=fg_color,
-                linewidth=lw_scale * (0.4 + 0.6 * fade),
-                alpha=a_scale * fade + 0.02,
-                solid_capstyle="round",
-            )
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
+    for i in range(n):
+        t = i / max(n - 1, 1)
+        fade = (1 - t) ** 1.5
+        ink_stroke(
+            ax,
+            xs[i : i + 2],
+            ys[i : i + 2],
+            ink,
+            lw=2.0 + 10.0 * fade,
+            alpha=0.15 + 0.85 * fade,
+        )
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
 
 
-# --- Shodō (書道) — the walk as brushstroke ---
+# --- Shodō (書道) ---
 
 
 @style("shodo")
 def shodo(lons, lats):
-    """Calligraphic bone: thick-thin from turning keys, like fude pressure."""
-    bg_color, fg_color = "#f9f6f0", SUMI_INK
-    fig, ax = create_figure(bg_color)
-    keys = turning_keys(lons, lats, angle_threshold=0.15)
-    # pressure peaks at turns (pause / direction change)
-    pressure = np.zeros(len(lons))
-    for k in keys:
-        pressure[k] = 1.0
-    # smooth pressure along path
-    kernel = 25
-    if len(pressure) > kernel:
-        kernel = kernel | 1
-        pad = kernel // 2
-        p = np.pad(pressure, pad, mode="edge")
-        pressure = np.convolve(p, np.ones(kernel) / kernel, mode="valid")
-    pressure = pressure / (pressure.max() + 1e-12)
-    step = max(1, len(lons) // 2000)
-    for i in range(0, len(lons) - 1, step):
-        p = pressure[i]
-        ax.plot(
-            [lons[i], lons[i + 1]],
-            [lats[i], lats[i + 1]],
-            color=fg_color,
-            linewidth=0.8 + p * 5.5,
-            alpha=0.45 + p * 0.5,
-            solid_capstyle="round",
+    """Calligraphy: thick at turns, thin on straights."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    keys = turning_keys(lons, lats, angle_threshold=0.2)
+    xs, ys = lons[keys], lats[keys]
+    if len(xs) > 40:
+        idx = np.linspace(0, len(xs) - 1, 40).astype(int)
+        xs, ys = xs[idx], ys[idx]
+    # angle change → pressure
+    for i in range(len(xs) - 1):
+        if 0 < i < len(xs) - 1:
+            v1 = np.array([xs[i] - xs[i - 1], ys[i] - ys[i - 1]])
+            v2 = np.array([xs[i + 1] - xs[i], ys[i + 1] - ys[i]])
+            n1, n2 = np.linalg.norm(v1), np.linalg.norm(v2)
+            if n1 > 0 and n2 > 0:
+                turn = 1 - np.clip(np.dot(v1, v2) / (n1 * n2), -1, 1)
+            else:
+                turn = 0
+        else:
+            turn = 1.0
+        ink_stroke(
+            ax,
+            xs[i : i + 2],
+            ys[i : i + 2],
+            ink,
+            lw=2.5 + turn * 10.0,
         )
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
 
 
 @style("shodo-lift")
 def shodo_lift(lons, lats):
-    """Brush lifts between phrase-like segments (clusters of motion)."""
-    bg_color = "#faf8f4"
-    fg_color = SUMI_INK
-    fig, ax = create_figure(bg_color)
-    d = segment_lengths(lons, lats)
-    thr = np.percentile(d, 92)
-    # split into continuous phrases
-    cuts = np.where(d > thr)[0]
-    bounds = [0] + [c + 1 for c in cuts] + [len(lons)]
-    for a, b in zip(bounds[:-1], bounds[1:]):
-        if b - a < 3:
+    """Few phrases — brush lifts between bold strokes."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.22, max_keys=36)
+    # break into 4–6 phrases
+    n_phrase = 5
+    cuts = np.linspace(0, len(xs) - 1, n_phrase + 1).astype(int)
+    for a, b in zip(cuts[:-1], cuts[1:]):
+        if b - a < 1:
             continue
-        seg_x, seg_y = lons[a:b], lats[a:b]
-        # each phrase: attack → sustain → release
-        n = len(seg_x) - 1
-        for i in range(n):
-            t = i / max(n - 1, 1)
-            envelope = np.sin(np.pi * t) ** 0.7
-            ax.plot(
-                [seg_x[i], seg_x[i + 1]],
-                [seg_y[i], seg_y[i + 1]],
-                color=fg_color,
-                linewidth=0.5 + envelope * 4.0,
-                alpha=0.3 + envelope * 0.6,
-                solid_capstyle="round",
-            )
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
+        ink_stroke(ax, xs[a : b + 1], ys[a : b + 1], ink, lw=8.0)
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
 
 
 @style("tome")
 def tome(lons, lats):
-    """止め — only corners remain: pure shodō structure, stops as joints."""
-    bg_color, fg_color = SUMI_WASH, SUMI_INK
-    fig, ax = create_figure(bg_color)
-    keys = turning_keys(lons, lats, angle_threshold=0.18)
-    kx, ky = lons[keys], lats[keys]
-    ax.plot(kx, ky, color=fg_color, linewidth=2.8, alpha=0.9, solid_capstyle="round")
-    for i, (x, y) in enumerate(zip(kx, ky)):
-        size = 8 if i in (0, len(kx) - 1) else 4.5
-        ax.plot(x, y, "o", color=fg_color, markersize=size, alpha=0.85)
-    pad_limits(ax, lons, lats, 0.14)
-    return fig, bg_color
+    """止め — only the stops. Corners and endpoints."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.32, max_keys=20)
+    ink_stroke(ax, xs, ys, ink, lw=8.0)
+    for i, (x, y) in enumerate(zip(xs, ys)):
+        s = 14 if i in (0, len(xs) - 1) else 9
+        ax.plot(x, y, "o", color=ink, markersize=s, markeredgewidth=0)
+    pad_limits(ax, xs, ys, 0.18)
+    return fig, bg
 
 
-# --- Haiga (俳画) — image + empty room for a poem ---
+# --- Haiga (俳画) ---
 
 
 @style("haiga")
 def haiga(lons, lats):
-    """Minimal path low on the page; upper field left empty for a haiku."""
-    bg_color = "#f7f4ee"
-    fg_color = "#2c2c2c"
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(500, len(lons)))
-    # normalize into lower third of a composed frame
+    """Path low, sky empty, one red seal."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=28)
     nx = (xs - xs.min()) / (xs.max() - xs.min() + 1e-12)
     ny = (ys - ys.min()) / (ys.max() - ys.min() + 1e-12)
-    # place track in lower-left third (ma above and right)
-    px = 0.08 + nx * 0.55
-    py = 0.08 + ny * 0.38
-    ax.plot(px, py, color=fg_color, linewidth=1.4, alpha=0.8, solid_capstyle="round")
-    # single ink accent — a small seal-like mark upper-right
-    ax.add_patch(Circle((0.88, 0.82), 0.018, color="#8b2e2e", alpha=0.55, linewidth=0))
+    px = 0.08 + nx * 0.52
+    py = 0.08 + ny * 0.36
+    ink_stroke(ax, px, py, ink, lw=4.5)
+    ax.add_patch(Rectangle((0.84, 0.78), 0.08, 0.08, facecolor="#a33a2e", edgecolor="none"))
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_aspect("equal")
-    return fig, bg_color
+    return fig, bg
 
 
 @style("haiga-slash")
 def haiga_slash(lons, lats):
-    """One decisive slash of path; vast empty field — haiku as negative space."""
-    bg_color = "#faf9f6"
-    fg_color = SUMI_INK
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(300, len(lons)))
+    """One slash in a field of empty."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=24)
     nx = (xs - xs.min()) / (xs.max() - xs.min() + 1e-12)
     ny = (ys - ys.min()) / (ys.max() - ys.min() + 1e-12)
-    px = 0.2 + nx * 0.5
-    py = 0.35 + ny * 0.3
-    for i in range(len(px) - 1):
-        t = i / max(len(px) - 2, 1)
-        ax.plot(
-            [px[i], px[i + 1]],
-            [py[i], py[i + 1]],
-            color=fg_color,
-            linewidth=1.8 * (1 - 0.4 * t),
-            alpha=0.7,
-            solid_capstyle="round",
-        )
+    px = 0.18 + nx * 0.48
+    py = 0.32 + ny * 0.28
+    ink_stroke(ax, px, py, ink, lw=6.0)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    return fig, bg_color
+    return fig, bg
 
 
-# --- Kintsugi (金継ぎ) — gold at breaks ---
+# --- Kintsugi (金継ぎ) ---
 
 
 @style("kintsugi")
 def kintsugi(lons, lats):
-    """Path in dark ink; golden repair at GPS gaps and sharp reversals."""
-    bg_color = "#f6f3ed"
-    ink = "#2a2a2a"
-    gold = KINTSUGI_GOLD
-    fig, ax = create_figure(bg_color)
-    gaps = gap_mask(lons, lats, factor=5.0)
-    revs = reverse_mask(lons, lats)
-    # reverse flags map to segment i (between i and i+1) via index i
-    repair = gaps.copy()
-    # mark segment after a reverse as repair too
-    for i, is_rev in enumerate(revs):
-        if is_rev:
-            repair[i] = True
-            if i + 1 < len(repair):
-                repair[i + 1] = True
-
-    step = max(1, len(lons) // 3000)
-    for i in range(0, len(lons) - 1, step):
-        if repair[i]:
+    """Black bone, gold only at the breaks."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.2, max_keys=50)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=6.0)
+    keys = turning_keys(lons, lats, angle_threshold=0.15)
+    extent = path_extent(xs, ys)
+    gold_idx = keys[:: max(1, len(keys) // 8)]
+    for k in gold_idx[1:-1]:
+        # short gold seam
+        if k < 1 or k >= len(lons) - 1:
             continue
+        dx = lons[min(k + 3, len(lons) - 1)] - lons[max(k - 3, 0)]
+        dy = lats[min(k + 3, len(lats) - 1)] - lats[max(k - 3, 0)]
+        L = max(np.hypot(dx, dy), 1e-12)
+        span = extent * 0.04
         ax.plot(
-            [lons[i], lons[i + 1]],
-            [lats[i], lats[i + 1]],
-            color=ink,
-            linewidth=1.6,
-            alpha=0.75,
+            [lons[k] - dx / L * span, lons[k] + dx / L * span],
+            [lats[k] - dy / L * span, lats[k] + dy / L * span],
+            color=KINTSUGI_GOLD,
+            linewidth=5.0,
+            alpha=1.0,
             solid_capstyle="round",
+            zorder=5,
         )
-    # gold seams — draw every repair segment (not stepped)
-    for i in np.where(repair)[0]:
-        ax.plot(
-            [lons[i], lons[i + 1]],
-            [lats[i], lats[i + 1]],
-            color=gold,
-            linewidth=2.8,
-            alpha=0.9,
-            solid_capstyle="round",
-        )
-        # soft gold glow
-        ax.plot(
-            [lons[i], lons[i + 1]],
-            [lats[i], lats[i + 1]],
-            color=KINTSUGI_GOLD_SOFT,
-            linewidth=6.0,
-            alpha=0.25,
-            solid_capstyle="round",
-            zorder=0,
-        )
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
 
 
 @style("kintsugi-vein")
 def kintsugi_vein(lons, lats):
-    """Whole path as cracked ceramic: dark body, gold veins at every turn."""
-    bg_color = "#f4f0e8"
-    ink = "#3a3530"
-    gold = KINTSUGI_GOLD
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(1500, len(lons)))
-    ax.plot(xs, ys, color=ink, linewidth=2.2, alpha=0.7, solid_capstyle="round")
-    keys = turning_keys(lons, lats, angle_threshold=0.12)
-    for k in keys[1:-1]:
-        # short gold vein through the joint, perpendicular + along
-        if k < 1 or k >= len(lons) - 1:
+    """Few gold veins on a dark body — not every crack, only the deep ones."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.28, max_keys=28)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=7.0)
+    extent = path_extent(xs, ys)
+    # only major joints
+    for i in range(1, len(xs) - 1):
+        v1 = np.array([xs[i] - xs[i - 1], ys[i] - ys[i - 1]])
+        v2 = np.array([xs[i + 1] - xs[i], ys[i + 1] - ys[i]])
+        n1, n2 = np.linalg.norm(v1), np.linalg.norm(v2)
+        if n1 == 0 or n2 == 0:
             continue
-        dx = lons[k + 1] - lons[k - 1]
-        dy = lats[k + 1] - lats[k - 1]
-        L = max(np.hypot(dx, dy), 1e-12)
-        ux, uy = dx / L, dy / L
-        span = path_extent(lons, lats) * 0.012
+        if np.dot(v1, v2) / (n1 * n2) > 0.3:
+            continue  # gentle bend — skip
+        span = extent * 0.05
         ax.plot(
-            [lons[k] - ux * span, lons[k] + ux * span],
-            [lats[k] - uy * span, lats[k] + uy * span],
-            color=gold,
-            linewidth=1.8,
-            alpha=0.85,
+            [xs[i] - span * 0.3, xs[i] + span * 0.3],
+            [ys[i], ys[i]],
+            color=KINTSUGI_GOLD,
+            linewidth=4.5,
             solid_capstyle="round",
+            zorder=5,
         )
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
 
 
 @style("kintsugi-shard")
 def kintsugi_shard(lons, lats):
-    """Broken into shards at gaps; gold mortar holds the pieces."""
-    bg_color = "#f7f4ef"
-    ink = "#1f1f1f"
-    gold = KINTSUGI_GOLD
-    fig, ax = create_figure(bg_color)
-    gaps = gap_mask(lons, lats, factor=4.5)
-    cuts = np.where(gaps)[0]
-    bounds = [0] + [c + 1 for c in cuts] + [len(lons)]
-    for a, b in zip(bounds[:-1], bounds[1:]):
-        if b - a < 2:
-            continue
+    """Three shards held by gold."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=36)
+    cuts = [0, len(xs) // 3, 2 * len(xs) // 3, len(xs) - 1]
+    for a, b in zip(cuts[:-1], cuts[1:]):
+        ink_stroke(ax, xs[a : b + 1], ys[a : b + 1], SUMI_INK, lw=7.0)
+    for c in cuts[1:-1]:
         ax.plot(
-            lons[a:b],
-            lats[a:b],
-            color=ink,
-            linewidth=2.0,
-            alpha=0.8,
-            solid_capstyle="round",
+            [xs[c]],
+            [ys[c]],
+            "o",
+            color=KINTSUGI_GOLD,
+            markersize=12,
+            markeredgewidth=0,
+            zorder=5,
         )
-    for c in cuts:
-        ax.plot(
-            [lons[c], lons[c + 1]],
-            [lats[c], lats[c + 1]],
-            color=gold,
-            linewidth=3.2,
-            alpha=0.92,
-            solid_capstyle="round",
-        )
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
+        # gold bridge across the cut
+        if c + 1 < len(xs):
+            ax.plot(
+                [xs[c], xs[c + 1] if c + 1 < len(xs) else xs[c]],
+                [ys[c], ys[min(c + 1, len(ys) - 1)]],
+                color=KINTSUGI_GOLD,
+                linewidth=6.0,
+                solid_capstyle="round",
+                zorder=5,
+            )
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
 
 
-# --- Karesansui (枯山水) — raked gravel garden ---
+# --- Karesansui (枯山水) ---
 
 
 @style("karesansui")
 def karesansui(lons, lats):
-    """Parallel rake lines bent around the path-as-stone."""
-    bg_color = RAKE_SAND
-    fg_color = RAKE_LINE
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(400, len(lons)))
-    # path as "rocks" — solid dark stones at key points
-    keys = turning_keys(lons, lats, angle_threshold=0.2)
-    stone_idx = keys[:: max(1, len(keys) // 12)]
+    """Few stones. Few rake lines. Sand and rock."""
+    bg, line_c, stone = RAKE_SAND, RAKE_LINE, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.35, max_keys=8)
     extent = path_extent(lons, lats)
-    min_lon, max_lon = lons.min() - extent * 0.15, lons.max() + extent * 0.15
-    min_lat, max_lat = lats.min() - extent * 0.15, lats.max() + extent * 0.15
-
-    n_lines = 28
-    # rake direction: principal axis of path
-    coords = np.column_stack([lons - lons.mean(), lats - lats.mean()])
-    _, _, vt = np.linalg.svd(coords, full_matrices=False)
-    tx, ty = vt[0]  # along
-    nx, ny = -ty, tx  # across
-
-    for k in np.linspace(-0.55, 0.55, n_lines):
-        # line of points across the bbox
-        t = np.linspace(-0.7, 0.7, 80)
-        line_x = lons.mean() + t * extent * tx + k * extent * nx
-        line_y = lats.mean() + t * extent * ty + k * extent * ny
-        # push line away from stones
-        for i in range(len(line_x)):
-            for si in stone_idx:
-                dx = line_x[i] - lons[si]
-                dy = line_y[i] - lats[si]
-                dist = np.hypot(dx, dy) + 1e-12
-                influence = np.exp(-dist / (extent * 0.06)) * extent * 0.04
-                line_x[i] += (dx / dist) * influence
-                line_y[i] += (dy / dist) * influence
-        ax.plot(line_x, line_y, color=fg_color, linewidth=0.55, alpha=0.45)
-
-    for si in stone_idx:
-        ax.add_patch(
-            Circle(
-                (lons[si], lats[si]),
-                extent * 0.018,
-                color="#3d3830",
-                alpha=0.85,
-                linewidth=0,
-            )
-        )
-    # faint true path as memory under the rakes
-    ax.plot(xs, ys, color="#3d3830", linewidth=0.4, alpha=0.2, solid_capstyle="round")
-    ax.set_xlim(min_lon, max_lon)
-    ax.set_ylim(min_lat, max_lat)
-    return fig, bg_color
-
-
-@style("rake")
-def rake(lons, lats):
-    """Concentric rakes around the path — water rings in dry stone."""
-    bg_color = RAKE_SAND
-    fg_color = RAKE_LINE
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(300, len(lons)))
-    extent = path_extent(lons, lats)
-    # rings offset outward from path
-    for scale, alpha in [(1.0, 0.55), (1.04, 0.35), (1.08, 0.22), (1.12, 0.12), (1.16, 0.08)]:
-        cx, cy = xs.mean(), ys.mean()
-        rx = cx + (xs - cx) * scale
-        ry = cy + (ys - cy) * scale
-        ax.plot(rx, ry, color=fg_color, linewidth=0.7, alpha=alpha, solid_capstyle="round")
-    ax.plot(xs, ys, color="#2c2820", linewidth=2.0, alpha=0.8, solid_capstyle="round")
-    pad_limits(ax, lons, lats, 0.22)
-    return fig, bg_color
-
-
-@style("gravel")
-def gravel(lons, lats):
-    """Pointillist gravel field denser near the walked line."""
-    bg_color = "#ebe4d6"
-    fg_color = "#5a5248"
-    fig, ax = create_figure(bg_color)
-    extent = path_extent(lons, lats)
-    xs, ys = downsample_path(lons, lats, min(250, len(lons)))
-    rng = np.random.default_rng(42)
-    n_pebbles = 3500
-    # sample near path with gaussian scatter
-    idx = rng.integers(0, len(xs), n_pebbles)
-    sigma = extent * 0.08
-    px = xs[idx] + rng.normal(0, sigma, n_pebbles)
-    py = ys[idx] + rng.normal(0, sigma, n_pebbles)
-    # size varies; denser look via alpha
-    sizes = rng.uniform(0.3, 2.2, n_pebbles)
-    alphas = rng.uniform(0.08, 0.4, n_pebbles)
-    for x, y, s, a in zip(px, py, sizes, alphas):
-        ax.plot(x, y, "o", color=fg_color, markersize=s, alpha=a, markeredgewidth=0)
-    ax.plot(xs, ys, color="#2a2620", linewidth=1.2, alpha=0.5, solid_capstyle="round")
-    pad_limits(ax, lons, lats, 0.2)
-    return fig, bg_color
-
-
-# --- Notan (濃淡) — light / dark balance only ---
-
-
-@style("notan")
-def notan(lons, lats):
-    """Two-tone: thick path as positive form; ground is the other half."""
-    bg_color = NOTAN_PAPER
-    fg_color = NOTAN_INK
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(800, len(lons)))
-    ax.plot(
-        xs,
-        ys,
-        color=fg_color,
-        linewidth=14,
-        alpha=1.0,
-        solid_capstyle="round",
-        solid_joinstyle="round",
-    )
-    pad_limits(ax, lons, lats, 0.16)
-    return fig, bg_color
-
-
-@style("notan-fill")
-def notan_fill(lons, lats):
-    """Landscape notan: upper envelope of the path as mountain silhouette."""
-    bg_color = NOTAN_PAPER
-    fg_color = NOTAN_INK
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(800, len(lons)))
-    extent = path_extent(lons, lats)
-    # bin by longitude → skyline of the walk
-    n_bins = 100
-    edges = np.linspace(xs.min(), xs.max(), n_bins + 1)
-    sky_x, sky_y = [], []
-    for i in range(n_bins):
-        mask = (xs >= edges[i]) & (xs <= edges[i + 1] if i == n_bins - 1 else xs < edges[i + 1])
-        if not np.any(mask):
-            continue
-        sky_x.append(0.5 * (edges[i] + edges[i + 1]))
-        sky_y.append(ys[mask].max())
-    sky_x = np.array(sky_x)
-    sky_y = np.array(sky_y)
-    floor = ys.min() - extent * 0.25
-    poly_x = np.concatenate([sky_x, [sky_x[-1], sky_x[0]]])
-    poly_y = np.concatenate([sky_y, [floor, floor]])
-    ax.fill(poly_x, poly_y, color=fg_color, alpha=1.0, linewidth=0, zorder=1)
-    # true path as hairline on the ridge
-    ax.plot(xs, ys, color=bg_color, linewidth=0.6, alpha=0.35, solid_capstyle="round", zorder=2)
-    pad = extent * 0.12
-    ax.set_xlim(xs.min() - pad, xs.max() + pad)
-    ax.set_ylim(floor, ys.max() + pad)
-    return fig, bg_color
-
-
-@style("notan-invert")
-def notan_invert(lons, lats):
-    """Black field, paper-colored path — night notan."""
-    bg_color = NOTAN_INK
-    fg_color = NOTAN_PAPER
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(800, len(lons)))
-    ax.plot(
-        xs,
-        ys,
-        color=fg_color,
-        linewidth=10,
-        alpha=1.0,
-        solid_capstyle="round",
-        solid_joinstyle="round",
-    )
-    pad_limits(ax, lons, lats, 0.16)
-    return fig, bg_color
-
-
-@style("notan-block")
-def notan_block(lons, lats):
-    """Bold black mass: ultra-thick stroke as pure positive form."""
-    bg_color = NOTAN_PAPER
-    fg_color = NOTAN_INK
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(300, len(lons)))
-    ax.plot(xs, ys, color=fg_color, linewidth=28, alpha=1.0, solid_capstyle="round")
-    pad_limits(ax, lons, lats, 0.22)
-    return fig, bg_color
-
-
-@style("notan-split")
-def notan_split(lons, lats):
-    """Canvas bisected: path rides the light/dark boundary."""
-    bg_color = NOTAN_PAPER
-    fg_color = NOTAN_INK
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(600, len(lons)))
-    extent = path_extent(lons, lats)
-    # half-plane below diagonal through center
-    cx, cy = xs.mean(), ys.mean()
-    # rotate so split follows path's principal axis
-    coords = np.column_stack([xs - cx, ys - cy])
-    _, _, vt = np.linalg.svd(coords, full_matrices=False)
-    nx, ny = vt[1]  # minor axis = split normal
-    # corners of a large square in data space
-    s = extent * 1.2
-    corners = np.array([[-s, -s], [s, -s], [s, s], [-s, s]], dtype=float)
-    world = corners @ np.array([[vt[0, 0], vt[0, 1]], [vt[1, 0], vt[1, 1]]])
-    world[:, 0] += cx
-    world[:, 1] += cy
-    # keep corners on the "dark" side of the path mean line
-    side = (world[:, 0] - cx) * nx + (world[:, 1] - cy) * ny
-    dark = world[side <= 0]
-    # build half-plane polygon: dark corners + path projected ends
-    if len(dark) >= 2:
-        # full rectangle split: fill using a big polygon on one side of path midline
-        t = np.linspace(-s, s, 2)
-        line_x = cx + t * vt[0, 0]
-        line_y = cy + t * vt[0, 1]
-        # dark half: line + offset along -normal
-        half_x = np.concatenate(
-            [line_x, line_x[::-1] - nx * s * 1.5]
-        )
-        half_y = np.concatenate(
-            [line_y, line_y[::-1] - ny * s * 1.5]
-        )
-        ax.fill(half_x, half_y, color=fg_color, linewidth=0, zorder=0)
-    ax.plot(xs, ys, color="#666666", linewidth=1.2, alpha=0.9, solid_capstyle="round", zorder=2)
-    # dual-color path: dark on paper side, paper on dark side — simple overlay
-    ax.plot(xs, ys, color=fg_color, linewidth=2.5, alpha=0.35, solid_capstyle="round", zorder=3)
-    pad_limits(ax, lons, lats, 0.2)
-    return fig, bg_color
-
-
-# --- Yūgen (幽玄) — suggest, don't depict ---
-
-
-@style("whisper")
-def whisper(lons, lats):
-    """The faintest possible line — yūgen as code."""
-    bg_color = "#fcfbf9"
-    fg_color = "#4a4a4a"
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(600, len(lons)))
-    ax.plot(xs, ys, color=fg_color, linewidth=0.4, alpha=0.12, solid_capstyle="round")
-    pad_limits(ax, lons, lats, 0.18)
-    return fig, bg_color
-
-
-@style("yugen")
-def yugen(lons, lats):
-    """Mist layers: path only half-seen through successive veils."""
-    bg_color = "#f3f1ec"
-    fg_color = "#3a3a3a"
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(500, len(lons)))
-    rng = np.random.default_rng(3)
-    for _ in range(7):
-        ox = rng.normal(0, path_extent(lons, lats) * 0.008)
-        oy = rng.normal(0, path_extent(lons, lats) * 0.008)
-        ax.plot(
-            xs + ox,
-            ys + oy,
-            color=fg_color,
-            linewidth=rng.uniform(0.8, 2.5),
-            alpha=rng.uniform(0.03, 0.1),
-            solid_capstyle="round",
-        )
-    # one slightly clearer core
-    ax.plot(xs, ys, color=fg_color, linewidth=0.7, alpha=0.18, solid_capstyle="round")
-    pad_limits(ax, lons, lats, 0.2)
-    return fig, bg_color
-
-
-@style("kasumi")
-def kasumi(lons, lats):
-    """Haze: soft dots along the path, no continuous line."""
-    bg_color = "#f5f3ef"
-    fg_color = "#2f2f2f"
-    fig, ax = create_figure(bg_color)
-    n = min(180, len(lons))
-    idx = np.linspace(0, len(lons) - 1, n).astype(int)
-    extent = path_extent(lons, lats)
-    for i in idx:
-        for _ in range(random.randint(2, 6)):
-            r = extent * random.uniform(0.01, 0.04)
-            ax.add_patch(
-                Circle(
-                    (
-                        lons[i] + random.gauss(0, r * 0.4),
-                        lats[i] + random.gauss(0, r * 0.4),
-                    ),
-                    r,
-                    color=fg_color,
-                    alpha=random.uniform(0.02, 0.08),
-                    linewidth=0,
-                )
-            )
-    pad_limits(ax, lons, lats, 0.22)
-    return fig, bg_color
-
-
-@style("maboroshi")
-def maboroshi(lons, lats):
-    """Phantom echoes: the route appears thrice, each time less sure."""
-    bg_color = "#f8f7f4"
-    fg_color = "#333333"
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(700, len(lons)))
-    extent = path_extent(lons, lats)
-    offsets = [(0, 0, 1.2, 0.35), (0.012, 0.008, 0.9, 0.12), (-0.01, 0.015, 0.6, 0.06)]
-    for ox_r, oy_r, lw, a in offsets:
-        ax.plot(
-            xs + ox_r * extent,
-            ys + oy_r * extent,
-            color=fg_color,
-            linewidth=lw,
-            alpha=a,
-            solid_capstyle="round",
-        )
-    pad_limits(ax, lons, lats, 0.2)
-    return fig, bg_color
-
-
-@style("ma")
-def ma_style(lons, lats):
-    """Mostly emptiness: a fragment of the path only — ma as subject."""
-    bg_color = "#fafaf8"
-    fg_color = "#2c2c2c"
-    fig, ax = create_figure(bg_color)
-    # show only the middle fifth of the walk
-    n = len(lons)
-    a, b = int(n * 0.4), int(n * 0.55)
-    xs, ys = lons[a:b], lats[a:b]
-    # place that fragment off-center in a large empty frame
-    nx = (xs - xs.min()) / (xs.max() - xs.min() + 1e-12)
-    ny = (ys - ys.min()) / (ys.max() - ys.min() + 1e-12)
-    px = 0.55 + nx * 0.28
-    py = 0.15 + ny * 0.28
-    ax.plot(px, py, color=fg_color, linewidth=1.0, alpha=0.55, solid_capstyle="round")
-    ax.set_xlim(0, 1)
-    ax.set_ylim(0, 1)
-    return fig, bg_color
-
-
-@style("wabi")
-def wabi(lons, lats):
-    """Wabi-sabi: imperfect, hand-jittered stroke — the unpolished beauty."""
-    bg_color = "#f4efe6"
-    fg_color = "#3a3530"
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(500, len(lons)))
-    rng = np.random.default_rng(11)
-    extent = path_extent(lons, lats)
-    jitter = extent * 0.004
-    xs = xs + rng.normal(0, jitter, len(xs))
-    ys = ys + rng.normal(0, jitter, len(ys))
-    # uneven pressure
-    for i in range(len(xs) - 1):
-        lw = rng.uniform(0.8, 3.5)
-        ax.plot(
-            [xs[i], xs[i + 1]],
-            [ys[i], ys[i + 1]],
-            color=fg_color,
-            linewidth=lw,
-            alpha=rng.uniform(0.5, 0.9),
-            solid_capstyle="round",
-        )
-    pad_limits(ax, lons, lats, 0.14)
-    return fig, bg_color
-
-
-@style("suiboku")
-def suiboku(lons, lats):
-    """Water-ink: layered gray washes of increasing darkness on the same stroke."""
-    bg_color = "#f0ebe3"
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(700, len(lons)))
-    layers = [
-        ("#1a1a1a", 8.0, 0.06),
-        ("#1a1a1a", 4.5, 0.12),
-        ("#1a1a1a", 2.0, 0.35),
-        ("#0d0d0d", 0.7, 0.7),
-    ]
-    for color, lw, a in layers:
-        ax.plot(xs, ys, color=color, linewidth=lw, alpha=a, solid_capstyle="round")
-    pad_limits(ax, lons, lats)
-    return fig, bg_color
-
-
-@style("in-seal")
-def in_seal(lons, lats):
-    """Red seal (印) at the end of a quiet ink path — signature of the body."""
-    bg_color = SUMI_WASH
-    fg_color = SUMI_INK
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(800, len(lons)))
-    ax.plot(xs, ys, color=fg_color, linewidth=1.3, alpha=0.75, solid_capstyle="round")
-    # square seal near the finish
-    extent = path_extent(lons, lats)
-    s = extent * 0.035
-    ex, ey = xs[-1], ys[-1]
-    # offset seal slightly off the path end
-    sx = ex + extent * 0.04
-    sy = ey - extent * 0.04
-    ax.add_patch(
-        Rectangle(
-            (sx - s / 2, sy - s / 2),
-            s,
-            s,
-            facecolor="#b54a3c",
-            edgecolor="#8b2e2e",
-            linewidth=0.5,
-            alpha=0.85,
-            zorder=5,
-        )
-    )
-    pad_limits(ax, lons, lats, 0.18)
-    return fig, bg_color
-
-
-@style("hashi")
-def hashi(lons, lats):
-    """Bridge of stones: only discrete stepping-stones along the route."""
-    bg_color = "#f5f2eb"
-    fg_color = "#2c2c2c"
-    fig, ax = create_figure(bg_color)
-    n_stones = min(40, max(12, len(lons) // 150))
-    idx = np.linspace(0, len(lons) - 1, n_stones).astype(int)
-    extent = path_extent(lons, lats)
-    for i, j in enumerate(idx):
-        r = extent * (0.008 + 0.006 * (i % 3) / 2)
-        ax.add_patch(
-            Circle(
-                (lons[j], lats[j]),
-                r,
-                color=fg_color,
-                alpha=0.75,
-                linewidth=0,
-            )
-        )
-    pad_limits(ax, lons, lats, 0.16)
-    return fig, bg_color
-
-
-@style("kiri")
-def kiri(lons, lats):
-    """Fog bank: path dissolves into horizontal mist bands (kasumi variation)."""
-    bg_color = "#eef0f2"
-    fg_color = "#4a4a50"
-    fig, ax = create_figure(bg_color)
-    xs, ys = downsample_path(lons, lats, min(400, len(lons)))
-    extent = path_extent(lons, lats)
-    # horizontal mist strips that intersect the path
-    y_levels = np.linspace(ys.min(), ys.max(), 18)
-    for y0 in y_levels:
-        # find path crossings near this latitude
-        near = np.where(np.abs(ys - y0) < extent * 0.04)[0]
-        if len(near) == 0:
-            continue
-        x_left = xs[near].min() - extent * 0.15
-        x_right = xs[near].max() + extent * 0.15
-        for _ in range(3):
-            yy = y0 + random.uniform(-extent * 0.01, extent * 0.01)
-            ax.plot(
-                [x_left, x_right],
-                [yy, yy],
-                color=fg_color,
-                linewidth=random.uniform(2, 8),
-                alpha=random.uniform(0.04, 0.12),
-                solid_capstyle="round",
-            )
-    ax.plot(xs, ys, color=fg_color, linewidth=0.9, alpha=0.25, solid_capstyle="round")
-    pad_limits(ax, lons, lats, 0.18)
-    return fig, bg_color
-
-
-@style("zen-garden")
-def zen_garden(lons, lats):
-    """Full karesansui field: dense rakes + clustered stones at path nodes."""
-    bg_color = "#e6dfd0"
-    line_c = "#6b6358"
-    stone_c = "#2a2620"
-    fig, ax = create_figure(bg_color)
-    extent = path_extent(lons, lats)
-    xs, ys = downsample_path(lons, lats, min(200, len(lons)))
-    keys = turning_keys(lons, lats, angle_threshold=0.22)
-    stones = keys[:: max(1, len(keys) // 8)]
-
-    # denser parallel rakes
+    # 12 rake lines only
     coords = np.column_stack([lons - lons.mean(), lats - lats.mean()])
     _, _, vt = np.linalg.svd(coords, full_matrices=False)
     tx, ty = vt[0]
     nx, ny = -ty, tx
-    for k in np.linspace(-0.6, 0.6, 40):
-        t = np.linspace(-0.75, 0.75, 100)
+    for k in np.linspace(-0.5, 0.5, 12):
+        t = np.linspace(-0.65, 0.65, 40)
         lx = lons.mean() + t * extent * tx + k * extent * nx
         ly = lats.mean() + t * extent * ty + k * extent * ny
         for i in range(len(lx)):
-            for si in stones:
-                dx = lx[i] - lons[si]
-                dy = ly[i] - lats[si]
+            for sx, sy in zip(xs, ys):
+                dx, dy = lx[i] - sx, ly[i] - sy
                 dist = np.hypot(dx, dy) + 1e-12
-                push = np.exp(-dist / (extent * 0.05)) * extent * 0.05
+                push = np.exp(-dist / (extent * 0.07)) * extent * 0.055
                 lx[i] += (dx / dist) * push
                 ly[i] += (dy / dist) * push
-        ax.plot(lx, ly, color=line_c, linewidth=0.45, alpha=0.4)
-
-    for si in stones:
-        ax.add_patch(
-            Circle((lons[si], lats[si]), extent * 0.022, color=stone_c, alpha=0.9, linewidth=0)
-        )
-        # soft moss ring
-        ax.add_patch(
-            Circle(
-                (lons[si], lats[si]),
-                extent * 0.032,
-                facecolor="none",
-                edgecolor=stone_c,
-                alpha=0.25,
-                linewidth=0.8,
-            )
-        )
+        ax.plot(lx, ly, color=line_c, linewidth=1.2, alpha=0.7)
+    for sx, sy in zip(xs, ys):
+        ax.add_patch(Circle((sx, sy), extent * 0.03, color=stone, linewidth=0))
     pad = extent * 0.2
     ax.set_xlim(lons.min() - pad, lons.max() + pad)
     ax.set_ylim(lats.min() - pad, lats.max() + pad)
-    return fig, bg_color
+    return fig, bg
+
+
+@style("rake")
+def rake(lons, lats):
+    """Three rings. One stone-path."""
+    bg = RAKE_SAND
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=30)
+    cx, cy = xs.mean(), ys.mean()
+    for scale, lw, a in [(1.0, 5.0, 1.0), (1.08, 2.0, 0.45), (1.16, 1.2, 0.25)]:
+        ink_stroke(ax, cx + (xs - cx) * scale, cy + (ys - cy) * scale, RAKE_LINE, lw=lw, alpha=a)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=6.0)
+    pad_limits(ax, xs, ys, 0.24)
+    return fig, bg
+
+
+@style("gravel")
+def gravel(lons, lats):
+    """Sparse pebbles + bold bone."""
+    bg = RAKE_SAND
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=30)
+    extent = path_extent(xs, ys)
+    rng = np.random.default_rng(42)
+    n = 400
+    idx = rng.integers(0, len(xs), n)
+    px = xs[idx] + rng.normal(0, extent * 0.06, n)
+    py = ys[idx] + rng.normal(0, extent * 0.06, n)
+    ax.scatter(px, py, s=rng.uniform(4, 18, n), c=RAKE_LINE, alpha=0.5, linewidths=0)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=5.0)
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
+
+
+# --- Notan (濃淡) ---
+
+
+@style("notan")
+def notan(lons, lats):
+    """Black form. White ground. Nothing else."""
+    bg, ink = NOTAN_PAPER, NOTAN_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.2, max_keys=40)
+    ink_stroke(ax, xs, ys, ink, lw=18.0)
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
+
+
+@style("notan-fill")
+def notan_fill(lons, lats):
+    """Mountain mass: solid black under the skyline."""
+    bg, ink = NOTAN_PAPER, NOTAN_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=50)
+    extent = path_extent(xs, ys)
+    n_bins = 48
+    edges = np.linspace(xs.min(), xs.max(), n_bins + 1)
+    sky_x, sky_y = [], []
+    for i in range(n_bins):
+        right = edges[i + 1] if i < n_bins - 1 else edges[i + 1] + 1e-15
+        mask = (xs >= edges[i]) & (xs < right if i < n_bins - 1 else xs <= right)
+        if not np.any(mask):
+            continue
+        sky_x.append(0.5 * (edges[i] + edges[i + 1]))
+        sky_y.append(ys[mask].max())
+    sky_x, sky_y = np.array(sky_x), np.array(sky_y)
+    floor = ys.min() - extent * 0.2
+    ax.fill(
+        np.concatenate([sky_x, [sky_x[-1], sky_x[0]]]),
+        np.concatenate([sky_y, [floor, floor]]),
+        color=ink,
+        linewidth=0,
+    )
+    pad = extent * 0.1
+    ax.set_xlim(xs.min() - pad, xs.max() + pad)
+    ax.set_ylim(floor, ys.max() + pad)
+    return fig, bg
+
+
+@style("notan-invert")
+def notan_invert(lons, lats):
+    """Night: white bone on black."""
+    bg, ink = NOTAN_INK, NOTAN_PAPER
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.2, max_keys=40)
+    ink_stroke(ax, xs, ys, ink, lw=14.0)
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
+
+
+@style("notan-block")
+def notan_block(lons, lats):
+    """Maximum mass — the path as a single black slab."""
+    bg, ink = NOTAN_PAPER, NOTAN_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.25, max_keys=28)
+    ink_stroke(ax, xs, ys, ink, lw=36.0)
+    pad_limits(ax, xs, ys, 0.28)
+    return fig, bg
+
+
+@style("notan-split")
+def notan_split(lons, lats):
+    """Half black, half paper; path is the cut."""
+    bg, ink = NOTAN_PAPER, NOTAN_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=36)
+    extent = path_extent(xs, ys)
+    cx, cy = xs.mean(), ys.mean()
+    coords = np.column_stack([xs - cx, ys - cy])
+    _, _, vt = np.linalg.svd(coords, full_matrices=False)
+    s = extent * 1.3
+    t = np.array([-s, s])
+    line_x = cx + t * vt[0, 0]
+    line_y = cy + t * vt[0, 1]
+    nx, ny = vt[1]
+    ax.fill(
+        np.concatenate([line_x, line_x[::-1] - nx * s * 1.6]),
+        np.concatenate([line_y, line_y[::-1] - ny * s * 1.6]),
+        color=ink,
+        linewidth=0,
+        zorder=0,
+    )
+    ink_stroke(ax, xs, ys, "#888888", lw=3.5)
+    pad_limits(ax, xs, ys, 0.22)
+    return fig, bg
+
+
+# --- Yūgen / Ma ---
+
+
+@style("whisper")
+def whisper(lons, lats):
+    """Almost nothing — but still the bones."""
+    bg = "#fcfbf9"
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=30)
+    ink_stroke(ax, xs, ys, "#555555", lw=1.2, alpha=0.22)
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
+
+
+@style("yugen")
+def yugen(lons, lats):
+    """Two veils. One core. Suggest, stop."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=32)
+    extent = path_extent(xs, ys)
+    ink_stroke(ax, xs + extent * 0.02, ys + extent * 0.015, SUMI_INK, lw=8.0, alpha=0.08)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=3.0, alpha=0.35)
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
+
+
+@style("kasumi")
+def kasumi(lons, lats):
+    """Haze as discrete breath — few soft discs."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=16)
+    extent = path_extent(xs, ys)
+    for x, y in zip(xs, ys):
+        ax.add_patch(
+            Circle((x, y), extent * 0.045, color=SUMI_INK, alpha=0.12, linewidth=0)
+        )
+        ax.add_patch(
+            Circle((x, y), extent * 0.02, color=SUMI_INK, alpha=0.25, linewidth=0)
+        )
+    pad_limits(ax, xs, ys, 0.22)
+    return fig, bg
+
+
+@style("maboroshi")
+def maboroshi(lons, lats):
+    """Double — the path and its ghost."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=32)
+    extent = path_extent(xs, ys)
+    ink_stroke(ax, xs + extent * 0.025, ys + extent * 0.02, SUMI_INK, lw=5.0, alpha=0.15)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=5.0, alpha=0.85)
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
+
+
+@style("ma")
+def ma_style(lons, lats):
+    """Emptiness is the subject — one short bold fragment."""
+    bg = "#fafaf8"
+    fig, ax = create_figure(bg)
+    n = len(lons)
+    a, b = int(n * 0.42), int(n * 0.52)
+    xs, ys = essence_path(lons[a:b], lats[a:b], angle=0.15, max_keys=12)
+    nx = (xs - xs.min()) / (xs.max() - xs.min() + 1e-12)
+    ny = (ys - ys.min()) / (ys.max() - ys.min() + 1e-12)
+    px = 0.55 + nx * 0.3
+    py = 0.12 + ny * 0.3
+    ink_stroke(ax, px, py, SUMI_INK, lw=4.0)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    return fig, bg
+
+
+@style("wabi")
+def wabi(lons, lats):
+    """Imperfect bones — hand-shaken, unpolished, bold."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=28)
+    rng = np.random.default_rng(11)
+    extent = path_extent(xs, ys)
+    xs = xs + rng.normal(0, extent * 0.006, len(xs))
+    ys = ys + rng.normal(0, extent * 0.006, len(ys))
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=7.0)
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
+
+
+@style("suiboku")
+def suiboku(lons, lats):
+    """Two washes — soft mass under a hard core."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=36)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=16.0, alpha=0.12)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=4.5, alpha=1.0)
+    pad_limits(ax, xs, ys, 0.16)
+    return fig, bg
+
+
+@style("in-seal")
+def in_seal(lons, lats):
+    """Bold ink path. One red seal. Done."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=32)
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=6.0)
+    extent = path_extent(xs, ys)
+    s = extent * 0.05
+    ax.add_patch(
+        Rectangle(
+            (xs[-1] + extent * 0.03 - s / 2, ys[-1] - extent * 0.03 - s / 2),
+            s,
+            s,
+            facecolor="#a33a2e",
+            edgecolor="none",
+            zorder=5,
+        )
+    )
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
+
+
+@style("hashi")
+def hashi(lons, lats):
+    """Stepping stones — nothing between."""
+    bg = SUMI_WASH
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.3, max_keys=14)
+    extent = path_extent(xs, ys)
+    for x, y in zip(xs, ys):
+        ax.add_patch(Circle((x, y), extent * 0.035, color=SUMI_INK, linewidth=0))
+    pad_limits(ax, xs, ys, 0.2)
+    return fig, bg
+
+
+@style("kiri")
+def kiri(lons, lats):
+    """Fog as bold horizontal bars — the path cuts through."""
+    bg = "#eef0f2"
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, max_keys=28)
+    extent = path_extent(xs, ys)
+    for y0 in np.linspace(ys.min(), ys.max(), 9):
+        ax.plot(
+            [xs.min() - extent * 0.1, xs.max() + extent * 0.1],
+            [y0, y0],
+            color="#6a6a70",
+            linewidth=10,
+            alpha=0.15,
+            solid_capstyle="round",
+        )
+    ink_stroke(ax, xs, ys, SUMI_INK, lw=4.0, alpha=0.7)
+    pad_limits(ax, xs, ys, 0.18)
+    return fig, bg
+
+
+@style("zen-garden")
+def zen_garden(lons, lats):
+    """Five stones. Sixteen rakes. Silence."""
+    bg, line_c, stone = "#e6dfd0", "#5a5348", SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = essence_path(lons, lats, angle=0.4, max_keys=5)
+    extent = path_extent(lons, lats)
+    coords = np.column_stack([lons - lons.mean(), lats - lats.mean()])
+    _, _, vt = np.linalg.svd(coords, full_matrices=False)
+    tx, ty = vt[0]
+    nx, ny = -ty, tx
+    for k in np.linspace(-0.55, 0.55, 16):
+        t = np.linspace(-0.7, 0.7, 50)
+        lx = lons.mean() + t * extent * tx + k * extent * nx
+        ly = lats.mean() + t * extent * ty + k * extent * ny
+        for i in range(len(lx)):
+            for sx, sy in zip(xs, ys):
+                dx, dy = lx[i] - sx, ly[i] - sy
+                dist = np.hypot(dx, dy) + 1e-12
+                push = np.exp(-dist / (extent * 0.06)) * extent * 0.06
+                lx[i] += (dx / dist) * push
+                ly[i] += (dy / dist) * push
+        ax.plot(lx, ly, color=line_c, linewidth=1.4, alpha=0.65)
+    for sx, sy in zip(xs, ys):
+        ax.add_patch(Circle((sx, sy), extent * 0.035, color=stone, linewidth=0))
+    pad = extent * 0.22
+    ax.set_xlim(lons.min() - pad, lons.max() + pad)
+    ax.set_ylim(lats.min() - pad, lats.max() + pad)
+    return fig, bg
 
 
 # ============================================================================
