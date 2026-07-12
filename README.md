@@ -136,8 +136,8 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 - `--no-qr`: skip Gist upload and QR overlay. No `GITHUB_TOKEN` required.
 - `--styles s1,s2,...`: render only the named styles.
 
-Registered styles (45):
-`bokashi`, `contour`, `decay`, `enso`, `enso-ghost`, `enso-one`, `gravel`, `grid`, `haiga`, `haiga-slash`, `hashi`, `in-seal`, `karesansui`, `kasumi`, `kintsugi`, `kintsugi-shard`, `kintsugi-vein`, `kiri`, `ma`, `maboroshi`, `network`, `notan`, `notan-block`, `notan-fill`, `notan-invert`, `notan-split`, `painting`, `pulse`, `rain`, `rake`, `scaffold`, `shodo`, `shodo-lift`, `simplify`, `skeleton`, `stitch`, `suiboku`, `sumi`, `sumi-dry`, `sumi-wet`, `tome`, `wabi`, `whisper`, `yugen`, `zen-garden`.
+Registered styles (57):
+`bokashi`, `contour`, `decay`, `enso`, `enso-close`, `enso-ghost`, `enso-one`, `fude`, `gravel`, `grid`, `haiga`, `haiga-slash`, `haku`, `hashi`, `haze`, `ikebana`, `in-seal`, `karesansui`, `kasumi`, `kintsugi`, `kintsugi-shard`, `kintsugi-vein`, `kiri`, `ma`, `maboroshi`, `network`, `nijimi`, `notan`, `notan-block`, `notan-fill`, `notan-invert`, `notan-split`, `painting`, `parallel`, `pulse`, `rain`, `rake`, `ribbon`, `sabi`, `scaffold`, `seki`, `shodo`, `shodo-lift`, `simplify`, `skeleton`, `stitch`, `suiboku`, `sumi`, `sumi-dry`, `sumi-splash`, `sumi-wet`, `tome`, `tsuki`, `wabi`, `whisper`, `yugen`, `zen-garden`.
 
 ### `scripts/dtw-select.py`
 
