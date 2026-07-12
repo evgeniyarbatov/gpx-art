@@ -4,6 +4,16 @@ Generate artistic images from GPX tracks.
 
 This project takes a set of GPX files, renders each route in multiple visual styles, and saves PNG outputs. Each generated image can include a QR code linking to a GitHub Gist with the exact Python style function used to render it.
 
+## Why
+
+A GPS track is usually a thin line on a map. Here the route is the mark itself — ink, pressure, silence — so the walk can be seen as a drawing rather than a dataset.
+
+**Purpose:** turn personal tracks into quiet images worth keeping: one path, many readings (calligraphy, wash, silhouette, stone and sand). Optional QR codes keep the picture honest by pointing at the exact style code that made it.
+
+**Style:** Japanese ink and calligraphy as a *grammar*, not decoration. Favor a living hand — variable pressure, brush lifts, attack and release, accident — over a uniform polyline. Empty space is part of the composition. Quiet is fine; a dead continuous gray line is not.
+
+Taste criteria and how they map to code: [docs/artistic-direction.md](docs/artistic-direction.md).
+
 ## Examples
 
 | scaffold | simplify | stitch |
