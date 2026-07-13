@@ -1,17 +1,18 @@
 import ast
 import os
-import time
-import sys
 import random
+import sys
+import time
+from io import BytesIO
+
 import gpxpy
-import qrcode
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Circle, Rectangle
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from utils import get_files
+import qrcode
 from gist import get_gist_url
-from io import BytesIO
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+from matplotlib.patches import Circle, Rectangle
+from utils import get_files
 
 # ============================================================================
 # STYLE CATALOG - Easy to add/remove styles
@@ -36,7 +37,7 @@ def extract_style_source(script_path, style_name):
     Includes the decorator and full function body.
     """
     try:
-        with open(script_path, "r") as f:
+        with open(script_path) as f:
             source = f.read()
     except Exception as e:
         return f"# Error reading source: {e}"
@@ -50,10 +51,7 @@ def extract_style_source(script_path, style_name):
         if isinstance(node, ast.FunctionDef):
             # Check decorators
             for dec in node.decorator_list:
-                if (
-                    isinstance(dec, ast.Call)
-                    and getattr(dec.func, "id", None) == "style"
-                ):
+                if isinstance(dec, ast.Call) and getattr(dec.func, "id", None) == "style":
                     # Check the first argument of @style(...)
                     if (
                         dec.args
@@ -115,7 +113,7 @@ RAKE_LINE = "#5c5346"
 def extract_coordinates(gpx_filename):
     """Extract lon/lat arrays from GPX file"""
     lons, lats = [], []
-    with open(gpx_filename, "r") as gpx_file:
+    with open(gpx_filename) as gpx_file:
         gpx = gpxpy.parse(gpx_file)
         for track in gpx.tracks:
             for segment in track.segments:
@@ -139,9 +137,7 @@ def create_figure(bg_color, dpi=300):
 def save_figure(fig, filename, bg_color):
     """Save figure with standard settings"""
     fig.tight_layout(pad=0.1)
-    plt.savefig(
-        filename, dpi=300, facecolor=bg_color, edgecolor="none", bbox_inches="tight"
-    )
+    plt.savefig(filename, dpi=300, facecolor=bg_color, edgecolor="none", bbox_inches="tight")
     plt.close()
 
 
@@ -326,12 +322,8 @@ def contour(lons, lats):
 
     # Create multiple offset versions of the track
     for offset in np.linspace(-0.002, 0.002, 12):
-        offset_lons = np.array(lons) + offset * np.cos(
-            np.linspace(0, 2 * np.pi, len(lons))
-        )
-        offset_lats = np.array(lats) + offset * np.sin(
-            np.linspace(0, 2 * np.pi, len(lats))
-        )
+        offset_lons = np.array(lons) + offset * np.cos(np.linspace(0, 2 * np.pi, len(lons)))
+        offset_lats = np.array(lats) + offset * np.sin(np.linspace(0, 2 * np.pi, len(lats)))
         ax.plot(
             offset_lons,
             offset_lats,
@@ -472,9 +464,7 @@ def painting(lons, lats):
             size = random.uniform(0.015, 0.05)
             alpha = random.uniform(0.03, 0.12)
 
-            circle = Circle(
-                (cx + ox, cy + oy), size, color=fg_color, alpha=alpha, linewidth=0
-            )
+            circle = Circle((cx + ox, cy + oy), size, color=fg_color, alpha=alpha, linewidth=0)
             ax.add_patch(circle)
 
     ax.set_xlim(-0.05, 1.05)
@@ -507,7 +497,7 @@ def network(lons, lats):
                     weights.append(1.0 - (distance / max_distance))
 
     # Draw connections
-    for (start, end), weight in zip(connections, weights):
+    for (start, end), weight in zip(connections, weights, strict=False):
         ax.plot(
             [start[0], end[0]],
             [start[1], end[1]],
@@ -544,7 +534,7 @@ def simplify(lons, lats):
     gpx_segment = gpxpy.gpx.GPXTrackSegment()
     gpx_track.segments.append(gpx_segment)
 
-    for lon, lat in zip(lons, lats):
+    for lon, lat in zip(lons, lats, strict=False):
         gpx_segment.points.append(gpxpy.gpx.GPXTrackPoint(lat, lon))
 
     tolerance_values = np.linspace(10, 100, 10)
@@ -599,9 +589,7 @@ def decay(lons, lats):
                 py = lats[i] + random.gauss(0, 0.0008 * progress)
                 size = random.uniform(0.0001, 0.0004) * progress
 
-                circle = Circle(
-                    (px, py), size, color=fg_color, alpha=random.uniform(0.3, 0.7)
-                )
+                circle = Circle((px, py), size, color=fg_color, alpha=random.uniform(0.3, 0.7))
                 ax.add_patch(circle)
 
     return fig, bg_color
@@ -935,7 +923,7 @@ def sumi_wet(lons, lats):
             )
     # broken wet spine, not continuous
     bounds = phrase_bounds(xs, ys, percentile=85)
-    for a, b in zip(bounds[:-1], bounds[1:]):
+    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
         if b - a < 4 or rng.random() < 0.25:
             continue
         env = attack_release(b - a - 1, 0.7)
@@ -1111,7 +1099,7 @@ def shodo_lift(lons, lats):
     extent = path_extent(xs, ys)
     rng = np.random.default_rng(4)
     p = turn_pressure(xs, ys, smooth=7)
-    for a, b in zip(bounds[:-1], bounds[1:]):
+    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
         if b - a < 3:
             continue
         if rng.random() < 0.08:
@@ -1152,7 +1140,7 @@ def shodo_dash(lons, lats):
     bounds = phrase_bounds(xs, ys, percentile=78)
     extent = path_extent(xs, ys)
     rng = np.random.default_rng(8)
-    for a, b in zip(bounds[:-1], bounds[1:]):
+    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
         if b - a < 2:
             continue
         # force short dashes inside longer runs
@@ -1200,7 +1188,7 @@ def harai(lons, lats):
     # long sweeps (not GPS-jump micro-phrases)
     n_sweeps = max(5, min(14, len(xs) // 45))
     cuts = np.linspace(0, len(xs) - 1, n_sweeps + 1).astype(int)
-    for a, b in zip(cuts[:-1], cuts[1:]):
+    for a, b in zip(cuts[:-1], cuts[1:], strict=False):
         if b - a < 8:
             continue
         n = b - a - 1
@@ -1229,7 +1217,7 @@ def shodo_breath(lons, lats):
     bounds = phrase_bounds(xs, ys, percentile=92)
     p = turn_pressure(xs, ys, smooth=13)
     extent = path_extent(xs, ys)
-    for a, b in zip(bounds[:-1], bounds[1:]):
+    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
         if b - a < 6:
             continue
         n = b - a - 1
@@ -1282,7 +1270,7 @@ def tome(lons, lats):
                 lw=1.2 + env[j] * 6.0,
                 alpha=0.4 + env[j] * 0.5,
             )
-    for i, (x, y) in enumerate(zip(xs, ys)):
+    for i, (x, y) in enumerate(zip(xs, ys, strict=False)):
         is_end = i in (0, len(xs) - 1)
         r = extent * (0.018 if is_end else float(rng.uniform(0.008, 0.02)))
         layers = 4 if is_end else int(rng.integers(2, 5))
@@ -1499,7 +1487,7 @@ def kintsugi_vein(lons, lats):
     ink_stroke(ax, xs, ys, SUMI_INK, lw=3.2, alpha=0.8)
     keys = turning_keys(lons, lats, angle_threshold=0.14)
     extent = path_extent(lons, lats)
-    for k in keys[1:-1: max(1, len(keys) // 25)]:
+    for k in keys[1 : -1 : max(1, len(keys) // 25)]:
         if k < 1 or k >= len(lons) - 1:
             continue
         dx = lons[k + 1] - lons[k - 1]
@@ -1530,7 +1518,7 @@ def kintsugi_shard(lons, lats):
     if len(cuts) < 2:
         cuts = np.array([len(lons) // 3, 2 * len(lons) // 3])
     bounds = [0] + [int(c) + 1 for c in cuts] + [len(lons)]
-    for a, b in zip(bounds[:-1], bounds[1:]):
+    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
         if b - a < 2:
             continue
         ink_stroke(ax, lons[a:b], lats[a:b], SUMI_INK, lw=2.8, alpha=0.85)
@@ -1571,14 +1559,14 @@ def karesansui(lons, lats):
         lx = lons.mean() + t * extent * tx + k * extent * nx
         ly = lats.mean() + t * extent * ty + k * extent * ny
         for i in range(len(lx)):
-            for sx, sy in zip(xs, ys):
+            for sx, sy in zip(xs, ys, strict=False):
                 dx, dy = lx[i] - sx, ly[i] - sy
                 dist = np.hypot(dx, dy) + 1e-12
                 push = np.exp(-dist / (extent * 0.06)) * extent * 0.045
                 lx[i] += (dx / dist) * push
                 ly[i] += (dy / dist) * push
         ax.plot(lx, ly, color=line_c, linewidth=0.7, alpha=0.5)
-    for sx, sy in zip(xs, ys):
+    for sx, sy in zip(xs, ys, strict=False):
         ax.add_patch(Circle((sx, sy), extent * 0.02, color=stone, alpha=0.9, linewidth=0))
     fx, fy = flow_path(lons, lats, 300)
     ink_stroke(ax, fx, fy, stone, lw=0.5, alpha=0.2)
@@ -1670,7 +1658,7 @@ def suiseki(lons, lats):
     # one broken calligraphic whisper of the path — not a full rake map
     fx, fy = flow_path(lons, lats, 200)
     bounds = phrase_bounds(fx, fy, percentile=80)
-    for a, b in zip(bounds[:-1], bounds[1:]):
+    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
         if b - a < 4 or rng.random() < 0.55:
             continue
         env = attack_release(b - a - 1, 0.8)
@@ -1711,7 +1699,7 @@ def seki(lons, lats):
     fig, ax = create_figure(bg)
     xs, ys = essence_path(lons, lats, angle=0.32, max_keys=9)
     extent = path_extent(lons, lats)
-    for i, (x, y) in enumerate(zip(xs, ys)):
+    for i, (x, y) in enumerate(zip(xs, ys, strict=False)):
         r = extent * (0.04 if i in (0, len(xs) - 1) else 0.028)
         ax.add_patch(Circle((x, y), r, color=SUMI_INK, alpha=0.88, linewidth=0))
         # small satellite pebble
@@ -1860,7 +1848,7 @@ def whisper(lons, lats):
         ox = rng.normal(0, extent * 0.007)
         oy = rng.normal(0, extent * 0.007)
         ink_stroke(ax, xs + ox, ys + oy, "#5a5a5a", lw=2.0, alpha=0.035)
-    for a, b in zip(bounds[:-1], bounds[1:]):
+    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
         if b - a < 3 or rng.random() < 0.32:
             continue
         n = b - a - 1
@@ -2059,7 +2047,7 @@ def suiboku(lons, lats):
         ox = nx * extent * off_scale
         oy = ny * extent * off_scale
         bounds = phrase_bounds(xs, ys, percentile=90)
-        for a0, b0 in zip(bounds[:-1], bounds[1:]):
+        for a0, b0 in zip(bounds[:-1], bounds[1:], strict=False):
             if b0 - a0 < 3:
                 continue
             ink_stroke(
@@ -2263,10 +2251,7 @@ def main(gpx_dir, images_dir, styles=None, qr=True):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print(
-            "Usage: python gpx-art.py <gpx_dir> <images_dir> "
-            "[--styles s1,s2,...] [--no-qr]"
-        )
+        print("Usage: python gpx-art.py <gpx_dir> <images_dir> [--styles s1,s2,...] [--no-qr]")
         sys.exit(1)
 
     gpx_dir, images_dir = sys.argv[1], sys.argv[2]

@@ -6,9 +6,7 @@ import sqlite3
 import requests
 from dotenv import load_dotenv
 
-DEFAULT_DB_PATH = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "gists.db")
-)
+DEFAULT_DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "gists.db"))
 
 
 def get_gist_url(stylename: str, source: str, db_path: str | None = None) -> str:

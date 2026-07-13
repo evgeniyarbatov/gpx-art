@@ -4,9 +4,7 @@ from pathlib import Path
 from unittest.mock import Mock, call, patch
 
 import numpy as np
-
 from _module_loader import load_script_module
-
 
 gpx_art = load_script_module("gpx-art.py", "gpx_art_script")
 
@@ -27,6 +25,7 @@ SAMPLE_GPX = """<?xml version="1.0" encoding="UTF-8"?>
 class TestGpxArtCore(unittest.TestCase):
     def test_style_decorator_registers_function(self):
         with patch.dict(gpx_art.STYLES, {}, clear=True):
+
             @gpx_art.style("test-style")
             def style_impl(lons, lats):  # pragma: no cover - this is registration-only
                 return lons, lats
@@ -101,9 +100,7 @@ class TestGpxArtCore(unittest.TestCase):
                 with patch.object(gpx_art.plt, "gca", return_value=fake_axis):
                     with patch.object(gpx_art, "add_qr_code") as add_qr_mock:
                         with patch.object(gpx_art, "save_figure") as save_mock:
-                            with patch.object(
-                                gpx_art.time, "time", side_effect=[10.0, 11.5]
-                            ):
+                            with patch.object(gpx_art.time, "time", side_effect=[10.0, 11.5]):
                                 with patch("builtins.print") as print_mock:
                                     gpx_art.create_art("in.gpx", "out.png", "demo")
 
