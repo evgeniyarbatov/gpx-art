@@ -2,9 +2,7 @@ import unittest
 from unittest.mock import patch
 
 import numpy as np
-
 from _module_loader import load_script_module
-
 
 dtw_select = load_script_module("dtw-select.py", "dtw_select_script")
 

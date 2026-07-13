@@ -2,7 +2,6 @@ import importlib.util
 import sys
 from pathlib import Path
 
-
 ROOT_DIR = Path(__file__).resolve().parents[1]
 SCRIPTS_DIR = ROOT_DIR / "scripts"
 

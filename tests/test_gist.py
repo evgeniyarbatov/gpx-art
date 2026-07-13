@@ -6,7 +6,6 @@ from unittest.mock import Mock, patch
 
 from _module_loader import load_script_module
 
-
 gist = load_script_module("gist.py", "gist_script")
 
 
@@ -14,9 +13,7 @@ class TestGist(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.db_path = os.path.join(self.tmpdir.name, "cache", "gists.db")
-        self.default_db_path_patcher = patch.object(
-            gist, "DEFAULT_DB_PATH", self.db_path
-        )
+        self.default_db_path_patcher = patch.object(gist, "DEFAULT_DB_PATH", self.db_path)
         self.default_db_path_patcher.start()
         self.original_cwd = os.getcwd()
         os.chdir(self.tmpdir.name)
@@ -50,9 +47,7 @@ class TestGist(unittest.TestCase):
             self.assertEqual(post_mock.call_count, 1)
 
             conn = sqlite3.connect(self.db_path)
-            row = conn.execute(
-                "SELECT url FROM gists WHERE stylename=?", ("style-a",)
-            ).fetchone()
+            row = conn.execute("SELECT url FROM gists WHERE stylename=?", ("style-a",)).fetchone()
             conn.close()
             self.assertEqual(row[0], "https://gist.github.com/example/one")
 
