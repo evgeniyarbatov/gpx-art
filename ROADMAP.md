@@ -115,13 +115,13 @@ Each phase is self-contained. Finish one before rushing to the next. Walk, don't
 ### Phase 1 — Deepen the line you have
 *Stay in lat/lon. Make the existing styles irreplaceable.*
 
-**1.1 Complete the style catalog**  
+**1.1 Complete the style catalog**
 README lists 20 styles; 12 are implemented. The missing eight (`cascade`, `field`, `hatch`, `radial`, `shatter`, `spoke`, `vortex`, `weave`, `whisper`) are not gaps to fill quickly — each should be a small meditation. Start with one: `whisper` — the faintest possible line, yūgen made code.
 
-**1.2 Compose the canvas**  
+**1.2 Compose the canvas**
 Add optional layout parameters: margin ratio, anchor (lower-left, center, floating). One function change; every style benefits. Study one Hiroshige print and copy its balance of sky to ground.
 
-**1.3 One perfect series**  
+**1.3 One perfect series**
 Pick one route you love. Render all styles. Hang them in a row. Notice which styles *lie* about the walk and which *tell the truth*. Remove or rewrite the liars.
 
 **Deliverable:** A curated folder `series/ensho-v1/` — one track, best 8 styles, composed layout.
@@ -131,15 +131,15 @@ Pick one route you love. Render all styles. Hang them in a row. Notice which sty
 ### Phase 2 — Let the body speak through data
 *Introduce time, elevation, speed — still one line, but the line breathes.*
 
-**2.1 Extend `extract_coordinates` → `extract_track`**  
+**2.1 Extend `extract_coordinates` → `extract_track`**
 Return a DataFrame (you already have `get_df`). Pass it to styles that want more; keep lat/lon-only styles unchanged.
 
-**2.2 Three body-aware styles**  
-- `breath` — line width from pace (slow steps = thick ink)  
-- `ridge` — faint elevation contours behind the path  
-- `kintsugi` — golden `#c5a355` segments where GPS was lost or you stopped  
+**2.2 Three body-aware styles**
+- `breath` — line width from pace (slow steps = thick ink)
+- `ridge` — faint elevation contours behind the path
+- `kintsugi` — golden `#c5a355` segments where GPS was lost or you stopped
 
-**2.3 Walk with intention**  
+**2.3 Walk with intention**
 Plan one route designed for `breath`: start fast (thin), pause at a bench (thick blob), sprint finish (thin again). The render should be unmistakable.
 
 **Deliverable:** One GPX walked on purpose + three new body-aware styles.
@@ -149,13 +149,13 @@ Plan one route designed for `breath`: start fast (thin), pause at a bench (thick
 ### Phase 3 — Form before footstep
 *Design the shape, then walk it.*
 
-**3.1 Ensō protocol**  
+**3.1 Ensō protocol**
 Find a loop ~5–15 km, nearly circular, completable in one session. Document: weather, hour, whether the circle closed. Render with `simplify` layered — each pass a breath.
 
-**3.2 Character walk (shodō)**  
+**3.2 Character walk (shodō)**
 Choose one kanji or letter with few strokes (一, 人, 山, O). Sketch it on a map. Walk it. The skeleton style becomes calligraphy.
 
-**3.3 Shape library**  
+**3.3 Shape library**
 Small JSON or GPX templates: circle, spiral, horizon, zigzag. A `make route` helper that exports a target polyline for navigation apps.
 
 **Deliverable:** Three intentional walks with before/after sketches and final art.
@@ -165,13 +165,13 @@ Small JSON or GPX templates: circle, spiral, horizon, zigzag. A `make route` hel
 ### Phase 4 — Time and sequence
 *The line moves; let the viewer move with it.*
 
-**4.1 Draw-on animation**  
+**4.1 Draw-on animation**
 Export MP4 or GIF: point-by-point reveal. Speed of reveal = real timestamps or uniform — two different truths.
 
-**4.2 Seasonal return**  
+**4.2 Seasonal return**
 Same ensō loop, four times (or quarterly). Same style, same composition. Only the line's character changes — wabi-sabi in series.
 
-**4.3 Optional: sonify one track**  
+**4.3 Optional: sonify one track**
 One afternoon experiment. If it sings, keep it. If not, let it go.
 
 **Deliverable:** One animation + one seasonal quadtych.
@@ -181,13 +181,13 @@ One afternoon experiment. If it sings, keep it. If not, let it go.
 ### Phase 5 — Object and wall
 *Leave the screen.*
 
-**5.1 Plotter or print test**  
+**5.1 Plotter or print test**
 One work, one physical output. A3 washi or cotton paper. The QR code still links to source — physical and digital bound.
 
-**5.2 Format studies**  
+**5.2 Format studies**
 Try three aspect ratios: 1:3 scroll, 1:1 square, 3:1 panorama. The same track tells three different stories.
 
-**5.3 Haiga pairings**  
+**5.3 Haiga pairings**
 Under or beside each print, handwrite a haiku from the walk. 5-7-5 or free. The text is not metadata — it is part of the work.
 
 **Deliverable:** One exhibition-ready physical piece with haiku.
@@ -197,13 +197,13 @@ Under or beside each print, handwrite a haiku from the walk. 5-7-5 or free. The 
 ### Phase 6 — Place, people, collection
 *From project to practice.*
 
-**6.1 Site-specific series**  
+**6.1 Site-specific series**
 One location, 10 walks, one custom style that only makes sense there (e.g. `rain` for a city that was raining).
 
-**6.2 Open the registry**  
+**6.2 Open the registry**
 Document how to add a `@style` function. Accept contributions. DTW-select diverse *people*, not just diverse tracks.
 
-**6.3 The book or wall**  
+**6.3 The book or wall**
 20–40 images, exhibition order, short foreword on body-as-brush. PDF or printed zine. QR codes become footnotes.
 
 **Deliverable:** A named collection with title, order, and one paragraph of artist statement.
@@ -226,10 +226,10 @@ Document how to add a `@style` function. Accept contributions. DTW-select divers
 
 If you do only one thing after reading this:
 
-> Pick a route you will walk this week **for the image alone**.  
-> Before you leave, sketch the shape on paper.  
-> When you return, render it in `skeleton` and `painting` only.  
-> Hang them side by side.  
+> Pick a route you will walk this week **for the image alone**.
+> Before you leave, sketch the shape on paper.
+> When you return, render it in `skeleton` and `painting` only.
+> Hang them side by side.
 > Write one haiku in the margin.
 
 That is Phase 1 and Phase 3 in a single walk. The roadmap begins with your feet.

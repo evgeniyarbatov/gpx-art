@@ -4,7 +4,6 @@ from pathlib import Path
 
 from _module_loader import load_script_module
 
-
 utils = load_script_module("utils.py", "utils_script")
 
 

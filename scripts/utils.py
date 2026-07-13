@@ -1,7 +1,7 @@
-import os
 import glob
-import gpxpy
+import os
 
+import gpxpy
 import pandas as pd
 
 
@@ -21,7 +21,7 @@ def get_files(input_dir):
 
 
 def get_df(filepath):
-    with open(filepath, "r") as gpx_file:
+    with open(filepath) as gpx_file:
         gpx = gpxpy.parse(gpx_file)
 
     data = []

@@ -9,16 +9,17 @@ Optimized with:
 Copies selected files to destination directory.
 """
 
-import sys
+import math
 import os
 import shutil
+import sys
 import xml.etree.ElementTree as ET
-import numpy as np
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+
+import numpy as np
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
-from concurrent.futures import ProcessPoolExecutor, as_completed
-import math
 
 # -------------------- GPX Parsing & Processing -------------------- #
 
@@ -28,11 +29,7 @@ def parse_gpx(filepath):
     try:
         tree = ET.parse(filepath)
         root = tree.getroot()
-        ns = (
-            {"gpx": "http://www.topografix.com/GPX/1/1"}
-            if root.tag.endswith("gpx")
-            else {}
-        )
+        ns = {"gpx": "http://www.topografix.com/GPX/1/1"} if root.tag.endswith("gpx") else {}
         points = []
 
         for trkpt in root.findall(".//gpx:trkpt", ns):
@@ -83,19 +80,14 @@ def haversine_distance(p1, p2):
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
     dlambda = math.radians(lon2 - lon1)
-    a = (
-        math.sin(dphi / 2) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    )
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
 def track_length_km(track):
     if track is None or len(track) < 2:
         return 0
-    return sum(
-        haversine_distance(track[i], track[i + 1]) for i in range(len(track) - 1)
-    )
+    return sum(haversine_distance(track[i], track[i + 1]) for i in range(len(track) - 1))
 
 
 def smooth_track(track, window=5):
@@ -111,9 +103,7 @@ def smooth_track(track, window=5):
 
 def select_first_track(tracks, min_length_km=10, temperature=0.5):
     """Weighted random first track favoring smooth and spread tracks >= min_length_km."""
-    valid_tracks = {
-        f: t for f, t in tracks.items() if track_length_km(t) >= min_length_km
-    }
+    valid_tracks = {f: t for f, t in tracks.items() if track_length_km(t) >= min_length_km}
     if not valid_tracks:
         raise ValueError(
             f"No tracks longer than {min_length_km} km available for first selection."
@@ -176,9 +166,7 @@ def select_diverse_gpx_files(directory, num_files, min_length_km=10):
                 tracks_dtw[f] = dtw
 
     # Filter by minimum length
-    tracks_raw = {
-        f: t for f, t in tracks_raw.items() if track_length_km(t) >= min_length_km
-    }
+    tracks_raw = {f: t for f, t in tracks_raw.items() if track_length_km(t) >= min_length_km}
     tracks_dtw = {f: tracks_dtw[f] for f in tracks_raw.keys()}
     if not tracks_raw:
         print(f"No tracks ≥ {min_length_km} km found", file=sys.stderr)
@@ -194,9 +182,7 @@ def select_diverse_gpx_files(directory, num_files, min_length_km=10):
     signatures = {f: track_signature(tracks_dtw[f]) for f in tracks_dtw}
 
     # Smart first track
-    first_file = select_first_track(
-        tracks_raw, min_length_km=min_length_km, temperature=0.5
-    )
+    first_file = select_first_track(tracks_raw, min_length_km=min_length_km, temperature=0.5)
     selected_files.append(first_file)
     selected_tracks.append(tracks_dtw[first_file])
     available_files.remove(first_file)
@@ -207,14 +193,13 @@ def select_diverse_gpx_files(directory, num_files, min_length_km=10):
         for i in range(1, num_files):
             if not available_files:
                 break
-            print(f"Selecting file {i+1}/{num_files}...", file=sys.stderr, end="\r")
+            print(f"Selecting file {i + 1}/{num_files}...", file=sys.stderr, end="\r")
 
             min_sig_distances = []
             for candidate in available_files:
                 sig = signatures[candidate]
                 min_dist = min(
-                    np.linalg.norm(sig - track_signature(sel))
-                    for sel in selected_tracks
+                    np.linalg.norm(sig - track_signature(sel)) for sel in selected_tracks
                 )
                 min_sig_distances.append(min_dist)
 
@@ -241,7 +226,7 @@ def select_diverse_gpx_files(directory, num_files, min_length_km=10):
             available_files.remove(best_file)
 
             print(
-                f"{i+1}. {best_file.name} (DTW diversity score: {dtw_scores[best_file]:.2f})"
+                f"{i + 1}. {best_file.name} (DTW diversity score: {dtw_scores[best_file]:.2f})"
                 + " " * 20,
                 file=sys.stderr,
             )
@@ -265,7 +250,7 @@ def main():
     try:
         num_files = int(sys.argv[2])
     except ValueError:
-        print(f"Error: num_files must be integer", file=sys.stderr)
+        print("Error: num_files must be integer", file=sys.stderr)
         sys.exit(1)
 
     if num_files < 1:
