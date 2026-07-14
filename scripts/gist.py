@@ -41,7 +41,7 @@ def get_gist_url(stylename: str, source: str, db_path: str | None = None) -> str
 
         # --- reuse if unchanged ---
         if row and row[0] == src_hash:
-            return row[1]
+            return str(row[1])
 
         # --- create gist ---
         headers = {"Authorization": f"token {github_token}"}
@@ -50,9 +50,9 @@ def get_gist_url(stylename: str, source: str, db_path: str | None = None) -> str
             "public": True,
             "files": {f"{stylename}.py": {"content": source}},
         }
-        r = requests.post(API_URL, headers=headers, data=json.dumps(payload))
+        r = requests.post(API_URL, headers=headers, data=json.dumps(payload), timeout=30)
         r.raise_for_status()
-        gist_url = r.json()["html_url"]
+        gist_url = str(r.json()["html_url"])
 
         # --- save or update record ---
         conn.execute(

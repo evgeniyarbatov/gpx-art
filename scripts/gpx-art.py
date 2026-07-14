@@ -3,35 +3,43 @@ import os
 import random
 import sys
 import time
+from collections.abc import Callable, Sequence
 from io import BytesIO
 
 import gpxpy
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import qrcode
 from gist import get_gist_url
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from matplotlib.patches import Circle, Rectangle
+from qrcode.image.pil import PilImage
 from utils import get_files
+
+FloatArray = npt.NDArray[np.float64]
+StyleFunc = Callable[[FloatArray, FloatArray], tuple[Figure, str]]
 
 # ============================================================================
 # STYLE CATALOG - Easy to add/remove styles
 # ============================================================================
 
-STYLES = {}
+STYLES: dict[str, StyleFunc] = {}
 
 
-def style(name):
+def style(name: str) -> Callable[[StyleFunc], StyleFunc]:
     """Decorator to register a style function"""
 
-    def decorator(func):
+    def decorator(func: StyleFunc) -> StyleFunc:
         STYLES[name] = func
         return func
 
     return decorator
 
 
-def extract_style_source(script_path, style_name):
+def extract_style_source(script_path: str, style_name: str) -> str:
     """
     Extract the full source code of a function decorated with @style('style_name').
     Includes the decorator and full function body.
@@ -51,20 +59,20 @@ def extract_style_source(script_path, style_name):
         if isinstance(node, ast.FunctionDef):
             # Check decorators
             for dec in node.decorator_list:
-                if isinstance(dec, ast.Call) and getattr(dec.func, "id", None) == "style":
-                    # Check the first argument of @style(...)
-                    if (
-                        dec.args
-                        and isinstance(dec.args[0], ast.Constant)
-                        and dec.args[0].value == style_name
-                    ):
-                        # Include decorators and full function body.
-                        lines = source.splitlines()
-                        start_line = node.lineno
-                        if node.decorator_list:
-                            start_line = min(d.lineno for d in node.decorator_list)
-                        func_lines = lines[start_line - 1 : node.end_lineno]
-                        return "\n".join(func_lines) + "\n"
+                if (
+                    isinstance(dec, ast.Call)
+                    and getattr(dec.func, "id", None) == "style"
+                    and dec.args
+                    and isinstance(dec.args[0], ast.Constant)
+                    and dec.args[0].value == style_name
+                ):
+                    # Include decorators and full function body.
+                    lines = source.splitlines()
+                    start_line = node.lineno
+                    if node.decorator_list:
+                        start_line = min(d.lineno for d in node.decorator_list)
+                    func_lines = lines[start_line - 1 : node.end_lineno]
+                    return "\n".join(func_lines) + "\n"
 
     return f"# Could not find function decorated with @style('{style_name}')"
 
@@ -110,7 +118,7 @@ RAKE_LINE = "#5c5346"
 # ============================================================================
 
 
-def extract_coordinates(gpx_filename):
+def extract_coordinates(gpx_filename: str) -> tuple[FloatArray, FloatArray]:
     """Extract lon/lat arrays from GPX file"""
     lons, lats = [], []
     with open(gpx_filename) as gpx_file:
@@ -123,7 +131,7 @@ def extract_coordinates(gpx_filename):
     return np.array(lons), np.array(lats)
 
 
-def create_figure(bg_color, dpi=300):
+def create_figure(bg_color: str, dpi: int = 300) -> tuple[Figure, Axes]:
     """Create matplotlib figure with standard settings"""
     fig, ax = plt.subplots(dpi=dpi)
     ax.set_facecolor(bg_color)
@@ -134,24 +142,24 @@ def create_figure(bg_color, dpi=300):
     return fig, ax
 
 
-def save_figure(fig, filename, bg_color):
+def save_figure(fig: Figure, filename: str, bg_color: str) -> None:
     """Save figure with standard settings"""
     fig.tight_layout(pad=0.1)
     plt.savefig(filename, dpi=300, facecolor=bg_color, edgecolor="none", bbox_inches="tight")
     plt.close()
 
 
-def segment_lengths(lons, lats):
+def segment_lengths(lons: FloatArray, lats: FloatArray) -> FloatArray:
     """Per-segment Euclidean lengths in lon/lat degrees."""
     return np.hypot(np.diff(lons), np.diff(lats))
 
 
-def path_extent(lons, lats):
+def path_extent(lons: FloatArray, lats: FloatArray) -> float:
     """Characteristic scale of the track bounding box."""
-    return max(lons.max() - lons.min(), lats.max() - lats.min(), 1e-9)
+    return float(max(lons.max() - lons.min(), lats.max() - lats.min(), 1e-9))
 
 
-def downsample_path(lons, lats, n):
+def downsample_path(lons: FloatArray, lats: FloatArray, n: int) -> tuple[FloatArray, FloatArray]:
     """Evenly sample n points along the index (not arc length)."""
     if len(lons) <= n:
         return lons.copy(), lats.copy()
@@ -159,7 +167,7 @@ def downsample_path(lons, lats, n):
     return lons[idx], lats[idx]
 
 
-def turning_keys(lons, lats, angle_threshold=0.25):
+def turning_keys(lons: FloatArray, lats: FloatArray, angle_threshold: float = 0.25) -> list[int]:
     """Indices of significant direction changes plus endpoints."""
     keys = [0]
     for i in range(1, len(lons) - 1):
@@ -174,14 +182,16 @@ def turning_keys(lons, lats, angle_threshold=0.25):
     return keys
 
 
-def gap_mask(lons, lats, factor=6.0):
+def gap_mask(lons: FloatArray, lats: FloatArray, factor: float = 6.0) -> npt.NDArray[np.bool_]:
     """Boolean mask length N-1: True where segment is a GPS jump."""
     d = segment_lengths(lons, lats)
     med = np.median(d[d > 0]) if np.any(d > 0) else 1e-9
     return d > med * factor
 
 
-def reverse_mask(lons, lats, cos_thresh=-0.3):
+def reverse_mask(
+    lons: FloatArray, lats: FloatArray, cos_thresh: float = -0.3
+) -> npt.NDArray[np.bool_]:
     """Boolean mask length N-2: True where direction reverses sharply."""
     dx = np.diff(lons)
     dy = np.diff(lats)
@@ -192,7 +202,7 @@ def reverse_mask(lons, lats, cos_thresh=-0.3):
     return dots < cos_thresh
 
 
-def pad_limits(ax, lons, lats, pad_ratio=0.12):
+def pad_limits(ax: Axes, lons: FloatArray, lats: FloatArray, pad_ratio: float = 0.12) -> None:
     """Expand axes so thin/faint styles don't get clipped by tight bbox."""
     extent = path_extent(lons, lats)
     pad = extent * pad_ratio
@@ -200,7 +210,9 @@ def pad_limits(ax, lons, lats, pad_ratio=0.12):
     ax.set_ylim(lats.min() - pad, lats.max() + pad)
 
 
-def essence_path(lons, lats, angle=0.22, max_keys=80):
+def essence_path(
+    lons: FloatArray, lats: FloatArray, angle: float = 0.22, max_keys: int = 80
+) -> tuple[FloatArray, FloatArray]:
     """Structural bones: turning points, lightly capped."""
     keys = turning_keys(lons, lats, angle_threshold=angle)
     if len(keys) > max_keys:
@@ -210,12 +222,19 @@ def essence_path(lons, lats, angle=0.22, max_keys=80):
     return lons[np.array(keys)], lats[np.array(keys)]
 
 
-def flow_path(lons, lats, n=400):
+def flow_path(lons: FloatArray, lats: FloatArray, n: int = 400) -> tuple[FloatArray, FloatArray]:
     """Organic mid-density path — more life than bones, less noise than raw GPS."""
     return downsample_path(lons, lats, min(n, len(lons)))
 
 
-def ink_stroke(ax, xs, ys, color, lw=3.5, alpha=1.0):
+def ink_stroke(
+    ax: Axes,
+    xs: FloatArray | Sequence[float],
+    ys: FloatArray | Sequence[float],
+    color: str,
+    lw: float = 3.5,
+    alpha: float = 1.0,
+) -> None:
     """Rounded ink line."""
     ax.plot(
         xs,
@@ -228,7 +247,7 @@ def ink_stroke(ax, xs, ys, color, lw=3.5, alpha=1.0):
     )
 
 
-def pace_weights(lons, lats):
+def pace_weights(lons: FloatArray, lats: FloatArray) -> FloatArray:
     """Slow steps → high weight (thick ink). Length N, aligned to points."""
     d = segment_lengths(lons, lats)
     inv = 1.0 / (d + np.percentile(d[d > 0], 15) + 1e-12)
@@ -241,7 +260,7 @@ def pace_weights(lons, lats):
     return out
 
 
-def turn_pressure(xs, ys, smooth=11):
+def turn_pressure(xs: FloatArray, ys: FloatArray, smooth: int = 11) -> FloatArray:
     """Turning intensity [0, 1] along path — thick at corners."""
     pressure = np.zeros(len(xs))
     for i in range(1, len(xs) - 1):
@@ -254,10 +273,11 @@ def turn_pressure(xs, ys, smooth=11):
         k = smooth if smooth % 2 == 1 else smooth + 1
         p = np.pad(pressure, k // 2, mode="edge")
         pressure = np.convolve(p, np.ones(k) / k, mode="valid")
-    return pressure / (pressure.max() + 1e-12)
+    result: FloatArray = pressure / (pressure.max() + 1e-12)
+    return result
 
 
-def phrase_bounds(xs, ys, percentile=88):
+def phrase_bounds(xs: FloatArray, ys: FloatArray, percentile: float = 88) -> list[int]:
     """Split path into brush phrases at long segments."""
     d = segment_lengths(xs, ys)
     thr = np.percentile(d, percentile)
@@ -265,7 +285,7 @@ def phrase_bounds(xs, ys, percentile=88):
     return [0] + [c + 1 for c in cuts] + [len(xs)]
 
 
-def attack_release(n, power=0.65):
+def attack_release(n: int, power: float = 0.65) -> FloatArray:
     """Sin envelope [0, 1] over n segment starts of a phrase."""
     if n <= 1:
         return np.ones(max(n, 1))
@@ -273,7 +293,7 @@ def attack_release(n, power=0.65):
     return np.sin(np.pi * t) ** power
 
 
-def path_normals(xs, ys):
+def path_normals(xs: FloatArray, ys: FloatArray) -> tuple[FloatArray, FloatArray]:
     """Unit normals along path (length N)."""
     dx = np.gradient(xs)
     dy = np.gradient(ys)
@@ -287,7 +307,7 @@ def path_normals(xs, ys):
 
 
 @style("rain")
-def rain(lons, lats):
+def rain(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Downward streaks like rain on window"""
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
@@ -315,7 +335,7 @@ def rain(lons, lats):
 
 
 @style("contour")
-def contour(lons, lats):
+def contour(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Topographic contour-like parallel lines"""
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
@@ -337,7 +357,7 @@ def contour(lons, lats):
 
 
 @style("stitch")
-def stitch(lons, lats):
+def stitch(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Embroidery-like dashed patterns"""
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
@@ -371,7 +391,7 @@ def stitch(lons, lats):
 
 
 @style("scaffold")
-def scaffold(lons, lats):
+def scaffold(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Architectural wireframe structure"""
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
@@ -405,7 +425,7 @@ def scaffold(lons, lats):
 
 
 @style("skeleton")
-def skeleton(lons, lats):
+def skeleton(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Calligraphic bones — incomplete, pressure-weighted structure."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -444,7 +464,7 @@ def skeleton(lons, lats):
 
 
 @style("painting")
-def painting(lons, lats):
+def painting(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Ink wash painting with scattered blobs"""
     bg_color = "#f9f6f0"
     fg_color = "#1b1b1b"
@@ -474,7 +494,7 @@ def painting(lons, lats):
 
 
 @style("network")
-def network(lons, lats):
+def network(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Node network with connections"""
     bg_color, fg_color = random.choice(ZEN_STONE)
     fig, ax = create_figure(bg_color)
@@ -523,7 +543,7 @@ def network(lons, lats):
 
 
 @style("simplify")
-def simplify(lons, lats):
+def simplify(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Progressive simplification layers"""
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
@@ -562,7 +582,7 @@ def simplify(lons, lats):
 
 
 @style("decay")
-def decay(lons, lats):
+def decay(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Erosion - path gradually dissolves into particles"""
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
@@ -596,7 +616,7 @@ def decay(lons, lats):
 
 
 @style("pulse")
-def pulse(lons, lats):
+def pulse(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Rhythmic thickness variations - heartbeat"""
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
@@ -625,7 +645,7 @@ def pulse(lons, lats):
 
 
 @style("grid")
-def grid(lons, lats):
+def grid(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Structured grid that bends to follow the path"""
     bg_color, fg_color = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg_color)
@@ -697,7 +717,7 @@ def grid(lons, lats):
 
 
 @style("enso")
-def enso(lons, lats):
+def enso(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Lived path left open — incomplete circle as wabi-sabi."""
     bg, ink = SUMI_WASH, ENSO_INK
     fig, ax = create_figure(bg)
@@ -719,7 +739,7 @@ def enso(lons, lats):
 
 
 @style("enso-one")
-def enso_one(lons, lats):
+def enso_one(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """One breath: brush loads full, runs dry along the walk."""
     bg, ink = SUMI_WASH, ENSO_INK
     fig, ax = create_figure(bg)
@@ -740,7 +760,7 @@ def enso_one(lons, lats):
 
 
 @style("enso-ghost")
-def enso_ghost(lons, lats):
+def enso_ghost(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Ideal incomplete circle behind the lived route."""
     bg, ink = SUMI_WASH, ENSO_INK
     fig, ax = create_figure(bg)
@@ -755,7 +775,7 @@ def enso_ghost(lons, lats):
 
 
 @style("enso-close")
-def enso_close(lons, lats):
+def enso_close(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Nearly closed loop — gap is the whole point."""
     bg, ink = SUMI_WASH, ENSO_INK
     fig, ax = create_figure(bg)
@@ -774,7 +794,7 @@ def enso_close(lons, lats):
 
 
 @style("sumi")
-def sumi(lons, lats):
+def sumi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Living ink: pace + turn pressure + micro-jitter + ghost trail."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -822,7 +842,7 @@ def sumi(lons, lats):
 
 
 @style("sumi-dry")
-def sumi_dry(lons, lats):
+def sumi_dry(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Split dry brush: directional fray, flying white, wild hair at turns."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -874,7 +894,7 @@ def sumi_dry(lons, lats):
 
 
 @style("sumi-wet")
-def sumi_wet(lons, lats):
+def sumi_wet(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Unpredictable wet pools: directional bleed, sparse spine, drip runs."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -941,7 +961,7 @@ def sumi_wet(lons, lats):
 
 
 @style("bokashi")
-def bokashi(lons, lats):
+def bokashi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Graduated wash: layered fade from start to end."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -964,7 +984,7 @@ def bokashi(lons, lats):
 
 
 @style("nijimi")
-def nijimi(lons, lats):
+def nijimi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """滲み — uneven bleed: pressure-driven halo, soft blotches at turns."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1012,7 +1032,7 @@ def nijimi(lons, lats):
 
 
 @style("sumi-splash")
-def sumi_splash(lons, lats):
+def sumi_splash(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Ink spatters at turns — the brush shakes."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1044,7 +1064,7 @@ def sumi_splash(lons, lats):
 
 
 @style("shodo")
-def shodo(lons, lats):
+def shodo(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Fude pressure extreme: turn + pace, soft under-wash, ink stops."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1090,7 +1110,7 @@ def shodo(lons, lats):
 
 
 @style("shodo-lift")
-def shodo_lift(lons, lats):
+def shodo_lift(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Phrases with attack–release; brush lifts; ink dots at attacks."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1132,7 +1152,7 @@ def shodo_lift(lons, lats):
 
 
 @style("shodo-dash")
-def shodo_dash(lons, lats):
+def shodo_dash(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Staccato calligraphy — short fierce phrases, long silence."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1180,7 +1200,7 @@ def shodo_dash(lons, lats):
 
 
 @style("harai")
-def harai(lons, lats):
+def harai(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """払い — sweeping release: fat start, long thinning exit."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1209,7 +1229,7 @@ def harai(lons, lats):
 
 
 @style("shodo-breath")
-def shodo_breath(lons, lats):
+def shodo_breath(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Long inhaling strokes; deep mid-pressure; rests between breaths."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1248,7 +1268,7 @@ def shodo_breath(lons, lats):
 
 
 @style("tome")
-def tome(lons, lats):
+def tome(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """止め — intense joints: ink pools, attack-release bones between stops."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1274,7 +1294,7 @@ def tome(lons, lats):
         is_end = i in (0, len(xs) - 1)
         r = extent * (0.018 if is_end else float(rng.uniform(0.008, 0.02)))
         layers = 4 if is_end else int(rng.integers(2, 5))
-        for k in range(layers):
+        for _k in range(layers):
             ax.add_patch(
                 Circle(
                     (
@@ -1292,7 +1312,7 @@ def tome(lons, lats):
 
 
 @style("fude")
-def fude(lons, lats):
+def fude(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Continuous brush: turn-aware sine pressure + soft second pass."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1316,7 +1336,7 @@ def fude(lons, lats):
 
 
 @style("haku")
-def haku(lons, lats):
+def haku(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """飛白 — flying white with pressure-weighted skips."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1351,7 +1371,7 @@ def haku(lons, lats):
 
 
 @style("haiga")
-def haiga(lons, lats):
+def haiga(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Path low on the page; sky empty for a haiku; red seal."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1369,7 +1389,7 @@ def haiga(lons, lats):
 
 
 @style("haiga-slash")
-def haiga_slash(lons, lats):
+def haiga_slash(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """One decisive path in a field of empty."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1388,7 +1408,7 @@ def haiga_slash(lons, lats):
 
 
 @style("in-seal")
-def in_seal(lons, lats):
+def in_seal(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Quiet ink path; red 印 at the finish."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1411,7 +1431,7 @@ def in_seal(lons, lats):
 
 
 @style("ikebana")
-def ikebana(lons, lats):
+def ikebana(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Path as arrangement: three stems (shin–soe–tai) of unequal length."""
     bg, ink = SUMI_WASH, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1434,7 +1454,7 @@ def ikebana(lons, lats):
 
 
 @style("kintsugi")
-def kintsugi(lons, lats):
+def kintsugi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Dark path; gold at GPS gaps and sharp reversals."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -1479,7 +1499,7 @@ def kintsugi(lons, lats):
 
 
 @style("kintsugi-vein")
-def kintsugi_vein(lons, lats):
+def kintsugi_vein(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Gold veins at major turns on a dark body."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -1508,7 +1528,7 @@ def kintsugi_vein(lons, lats):
 
 
 @style("kintsugi-shard")
-def kintsugi_shard(lons, lats):
+def kintsugi_shard(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Shards split at gaps; gold mortar between pieces."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -1542,7 +1562,7 @@ def kintsugi_shard(lons, lats):
 
 
 @style("karesansui")
-def karesansui(lons, lats):
+def karesansui(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Rake lines bent around path-stones."""
     bg, line_c, stone = RAKE_SAND, RAKE_LINE, SUMI_INK
     fig, ax = create_figure(bg)
@@ -1577,7 +1597,7 @@ def karesansui(lons, lats):
 
 
 @style("rake")
-def rake(lons, lats):
+def rake(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Concentric water rings around the path."""
     bg = RAKE_SAND
     fig, ax = create_figure(bg)
@@ -1597,7 +1617,7 @@ def rake(lons, lats):
 
 
 @style("gravel")
-def gravel(lons, lats):
+def gravel(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Pointillist sand denser near the walked line."""
     bg = RAKE_SAND
     fig, ax = create_figure(bg)
@@ -1615,7 +1635,7 @@ def gravel(lons, lats):
 
 
 @style("suiseki")
-def suiseki(lons, lats):
+def suiseki(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """水石 — viewing stones: irregular rocks, sparse sand, one ink whisper."""
     bg, sand, stone = "#e8e2d4", "#6a6358", SUMI_INK
     fig, ax = create_figure(bg)
@@ -1678,7 +1698,7 @@ def suiseki(lons, lats):
 
 
 @style("hashi")
-def hashi(lons, lats):
+def hashi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Stepping stones along the route — space between is ma."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -1693,7 +1713,7 @@ def hashi(lons, lats):
 
 
 @style("seki")
-def seki(lons, lats):
+def seki(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """石 — stones only: large rock placements at major turns."""
     bg = RAKE_SAND
     fig, ax = create_figure(bg)
@@ -1721,7 +1741,7 @@ def seki(lons, lats):
 
 
 @style("notan")
-def notan(lons, lats):
+def notan(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Thick black form on paper — shape vs ground."""
     bg, ink = NOTAN_PAPER, NOTAN_INK
     fig, ax = create_figure(bg)
@@ -1732,7 +1752,7 @@ def notan(lons, lats):
 
 
 @style("notan-fill")
-def notan_fill(lons, lats):
+def notan_fill(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Mountain silhouette: black mass under the path skyline."""
     bg, ink = NOTAN_PAPER, NOTAN_INK
     fig, ax = create_figure(bg)
@@ -1750,11 +1770,11 @@ def notan_fill(lons, lats):
             continue
         sky_x.append(0.5 * (edges[i] + edges[i + 1]))
         sky_y.append(ys[mask].max())
-    sky_x, sky_y = np.array(sky_x), np.array(sky_y)
+    sky_x_arr, sky_y_arr = np.array(sky_x), np.array(sky_y)
     floor = ys.min() - extent * 0.22
     ax.fill(
-        np.concatenate([sky_x, [sky_x[-1], sky_x[0]]]),
-        np.concatenate([sky_y, [floor, floor]]),
+        np.concatenate([sky_x_arr, [sky_x_arr[-1], sky_x_arr[0]]]),
+        np.concatenate([sky_y_arr, [floor, floor]]),
         color=ink,
         linewidth=0,
     )
@@ -1766,7 +1786,7 @@ def notan_fill(lons, lats):
 
 
 @style("notan-invert")
-def notan_invert(lons, lats):
+def notan_invert(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Night notan: paper path on black field."""
     bg, ink = NOTAN_INK, NOTAN_PAPER
     fig, ax = create_figure(bg)
@@ -1777,7 +1797,7 @@ def notan_invert(lons, lats):
 
 
 @style("notan-block")
-def notan_block(lons, lats):
+def notan_block(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Ultra-thick mass — the walk as a single slab."""
     bg, ink = NOTAN_PAPER, NOTAN_INK
     fig, ax = create_figure(bg)
@@ -1788,7 +1808,7 @@ def notan_block(lons, lats):
 
 
 @style("notan-split")
-def notan_split(lons, lats):
+def notan_split(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Canvas bisected; path rides the light/dark cut."""
     bg, ink = NOTAN_PAPER, NOTAN_INK
     fig, ax = create_figure(bg)
@@ -1815,7 +1835,7 @@ def notan_split(lons, lats):
 
 
 @style("ribbon")
-def ribbon(lons, lats):
+def ribbon(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Parallel offsets — the path as a cloth band."""
     bg, ink = NOTAN_PAPER, NOTAN_INK
     fig, ax = create_figure(bg)
@@ -1835,7 +1855,7 @@ def ribbon(lons, lats):
 
 
 @style("whisper")
-def whisper(lons, lats):
+def whisper(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Fragmented ghost phrases — almost gone, still living."""
     bg = "#fcfbf9"
     fig, ax = create_figure(bg)
@@ -1868,7 +1888,7 @@ def whisper(lons, lats):
 
 
 @style("yugen")
-def yugen(lons, lats):
+def yugen(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Mist layers: the path half-seen through veils."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -1902,7 +1922,7 @@ def yugen(lons, lats):
 
 
 @style("kasumi")
-def kasumi(lons, lats):
+def kasumi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Haze: soft discs along the path, no hard spine."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -1929,7 +1949,7 @@ def kasumi(lons, lats):
 
 
 @style("maboroshi")
-def maboroshi(lons, lats):
+def maboroshi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Phantom echoes — the route thrice, each less sure."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -1946,7 +1966,7 @@ def maboroshi(lons, lats):
 
 
 @style("ma")
-def ma_style(lons, lats):
+def ma_style(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Emptiness as subject — only a fragment of the walk."""
     bg = "#fafaf8"
     fig, ax = create_figure(bg)
@@ -1964,7 +1984,7 @@ def ma_style(lons, lats):
 
 
 @style("wabi")
-def wabi(lons, lats):
+def wabi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Imperfect hand-jittered stroke — unpolished beauty."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -1987,7 +2007,7 @@ def wabi(lons, lats):
 
 
 @style("sabi")
-def sabi(lons, lats):
+def sabi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """寂 — worn path: eroded segments, quiet decay of the line."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -2012,7 +2032,7 @@ def sabi(lons, lats):
 
 
 @style("suiboku")
-def suiboku(lons, lats):
+def suiboku(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """水墨 — offset washes, value bands, firm core with living pressure."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -2073,7 +2093,7 @@ def suiboku(lons, lats):
 
 
 @style("kiri")
-def kiri(lons, lats):
+def kiri(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Fog banks: horizontal mist strips the path cuts through."""
     bg = "#eef0f2"
     fig, ax = create_figure(bg)
@@ -2101,7 +2121,7 @@ def kiri(lons, lats):
 
 
 @style("haze")
-def haze(lons, lats):
+def haze(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Soft multi-pass path dissolving into atmosphere."""
     bg = "#f2f0eb"
     fig, ax = create_figure(bg)
@@ -2124,7 +2144,7 @@ def haze(lons, lats):
 
 
 @style("tsuki")
-def tsuki(lons, lats):
+def tsuki(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """月 — path beneath a quiet moon disk."""
     bg = "#0f1218"
     fig, ax = create_figure(bg)
@@ -2142,7 +2162,7 @@ def tsuki(lons, lats):
 
 
 @style("parallel")
-def parallel(lons, lats):
+def parallel(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Many quiet echoes — like woodgrain or water ripples."""
     bg = SUMI_WASH
     fig, ax = create_figure(bg)
@@ -2152,7 +2172,7 @@ def parallel(lons, lats):
     dy = np.gradient(ys)
     L = np.hypot(dx, dy) + 1e-12
     nx, ny = -dy / L, dx / L
-    for i, off in enumerate(np.linspace(-0.04, 0.04, 11)):
+    for _i, off in enumerate(np.linspace(-0.04, 0.04, 11)):
         a = 0.15 + 0.7 * (1 - abs(off) / 0.04)
         ink_stroke(
             ax,
@@ -2171,7 +2191,9 @@ def parallel(lons, lats):
 # ============================================================================
 
 
-def add_qr_code(fig, ax, bg_color, style_name, script_path=__file__):
+def add_qr_code(
+    fig: Figure, ax: Axes, bg_color: str, style_name: str, script_path: str = __file__
+) -> None:
     """Add a small QR code in the bottom-right corner using axes-relative coordinates."""
 
     # Extract the specific style function (your existing helper)
@@ -2183,6 +2205,7 @@ def add_qr_code(fig, ax, bg_color, style_name, script_path=__file__):
         error_correction=qrcode.constants.ERROR_CORRECT_H,
         box_size=10,
         border=1,  # minimal white border
+        image_factory=PilImage,
     )
 
     # Get URL of Gist with source code
@@ -2215,7 +2238,7 @@ def add_qr_code(fig, ax, bg_color, style_name, script_path=__file__):
     ax.add_artist(ab)
 
 
-def create_art(gpx_filename, image_filename, style_name, qr=True):
+def create_art(gpx_filename: str, image_filename: str, style_name: str, qr: bool = True) -> None:
     """Create art from GPX file using specified style"""
     start_time = time.time()  # ⏱ Start timing
 
@@ -2240,7 +2263,7 @@ def create_art(gpx_filename, image_filename, style_name, qr=True):
     print(f"Created {style_name}: {image_filename} ({duration:.2f} seconds)")
 
 
-def main(gpx_dir, images_dir, styles=None, qr=True):
+def main(gpx_dir: str, images_dir: str, styles: list[str] | None = None, qr: bool = True) -> None:
     os.makedirs(images_dir, exist_ok=True)
     style_names = styles if styles is not None else sorted(STYLES.keys())
     for name, gpx_path in get_files(gpx_dir):

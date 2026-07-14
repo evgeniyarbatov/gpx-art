@@ -10,7 +10,7 @@ gist = load_script_module("gist.py", "gist_script")
 
 
 class TestGist(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.tmpdir = tempfile.TemporaryDirectory()
         self.db_path = os.path.join(self.tmpdir.name, "cache", "gists.db")
         self.default_db_path_patcher = patch.object(gist, "DEFAULT_DB_PATH", self.db_path)
@@ -18,24 +18,26 @@ class TestGist(unittest.TestCase):
         self.original_cwd = os.getcwd()
         os.chdir(self.tmpdir.name)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         os.chdir(self.original_cwd)
         self.default_db_path_patcher.stop()
         self.tmpdir.cleanup()
 
-    def _mock_response(self, url):
+    def _mock_response(self, url: str) -> Mock:
         response = Mock()
         response.raise_for_status = Mock()
         response.json.return_value = {"html_url": url}
         return response
 
-    def test_get_gist_url_requires_token(self):
-        with patch.dict(os.environ, {}, clear=True):
-            with patch.object(gist, "load_dotenv", return_value=None):
-                with self.assertRaisesRegex(RuntimeError, "Missing GITHUB_TOKEN"):
-                    gist.get_gist_url("style-a", "print('hello')")
+    def test_get_gist_url_requires_token(self) -> None:
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch.object(gist, "load_dotenv", return_value=None),
+            self.assertRaisesRegex(RuntimeError, "Missing GITHUB_TOKEN"),
+        ):
+            gist.get_gist_url("style-a", "print('hello')")
 
-    def test_get_gist_url_reuses_cached_gist_when_source_unchanged(self):
+    def test_get_gist_url_reuses_cached_gist_when_source_unchanged(self) -> None:
         with patch.dict(os.environ, {"GITHUB_TOKEN": "token"}):
             response = self._mock_response("https://gist.github.com/example/one")
             with patch.object(gist.requests, "post", return_value=response) as post_mock:
@@ -51,7 +53,7 @@ class TestGist(unittest.TestCase):
             conn.close()
             self.assertEqual(row[0], "https://gist.github.com/example/one")
 
-    def test_get_gist_url_creates_new_gist_when_source_changes(self):
+    def test_get_gist_url_creates_new_gist_when_source_changes(self) -> None:
         with patch.dict(os.environ, {"GITHUB_TOKEN": "token"}):
             response_one = self._mock_response("https://gist.github.com/example/one")
             response_two = self._mock_response("https://gist.github.com/example/two")
@@ -65,7 +67,7 @@ class TestGist(unittest.TestCase):
             self.assertEqual(url_second, "https://gist.github.com/example/two")
             self.assertEqual(post_mock.call_count, 2)
 
-    def test_get_gist_url_reuses_cache_across_working_directories(self):
+    def test_get_gist_url_reuses_cache_across_working_directories(self) -> None:
         first_cwd = os.path.join(self.tmpdir.name, "run-a")
         second_cwd = os.path.join(self.tmpdir.name, "run-b")
         os.makedirs(first_cwd, exist_ok=True)
