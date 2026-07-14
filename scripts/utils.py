@@ -5,7 +5,7 @@ import gpxpy
 import pandas as pd
 
 
-def get_files(input_dir):
+def get_files(input_dir: str) -> list[tuple[str, str]]:
     gpx_files = []
 
     for gpx_file in glob.glob(
@@ -20,7 +20,7 @@ def get_files(input_dir):
     return gpx_files
 
 
-def get_df(filepath):
+def get_df(filepath: str) -> pd.DataFrame:
     with open(filepath) as gpx_file:
         gpx = gpxpy.parse(gpx_file)
 
@@ -37,5 +37,4 @@ def get_df(filepath):
                     }
                 )
 
-    df = pd.DataFrame(data)
-    return df
+    return pd.DataFrame(data)

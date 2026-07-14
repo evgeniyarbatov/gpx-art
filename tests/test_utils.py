@@ -21,7 +21,7 @@ SAMPLE_GPX = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 class TestUtils(unittest.TestCase):
-    def test_get_files_is_case_insensitive_and_returns_stem_name(self):
+    def test_get_files_is_case_insensitive_and_returns_stem_name(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             (root / "alpha.gpx").write_text(SAMPLE_GPX, encoding="utf-8")
@@ -33,7 +33,7 @@ class TestUtils(unittest.TestCase):
 
             self.assertEqual(result_set, {("alpha", "alpha.gpx"), ("beta", "beta.GPX")})
 
-    def test_get_df_parses_track_points(self):
+    def test_get_df_parses_track_points(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             gpx_path = Path(tmpdir) / "track.gpx"
             gpx_path.write_text(SAMPLE_GPX, encoding="utf-8")
