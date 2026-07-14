@@ -6,9 +6,10 @@ import sys
 
 import gpxpy
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 
 
-def has_visible_track(gpx_file, threshold=1e-6):
+def has_visible_track(gpx_file: str, threshold: float = 1e-6) -> bool:
     """Return True if the GPX file has a non-degenerate track."""
     try:
         with open(gpx_file, encoding="utf-8") as f:
@@ -29,13 +30,10 @@ def has_visible_track(gpx_file, threshold=1e-6):
 
     if len(lat_all) < 2:
         return False
-    if (max(lat_all) - min(lat_all) < threshold) or (max(lon_all) - min(lon_all) < threshold):
-        return False
-
-    return True
+    return not (max(lat_all) - min(lat_all) < threshold or max(lon_all) - min(lon_all) < threshold)
 
 
-def plot_gpx(ax, gpx_file):
+def plot_gpx(ax: Axes, gpx_file: str) -> None:
     """Actually plot the GPX file."""
     with open(gpx_file, encoding="utf-8") as f:
         gpx = gpxpy.parse(f)
@@ -58,7 +56,7 @@ def plot_gpx(ax, gpx_file):
         spine.set_linewidth(1.0)
 
 
-def main():
+def main() -> None:
     if len(sys.argv) != 2:
         print(f"Usage: {sys.argv[0]} <GPX_directory>")
         sys.exit(1)
@@ -87,10 +85,7 @@ def main():
     rows = math.ceil(n / cols)
 
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3), facecolor="white")
-    if n == 1:
-        axes = [axes]
-    else:
-        axes = axes.flatten()
+    axes = [axes] if n == 1 else axes.flatten()
 
     for ax, gpx_file in zip(axes, visible_files, strict=False):
         plot_gpx(ax, gpx_file)
