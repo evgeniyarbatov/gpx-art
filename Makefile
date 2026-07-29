@@ -5,7 +5,9 @@ DATA_ROOT ?= $(HOME)/data
 REPO_NAME := $(notdir $(CURDIR))
 DATA_DIR  ?= $(DATA_ROOT)/$(REPO_NAME)
 
-SOURCE_DIR ?= ./source-gpx
+# ./source-gpx has no tracked content — nothing to sample from on a fresh clone.
+# Real personal GPX archive, same external-input pattern as automations' AUDIO_DIR.
+SOURCE_DIR ?= $(HOME)/Documents/hcm-gpx
 
 GPX_DIR = $(DATA_DIR)/gpx
 IMAGES_DIR = $(DATA_DIR)/images
@@ -34,7 +36,7 @@ plot: install
 	@uv run python scripts/plot-gpx.py $(GPX_DIR)
 
 render: install
-	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
+	@GISTS_DB_PATH=$(DATA_DIR)/gists.db GITHUB_TOKEN=$$(gh auth token) uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
 
 render-no-qr: install
 	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) --no-qr
@@ -51,7 +53,7 @@ help:
 	@echo "random        - copy random GPX files into $(GPX_DIR)"
 	@echo "dtwselect     - select GPX files via DTW"
 	@echo "plot          - plot GPX tracks"
-	@echo "render        - render GPX art images (with QR)"
+	@echo "render        - render GPX art images (with QR); needs gh CLI authenticated"
 	@echo "render-no-qr  - render all styles without QR / Gist"
 	@echo "art           - random + render (default)"
 	@echo "test          - run unit tests"
