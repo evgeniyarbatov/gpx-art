@@ -36,6 +36,8 @@ make dtwselect SOURCE_DIR=/absolute/path/to/your/gpx NUMBER_OF_GPX=20
 make render-no-qr
 ```
 
+Generated GPX selections and rendered art are written under `~/data/gpx-art/` by default (`gpx/`, `images/`), not into the repo. Override with `DATA_ROOT=/other/root` (keeps the `gpx-art` subfolder) or `DATA_DIR=/exact/path`.
+
 ## Documentation
 
 | Doc | Contents |
