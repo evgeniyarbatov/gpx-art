@@ -5,9 +5,9 @@ DATA_ROOT ?= $(HOME)/data
 REPO_NAME := $(notdir $(CURDIR))
 DATA_DIR  ?= $(DATA_ROOT)/$(REPO_NAME)
 
-# ./source-gpx has no tracked content — nothing to sample from on a fresh clone.
-# Real personal GPX archive, same external-input pattern as automations' AUDIO_DIR.
-SOURCE_DIR ?= $(HOME)/Documents/hcm-gpx
+# ./source-gpx has no tracked content — override with a real GPX archive, e.g.
+# make art SOURCE_DIR=$(HOME)/Documents/your-gpx-dir
+SOURCE_DIR ?= ./source-gpx
 
 GPX_DIR = $(DATA_DIR)/gpx
 IMAGES_DIR = $(DATA_DIR)/images
