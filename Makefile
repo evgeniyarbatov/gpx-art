@@ -13,7 +13,10 @@ GPX_DIR = $(DATA_DIR)/gpx
 IMAGES_DIR = $(DATA_DIR)/images
 NUMBER_OF_GPX = 20
 
-default: art
+default: run
+
+# Entry point: full pipeline (random track selection + rendering).
+run: art
 
 install:
 	@uv sync
