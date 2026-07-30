@@ -41,6 +41,7 @@ render: install
 render-no-qr: install
 	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) --no-qr
 
+# Entry point: end-to-end pipeline (random track selection + rendering)
 art: random render
 
 test: install
