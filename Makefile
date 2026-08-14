@@ -39,10 +39,7 @@ plot: install
 	@uv run python scripts/plot-gpx.py $(GPX_DIR)
 
 render: install
-	@GISTS_DB_PATH=$(DATA_DIR)/gists.db GITHUB_TOKEN=$$(gh auth token) uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
-
-render-no-qr: install
-	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR) --no-qr
+	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
 
 # Entry point: end-to-end pipeline (random track selection + rendering)
 art: random render
@@ -57,7 +54,6 @@ help:
 	@echo "random        - copy random GPX files into $(GPX_DIR)"
 	@echo "dtwselect     - select GPX files via DTW"
 	@echo "plot          - plot GPX tracks"
-	@echo "render        - render GPX art images (with QR); needs gh CLI authenticated"
-	@echo "render-no-qr  - render all styles without QR / Gist"
+	@echo "render        - render GPX art images"
 	@echo "art           - random + render (default)"
 	@echo "test          - run unit tests"

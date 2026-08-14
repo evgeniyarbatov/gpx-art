@@ -82,29 +82,24 @@ class TestGpxArtCore(unittest.TestCase):
                 "extract_coordinates",
                 return_value=(np.array([1.0]), np.array([2.0])),
             ),
-            patch.object(gpx_art, "add_qr_code") as add_qr_mock,
             patch.object(gpx_art, "save_figure") as save_mock,
             patch("builtins.print") as print_mock,
         ):
             gpx_art.create_art("in.gpx", "out.png", "demo")
 
         style_fn.assert_not_called()
-        add_qr_mock.assert_not_called()
         save_mock.assert_not_called()
         print_mock.assert_called_once()
         self.assertIn("Not enough GPS points in in.gpx", print_mock.call_args.args[0])
 
-    def test_create_art_calls_style_qr_and_save(self) -> None:
+    def test_create_art_calls_style_and_save(self) -> None:
         lons = np.array([20.0, 21.0])
         lats = np.array([10.0, 11.0])
         style_fn = Mock(return_value=("fig", "#fefefe"))
-        fake_axis = Mock()
 
         with (
             patch.dict(gpx_art.STYLES, {"demo": style_fn}, clear=True),
             patch.object(gpx_art, "extract_coordinates", return_value=(lons, lats)),
-            patch.object(gpx_art.plt, "gca", return_value=fake_axis),
-            patch.object(gpx_art, "add_qr_code") as add_qr_mock,
             patch.object(gpx_art, "save_figure") as save_mock,
             patch.object(gpx_art.time, "time", side_effect=[10.0, 11.5]),
             patch("builtins.print") as print_mock,
@@ -115,7 +110,6 @@ class TestGpxArtCore(unittest.TestCase):
         called_lons, called_lats = style_fn.call_args.args
         np.testing.assert_array_equal(called_lons, lons)
         np.testing.assert_array_equal(called_lats, lats)
-        add_qr_mock.assert_called_once_with("fig", fake_axis, "#fefefe", "demo")
         save_mock.assert_called_once_with("fig", "out.png", "#fefefe")
         self.assertIn("Created demo: out.png (1.50 seconds)", print_mock.call_args.args[0])
 
@@ -139,10 +133,10 @@ class TestGpxArtCore(unittest.TestCase):
         self.assertEqual(
             create_art_mock.call_args_list,
             [
-                call("input-dir/track-one.gpx", "images-dir/a-track-one.png", "a", qr=True),
-                call("input-dir/track-one.gpx", "images-dir/b-track-one.png", "b", qr=True),
-                call("input-dir/track-two.gpx", "images-dir/a-track-two.png", "a", qr=True),
-                call("input-dir/track-two.gpx", "images-dir/b-track-two.png", "b", qr=True),
+                call("input-dir/track-one.gpx", "images-dir/a-track-one.png", "a"),
+                call("input-dir/track-one.gpx", "images-dir/b-track-one.png", "b"),
+                call("input-dir/track-two.gpx", "images-dir/a-track-two.png", "a"),
+                call("input-dir/track-two.gpx", "images-dir/b-track-two.png", "b"),
             ],
         )
 

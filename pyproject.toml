@@ -8,11 +8,7 @@ dependencies = [
     "matplotlib",
     "numpy",
     "shapely",
-    "pillow",
     "scipy",
-    "qrcode",
-    "python-dotenv",
-    "requests",
     "fastdtw",
     "defusedxml>=0.7.1",
 ]
@@ -56,5 +52,4 @@ dev = [
     "ruff>=0.15.21",
     "scipy-stubs>=1.17.1.5",
     "types-defusedxml>=0.7.0.20260504",
-    "types-qrcode>=8.2.0.20260518",
 ]
