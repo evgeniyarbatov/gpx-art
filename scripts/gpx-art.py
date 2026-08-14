@@ -12,7 +12,7 @@ import numpy.typing as npt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Circle, Rectangle
-from utils import get_files
+from utils import get_files, get_lon_lat
 
 FloatArray = npt.NDArray[np.float64]
 StyleFunc = Callable[[FloatArray, FloatArray], tuple[Figure, str]]
@@ -114,15 +114,7 @@ RAKE_LINE = "#5c5346"
 
 
 def extract_coordinates(gpx_filename: str) -> tuple[FloatArray, FloatArray]:
-    """Extract lon/lat arrays from GPX file"""
-    lons, lats = [], []
-    with open(gpx_filename) as gpx_file:
-        gpx = gpxpy.parse(gpx_file)
-        for track in gpx.tracks:
-            for segment in track.segments:
-                for point in segment.points:
-                    lons.append(point.longitude)
-                    lats.append(point.latitude)
+    lons, lats = get_lon_lat(gpx_filename)
     return np.array(lons), np.array(lats)
 
 

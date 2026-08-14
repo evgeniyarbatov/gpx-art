@@ -1,49 +1,29 @@
 #!/usr/bin/env python3
-import glob
 import math
 import os
 import sys
 
-import gpxpy
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from utils import get_files, get_lon_lat
 
 
-def has_visible_track(gpx_file: str, threshold: float = 1e-6) -> bool:
-    """Return True if the GPX file has a non-degenerate track."""
+def has_visible_track(track_file: str, threshold: float = 1e-6) -> bool:
     try:
-        with open(gpx_file, encoding="utf-8") as f:
-            gpx = gpxpy.parse(f)
+        lons, lats = get_lon_lat(track_file)
     except Exception as e:
-        print(f"Error parsing {gpx_file}: {e}")
+        print(f"Error parsing {track_file}: {e}")
         return False
 
-    lat_all, lon_all = [], []
-    for track in gpx.tracks:
-        for segment in track.segments:
-            if not segment.points:
-                continue
-            lat = [p.latitude for p in segment.points]
-            lon = [p.longitude for p in segment.points]
-            lat_all.extend(lat)
-            lon_all.extend(lon)
-
-    if len(lat_all) < 2:
+    if len(lats) < 2:
         return False
-    return not (max(lat_all) - min(lat_all) < threshold or max(lon_all) - min(lon_all) < threshold)
+    return not (max(lats) - min(lats) < threshold or max(lons) - min(lons) < threshold)
 
 
-def plot_gpx(ax: Axes, gpx_file: str) -> None:
-    """Actually plot the GPX file."""
-    with open(gpx_file, encoding="utf-8") as f:
-        gpx = gpxpy.parse(f)
-
-    for track in gpx.tracks:
-        for segment in track.segments:
-            lat = [p.latitude for p in segment.points]
-            lon = [p.longitude for p in segment.points]
-            if lat and lon:
-                ax.plot(lon, lat, color="red", linewidth=0.8)
+def plot_track(ax: Axes, track_file: str) -> None:
+    lons, lats = get_lon_lat(track_file)
+    if lats and lons:
+        ax.plot(lons, lats, color="red", linewidth=0.8)
 
     ax.set_xticks([])
     ax.set_yticks([])
@@ -58,26 +38,25 @@ def plot_gpx(ax: Axes, gpx_file: str) -> None:
 
 def main() -> None:
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <GPX_directory>")
+        print(f"Usage: {sys.argv[0]} <track_directory>")
         sys.exit(1)
 
-    gpx_dir = sys.argv[1]
-    gpx_files = sorted(glob.glob(os.path.join(gpx_dir, "*.gpx")))
+    track_dir = sys.argv[1]
+    track_files = [path for _, path in get_files(track_dir)]
 
-    if not gpx_files:
-        print("No .gpx files found in directory.")
+    if not track_files:
+        print("No .parquet or .gpx files found in directory.")
         sys.exit(1)
 
-    # Filter only visible (non-degenerate) tracks
     visible_files = []
-    for f in gpx_files:
-        if has_visible_track(f):
-            visible_files.append(f)
+    for path in track_files:
+        if has_visible_track(path):
+            visible_files.append(path)
         else:
-            print(f"Skipping blank or degenerate GPX: {os.path.basename(f)}")
+            print(f"Skipping blank or degenerate track: {os.path.basename(path)}")
 
     if not visible_files:
-        print("No visible GPX tracks found.")
+        print("No visible tracks found.")
         sys.exit(0)
 
     n = len(visible_files)
@@ -87,10 +66,9 @@ def main() -> None:
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3), facecolor="white")
     axes = [axes] if n == 1 else axes.flatten()
 
-    for ax, gpx_file in zip(axes, visible_files, strict=False):
-        plot_gpx(ax, gpx_file)
+    for ax, track_file in zip(axes, visible_files, strict=False):
+        plot_track(ax, track_file)
 
-    # Hide any unused axes cleanly
     for ax in axes[len(visible_files) :]:
         ax.remove()
 
