@@ -1,5 +1,6 @@
 import random
 import re
+from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,6 +9,7 @@ import gpxpy
 import gpxpy.gpx
 import pandas as pd
 from shapely.geometry.base import BaseGeometry
+from utils import MIN_TRACK_LENGTH_KM, path_length_km
 
 _SLUG_RE = re.compile(r"[^\w\-]+", flags=re.UNICODE)
 _SOURCE_DIRS = {"android", "casio", "strava"}
@@ -33,10 +35,15 @@ class Track:
     index: int
     lons: list[float]
     lats: list[float]
+    origin: str = ""
 
     @property
     def key(self) -> str:
         return f"{self.source}:{self.city}:{self.index}:{self.name}"
+
+    @property
+    def group(self) -> str:
+        return self.origin or self.key
 
     def filename(self) -> str:
         parts = [
@@ -61,12 +68,13 @@ def _line_coords(geometry: BaseGeometry) -> tuple[list[float], list[float]] | No
     return [float(lon) for lon, lat in coords], [float(lat) for lon, lat in coords]
 
 
-def load_parquet_file(path: Path) -> list[Track]:
+def load_parquet_file(path: Path, origin: str = "") -> list[Track]:
     import geopandas as gpd
 
     frame = gpd.read_parquet(path)
     parent = path.parent.name
     source_from_dir = parent if parent in _SOURCE_DIRS else ""
+    file_origin = origin or path.name
     tracks: list[Track] = []
     for index, (_, row) in enumerate(frame.iterrows()):
         coords = _line_coords(row.geometry)
@@ -77,7 +85,15 @@ def load_parquet_file(path: Path) -> list[Track]:
         city = _cell_str(row, "city", path.stem)
         name = _cell_str(row, "name", path.stem)
         tracks.append(
-            Track(source=source, city=city, name=name, index=index, lons=lons, lats=lats)
+            Track(
+                source=source,
+                city=city,
+                name=name,
+                index=index,
+                lons=lons,
+                lats=lats,
+                origin=file_origin,
+            )
         )
     return tracks
 
@@ -90,19 +106,46 @@ def load_tracks(directory: str | Path) -> list[Track]:
     tracks: list[Track] = []
     for path in sorted(root.rglob("*.parquet")):
         if path.is_file():
-            tracks.extend(load_parquet_file(path))
+            tracks.extend(load_parquet_file(path, origin=str(path.relative_to(root))))
     return tracks
 
 
+def track_length_km(track: Track) -> float:
+    return path_length_km(track.lons, track.lats)
+
+
+def long_enough(
+    tracks: Sequence[Track], min_length_km: float = MIN_TRACK_LENGTH_KM
+) -> list[Track]:
+    return [track for track in tracks if track_length_km(track) >= min_length_km]
+
+
 def sample_tracks(
-    tracks: Sequence[Track], n: int, rng: random.Random | None = None
+    tracks: Sequence[Track],
+    n: int,
+    rng: random.Random | None = None,
+    min_length_km: float = MIN_TRACK_LENGTH_KM,
 ) -> list[Track]:
     if n < 1:
         raise ValueError("n must be at least 1")
-    if n >= len(tracks):
-        return list(tracks)
+    eligible = long_enough(tracks, min_length_km=min_length_km)
+    if n >= len(eligible):
+        return list(eligible)
     picker = rng or random.Random()
-    return picker.sample(list(tracks), n)
+    groups: dict[str, list[Track]] = defaultdict(list)
+    for track in eligible:
+        groups[track.group].append(track)
+
+    picked: list[Track] = []
+    leftover: list[Track] = []
+    for group in sorted(groups.values(), key=lambda items: (len(items), items[0].group)):
+        choice = picker.choice(group)
+        picked.append(choice)
+        leftover.extend(track for track in group if track is not choice)
+
+    if len(picked) >= n:
+        return picked[:n]
+    return picked + picker.sample(leftover, n - len(picked))
 
 
 def write_gpx(path: Path, track: Track) -> None:

@@ -65,7 +65,7 @@ Variables: `SOURCE_DIR` (default `./source-gpx`), `NUMBER_OF_GPX` (default `20`)
 Optional lane in `make/parquet.mk`. Not listed by `make help`.
 
 ```bash
-make art-parquet NUMBER_OF_GPX=20
+make art-parquet
 make help-parquet
 ```
 
@@ -73,8 +73,8 @@ make help-parquet
 |---|---|
 | `make install-parquet` | Install the `parquet` extra (`geopandas`, `pyarrow`) |
 | `make [private]` | Clone or update `[private]` under `$(DATA_DIR)/[private]` |
-| `make random-parquet` | Sample parquet tracks and write GPX into `gpx/` |
-| `make dtwselect-parquet` | DTW-select parquet tracks and write GPX into `gpx/` |
-| `make art-parquet` | `random-parquet` then `render` |
+| `make random-parquet` | Sample ≥10 km tracks from every parquet file into `gpx/` |
+| `make dtwselect-parquet` | Same pool, FastDTW-diverse, not near the current `gpx/` set |
+| `make art-parquet` | `dtwselect-parquet` then `render` |
 
-`PARQUET_DIR` defaults to `$(DATA_DIR)/[private]/data/parquet`.
+Parquet targets default to 100 tracks (`NUMBER_OF_GPX=100`). Override with `make art-parquet NUMBER_OF_GPX=40`. `PARQUET_DIR` defaults to `$(DATA_DIR)/[private]/data/parquet`. City files with no track ≥10 km are skipped.

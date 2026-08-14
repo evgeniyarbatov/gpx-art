@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from parquet_tracks import load_tracks, sample_tracks, write_tracks
+from utils import MIN_TRACK_LENGTH_KM
 
 
 def main() -> None:
@@ -31,7 +32,11 @@ def main() -> None:
         print(f"No tracks found in {source}", file=sys.stderr)
         sys.exit(1)
 
-    selected = sample_tracks(tracks, num_files)
+    selected = sample_tracks(tracks, num_files, min_length_km=MIN_TRACK_LENGTH_KM)
+    if not selected:
+        print(f"No tracks ≥ {MIN_TRACK_LENGTH_KM:g} km found in {source}", file=sys.stderr)
+        sys.exit(1)
+
     written = write_tracks(destination, selected)
     print(f"Wrote {len(written)} GPX files to {destination}", file=sys.stderr)
     for path in written:

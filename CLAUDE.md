@@ -20,7 +20,7 @@ make dtwselect SOURCE_DIR=… NUMBER_OF_GPX=20
 make random SOURCE_DIR=… NUMBER_OF_GPX=20
 make plot                             # grid preview of gpx/
 make art SOURCE_DIR=…                 # random + render
-make art-parquet                      # personal ingest (make/parquet.mk)
+make art-parquet                      # parquet DTW sample (100) + render
 make help-parquet                     # personal targets
 make clean                            # clear gpx/* and images/*
 ```
@@ -40,7 +40,7 @@ uv run python -m unittest tests.test_gpx_art_core.TestGpxArtCore.test_style_deco
 | `scripts/gpx-art.py` | Style registry + renderer + optional QR |
 | `scripts/dtw-select.py` | Diverse track selection (FastDTW) |
 | `scripts/plot-gpx.py` | Visual preview |
-| `scripts/utils.py` | `get_files`, `get_df`, `get_lon_lat` |
+| `scripts/utils.py` | `get_files`, `get_df`, `get_lon_lat`, `path_length_km` |
 | `scripts/sample-tracks.py` | Personal parquet → GPX sample |
 | `scripts/parquet_tracks.py` | Personal parquet ingest helpers |
 | `make/parquet.mk` | Personal parquet Make targets |

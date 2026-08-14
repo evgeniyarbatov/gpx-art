@@ -64,11 +64,12 @@ Path helpers (`essence_path`, `flow_path`, `gap_mask`, ink strokes, palettes, et
 
 **DTW** (`make dtwselect` / `dtw-select.py`):
 
-1. Parse all GPX files in the source directory.
+1. Parse all GPX files in the source directory (or every city parquet).
 2. Drop tracks shorter than 10 km.
 3. Downsample and normalize trajectories.
-4. Greedily pick a diverse set maximizing FastDTW distance between selected tracks.
-5. Copy winners into `gpx/`.
+4. For parquet, take one qualifying track from each file, then fill remaining slots.
+5. Greedily pick a diverse set maximizing FastDTW distance from already chosen tracks and from whatever is already in `gpx/`.
+6. Replace `gpx/` with the winners.
 
 ## Data layout
 
@@ -77,6 +78,6 @@ Path helpers (`essence_path`, `flow_path`, `gap_mask`, ink strokes, palettes, et
 
 ## Personal parquet source
 
-`make/parquet.mk` is a separate ingest lane (`make art-parquet`). It checkouts a private `[private]` repo, samples tracks from city parquet files, and writes ordinary GPX into the same `gpx/` working set. Render and plot stay GPX-only.
+`make/parquet.mk` is a separate ingest lane (`make art-parquet`). It checkouts a private `[private]` repo, FastDTW-selects ≥10 km tracks from every city parquet, and writes ordinary GPX into the same `gpx/` working set. Render and plot stay GPX-only. Default sample size is 100.
 
 A city parquet is a bundle of tracks (`name`, LineString `geometry`, `city`). Source is the parent folder (`android`, `casio`, `strava`). Those lines are already RDP-simplified at 10 m.
