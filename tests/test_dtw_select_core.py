@@ -75,6 +75,59 @@ class TestDtwSelectCore(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "No tracks longer than"):
             dtw_select.select_first_track(tracks, min_length_km=10)
 
+    def test_item_group_uses_parquet_origin(self) -> None:
+        track = dtw_select.Track(
+            source="strava",
+            city="Singapore",
+            name="run",
+            index=0,
+            lons=[0.0, 0.15],
+            lats=[0.0, 0.0],
+            origin="strava/singapore.parquet",
+        )
+        self.assertEqual(dtw_select.item_group(track), "strava/singapore.parquet")
+
+    def test_choose_diverse_keys_covers_each_file_group(self) -> None:
+        raw = {
+            "sg-a": np.array([[0.0, 0.0], [0.0, 0.15]]),
+            "sg-b": np.array([[0.01, 0.0], [0.01, 0.15]]),
+            "berlin": np.array([[0.0, 0.0], [0.15, 0.0]]),
+            "osaka": np.array([[0.0, 0.0], [0.15, 0.15]]),
+        }
+        dtw = {key: dtw_select.normalize_track(track) for key, track in raw.items()}
+        self.assertTrue(all(track is not None for track in dtw.values()))
+        groups = {
+            "strava/singapore.parquet": ["sg-a", "sg-b"],
+            "strava/berlin.parquet": ["berlin"],
+            "strava/osaka.parquet": ["osaka"],
+        }
+
+        selected = dtw_select.choose_diverse_keys(raw, dtw, groups, num_files=3)
+
+        self.assertEqual(len(selected), 3)
+        selected_groups = {
+            group
+            for group, keys in groups.items()
+            if any(key in selected for key in keys)
+        }
+        self.assertEqual(selected_groups, set(groups))
+
+    def test_pick_farthest_avoids_reference_shape(self) -> None:
+        similar = np.array([[0.0, 0.0], [0.0, 0.15]])
+        distinct = np.array([[0.0, 0.0], [0.15, 0.0]])
+        raw = {"similar": similar, "distinct": distinct}
+        dtw = {key: dtw_select.normalize_track(track) for key, track in raw.items()}
+        self.assertTrue(all(track is not None for track in dtw.values()))
+        reference = [dtw["similar"]]
+
+        picked = dtw_select.pick_farthest(
+            ["similar", "distinct"], raw, dtw, reference, min_length_km=10
+        )
+
+        self.assertIsNotNone(picked)
+        assert picked is not None
+        self.assertEqual(picked[0], "distinct")
+
 
 if __name__ == "__main__":
     unittest.main()

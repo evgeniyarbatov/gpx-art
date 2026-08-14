@@ -45,13 +45,12 @@ uv run python scripts/dtw-select.py <gpx_directory> <num_files> <destination_dir
 
 **Pipeline**
 
-1. Parse all GPX files.
+1. Parse all GPX files (or every city parquet under the tree).
 2. Filter tracks shorter than 10 km.
 3. Downsample + normalize trajectories.
-4. Greedily select diverse tracks using FastDTW.
-5. Copy selected files to the destination directory.
-
-If the source directory is a parquet tree instead, tracks are loaded from city files and written as GPX.
+4. If the source is parquet, take one qualifying track from each file, then fill with FastDTW.
+5. FastDTW also stays away from any GPX already in the destination directory.
+6. Replace the destination GPX set with the winners.
 
 Make wrapper: `make dtwselect SOURCE_DIR=... NUMBER_OF_GPX=20`.
 
@@ -59,13 +58,13 @@ Make wrapper: `make dtwselect SOURCE_DIR=... NUMBER_OF_GPX=20`.
 
 ## `scripts/sample-tracks.py`
 
-Personal ingest: random sample from a `gpx-data` parquet tree, written as GPX.
+Personal ingest: sample from a `gpx-data` parquet tree, written as GPX. Drops tracks shorter than 10 km, then takes at least one track from each city file before filling remaining slots.
 
 ```bash
 uv run python scripts/sample-tracks.py <parquet_dir> <num_files> <destination_directory>
 ```
 
-Make wrapper: `make random-parquet NUMBER_OF_GPX=20`.
+Make wrapper: `make random-parquet` (default 100).
 
 ---
 
@@ -92,9 +91,10 @@ Shared helpers:
 - `get_files(input_dir)` — enumerate GPX files as `(name, path)` pairs.
 - `get_df(filepath)` — parse track points into a pandas DataFrame (`time`, `lat`, `lon`, `elevation`).
 - `get_lon_lat(filepath)` — lon/lat lists from a GPX file.
+- `path_length_km(lons, lats)` — haversine length. Tracks shorter than `MIN_TRACK_LENGTH_KM` (10) are not used for art.
 
 ---
 
 ## `scripts/parquet_tracks.py`
 
-Helpers for the personal parquet ingest lane (`load_tracks`, `sample_tracks`, `write_tracks`). Not used by the public GPX path.
+Helpers for the personal parquet ingest lane (`load_tracks`, `sample_tracks`, `write_tracks`). `sample_tracks` enforces the 10 km floor and covers every city file. Not used by the public GPX path.

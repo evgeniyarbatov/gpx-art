@@ -57,6 +57,15 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(lons, [20.0, 21.0])
         self.assertEqual(lats, [10.0, 11.0])
 
+    def test_path_length_km_measures_haversine_sum(self) -> None:
+        one_degree = utils.haversine_km(0.0, 0.0, 0.0, 1.0)
+        self.assertGreater(one_degree, 110)
+        self.assertLess(one_degree, 112)
+        self.assertEqual(utils.path_length_km([0.0], [0.0]), 0.0)
+        length = utils.path_length_km([0.0, 1.0, 2.0], [0.0, 0.0, 0.0])
+        self.assertGreater(length, 220)
+        self.assertLess(length, 225)
+
 
 if __name__ == "__main__":
     unittest.main()

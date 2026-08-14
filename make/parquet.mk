@@ -4,6 +4,8 @@ PARQUET_DIR ?= $(GPX_DATA_DIR)/data/parquet
 
 .PHONY: install-parquet gpx-data random-parquet dtwselect-parquet art-parquet help-parquet
 
+random-parquet dtwselect-parquet art-parquet: NUMBER_OF_GPX = 100
+
 install-parquet:
 	@uv sync --group parquet
 
@@ -20,15 +22,18 @@ random-parquet: install-parquet gpx-data clean
 	@mkdir -p $(GPX_DIR)
 	@uv run python scripts/sample-tracks.py $(PARQUET_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
-dtwselect-parquet: install-parquet gpx-data clean
+dtwselect-parquet: install-parquet gpx-data
 	@mkdir -p $(GPX_DIR)
 	@uv run python scripts/dtw-select.py $(PARQUET_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
-art-parquet: random-parquet render
+art-parquet: dtwselect-parquet
+	@mkdir -p $(IMAGES_DIR)
+	@rm -rf $(IMAGES_DIR)/*
+	@$(MAKE) render
 
 help-parquet:
 	@echo "install-parquet    - uv sync including geopandas/pyarrow"
 	@echo "gpx-data           - clone or update gpx-data into $(GPX_DATA_DIR)"
-	@echo "random-parquet     - sample parquet tracks as GPX into $(GPX_DIR)"
-	@echo "dtwselect-parquet  - DTW-select parquet tracks as GPX"
-	@echo "art-parquet        - random-parquet + render"
+	@echo "random-parquet     - sample ≥10km tracks from every parquet file"
+	@echo "dtwselect-parquet  - DTW-select ≥10km tracks, covering every file"
+	@echo "art-parquet        - dtwselect-parquet + render (default 100)"

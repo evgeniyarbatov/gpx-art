@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Select diverse GPX files using FastDTW. Parquet trees are written out as GPX."""
 
-import math
 import os
 import shutil
 import sys
@@ -14,6 +13,7 @@ from defusedxml import ElementTree as ET
 from fastdtw import fastdtw
 from parquet_tracks import Track, load_tracks, write_tracks
 from scipy.spatial.distance import euclidean
+from utils import MIN_TRACK_LENGTH_KM, haversine_km, path_length_km
 
 PointArray = npt.NDArray[np.float64]
 SourceItem = Path | Track
@@ -57,10 +57,28 @@ def item_key(item: SourceItem) -> str:
     return str(item)
 
 
+def item_group(item: SourceItem) -> str:
+    if isinstance(item, Track):
+        return item.group
+    return item_key(item)
+
+
 def item_label(item: SourceItem) -> str:
     if isinstance(item, Track):
         return item.filename()
     return item.name
+
+
+def load_gpx_items(directory: str | Path) -> list[Path]:
+    root = Path(directory)
+    if not root.is_dir():
+        return []
+    return list(root.glob("*.gpx")) + list(root.glob("*.GPX"))
+
+
+def clear_gpx(dest: Path) -> None:
+    for path in load_gpx_items(dest):
+        path.unlink()
 
 
 def item_points(item: SourceItem) -> PointArray | None:
@@ -103,20 +121,15 @@ def process_source_item(
 
 
 def haversine_distance(p1: PointArray, p2: PointArray) -> float:
-    R = 6371  # km
     lat1, lon1 = p1
     lat2, lon2 = p2
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return haversine_km(float(lat1), float(lon1), float(lat2), float(lon2))
 
 
 def track_length_km(track: PointArray | None) -> float:
     if track is None or len(track) < 2:
         return 0
-    return sum(haversine_distance(track[i], track[i + 1]) for i in range(len(track) - 1))
+    return path_length_km(track[:, 1], track[:, 0])
 
 
 def smooth_track(track: PointArray | None, window: int = 5) -> PointArray | None:
@@ -131,7 +144,9 @@ def smooth_track(track: PointArray | None, window: int = 5) -> PointArray | None
 
 
 def select_first_track(
-    tracks: dict[str, PointArray], min_length_km: float = 10, temperature: float = 0.5
+    tracks: dict[str, PointArray],
+    min_length_km: float = MIN_TRACK_LENGTH_KM,
+    temperature: float = 0.5,
 ) -> str:
     """Weighted random first track favoring smooth and spread tracks >= min_length_km."""
     valid_tracks = {f: t for f, t in tracks.items() if track_length_km(t) >= min_length_km}
@@ -179,28 +194,160 @@ def track_signature(track: PointArray | None, n_points: int = 100) -> PointArray
 # -------------------- Selection Algorithm -------------------- #
 
 
+def signature_vector(track: PointArray) -> PointArray:
+    sig = track_signature(track)
+    assert sig is not None
+    return sig
+
+
+def group_item_keys(items: list[SourceItem]) -> dict[str, list[str]]:
+    groups: dict[str, list[str]] = {}
+    for item in items:
+        groups.setdefault(item_group(item), []).append(item_key(item))
+    return groups
+
+
+def pick_farthest(
+    candidates: list[str],
+    tracks_raw: dict[str, PointArray],
+    tracks_dtw: dict[str, PointArray],
+    known: list[PointArray],
+    min_length_km: float,
+    executor: ProcessPoolExecutor | None = None,
+    top_n: int = 100,
+) -> tuple[str, float] | None:
+    if not candidates:
+        return None
+    if not known:
+        subset = {key: tracks_raw[key] for key in candidates}
+        first = select_first_track(subset, min_length_km=min_length_km)
+        return first, float("inf")
+
+    signatures = {key: signature_vector(tracks_dtw[key]) for key in candidates}
+    known_sigs = [signature_vector(track) for track in known]
+    min_sig_distances = [
+        min(float(np.linalg.norm(signatures[key] - known_sig)) for known_sig in known_sigs)
+        for key in candidates
+    ]
+    top_indices = np.argsort(min_sig_distances)[-min(top_n, len(candidates)) :]
+    top_candidates = [candidates[int(idx)] for idx in top_indices]
+
+    dtw_scores = {key: float("inf") for key in top_candidates}
+    if executor is None:
+        for key in top_candidates:
+            for sel_track in known:
+                dtw_scores[key] = min(
+                    dtw_scores[key],
+                    compute_dtw_distance(tracks_dtw[key], sel_track),
+                )
+    else:
+        dtw_futures: dict[Future[float], str] = {}
+        for key in top_candidates:
+            for sel_track in known:
+                dtw_futures[executor.submit(compute_dtw_distance, tracks_dtw[key], sel_track)] = (
+                    key
+                )
+        for dtw_future in as_completed(dtw_futures):
+            key = dtw_futures[dtw_future]
+            dtw_scores[key] = min(dtw_scores[key], dtw_future.result())
+
+    best = max(dtw_scores, key=lambda key: dtw_scores[key])
+    return best, dtw_scores[best]
+
+
+def choose_diverse_keys(
+    tracks_raw: dict[str, PointArray],
+    tracks_dtw: dict[str, PointArray],
+    groups: dict[str, list[str]],
+    num_files: int,
+    min_length_km: float = MIN_TRACK_LENGTH_KM,
+    reference_dtw: list[PointArray] | None = None,
+    executor: ProcessPoolExecutor | None = None,
+    labels: dict[str, str] | None = None,
+) -> list[str]:
+    available = set(tracks_dtw)
+    selected: list[str] = []
+    selected_tracks: list[PointArray] = []
+    refs = list(reference_dtw or [])
+
+    def label(key: str) -> str:
+        return (labels or {}).get(key, key)
+
+    def commit(key: str) -> None:
+        selected.append(key)
+        selected_tracks.append(tracks_dtw[key])
+        available.discard(key)
+
+    if any(len(keys) > 1 for keys in groups.values()):
+        for _, keys in sorted(groups.items(), key=lambda item: (len(item[1]), item[0])):
+            if len(selected) >= num_files:
+                break
+            pool = [key for key in keys if key in available]
+            picked = pick_farthest(
+                pool, tracks_raw, tracks_dtw, refs + selected_tracks, min_length_km, executor
+            )
+            if picked:
+                commit(picked[0])
+                print(
+                    f"{len(selected)}/{num_files} {label(picked[0])} (file coverage)",
+                    file=sys.stderr,
+                )
+    elif available:
+        first = select_first_track(tracks_raw, min_length_km=min_length_km)
+        commit(first)
+        print(f"1/{num_files} {label(first)} (first track selected)", file=sys.stderr)
+
+    while len(selected) < num_files and available:
+        print(f"Selecting file {len(selected) + 1}/{num_files}...", file=sys.stderr, end="\r")
+        picked = pick_farthest(
+            sorted(available),
+            tracks_raw,
+            tracks_dtw,
+            refs + selected_tracks,
+            min_length_km,
+            executor,
+        )
+        if not picked:
+            break
+        commit(picked[0])
+        print(
+            f"{len(selected)}/{num_files} {label(picked[0])} (DTW {picked[1]:.2f})" + " " * 20,
+            file=sys.stderr,
+        )
+
+    return selected
+
+
 def select_diverse_tracks(
-    directory: str, num_files: int, min_length_km: float = 10
+    directory: str,
+    num_files: int,
+    min_length_km: float = MIN_TRACK_LENGTH_KM,
+    reference_dir: str | Path | None = None,
 ) -> list[SourceItem]:
     loaded = load_source_items(directory)
     if not loaded:
         print(f"No tracks found in {directory}", file=sys.stderr)
         return []
 
+    source_keys = {item_key(item) for item in loaded}
+    references = [
+        item
+        for item in (load_gpx_items(reference_dir) if reference_dir else [])
+        if item_key(item) not in source_keys
+    ]
     print(f"Found {len(loaded)} tracks", file=sys.stderr)
+    if references:
+        print(f"Comparing against {len(references)} existing tracks", file=sys.stderr)
     print("Preparing tracks in parallel...", file=sys.stderr)
-
-    def signature_of(track: PointArray) -> PointArray:
-        sig = track_signature(track)
-        assert sig is not None
-        return sig
 
     tracks_raw: dict[str, PointArray] = {}
     tracks_dtw: dict[str, PointArray] = {}
     by_key = {item_key(item): item for item in loaded}
+    ref_keys = {item_key(item) for item in references}
     with ProcessPoolExecutor() as executor:
         parse_futures = {
-            executor.submit(process_source_item, item): item_key(item) for item in loaded
+            executor.submit(process_source_item, item): item_key(item)
+            for item in [*loaded, *references]
         }
         for parse_future in as_completed(parse_futures):
             key, raw, dtw = parse_future.result()
@@ -208,71 +355,31 @@ def select_diverse_tracks(
                 tracks_raw[key] = raw
                 tracks_dtw[key] = dtw
 
-    # Filter by minimum length
-    tracks_raw = {f: t for f, t in tracks_raw.items() if track_length_km(t) >= min_length_km}
-    tracks_dtw = {f: tracks_dtw[f] for f in tracks_raw}
+    reference_dtw = [tracks_dtw[key] for key in ref_keys if key in tracks_dtw]
+    tracks_raw = {
+        key: track
+        for key, track in tracks_raw.items()
+        if key not in ref_keys and track_length_km(track) >= min_length_km
+    }
+    tracks_dtw = {key: tracks_dtw[key] for key in tracks_raw}
     if not tracks_raw:
         print(f"No tracks ≥ {min_length_km} km found", file=sys.stderr)
         return []
 
     print(f"Successfully parsed and filtered {len(tracks_raw)} tracks", file=sys.stderr)
+    groups = group_item_keys([by_key[key] for key in tracks_raw])
 
-    available_files = list(tracks_dtw.keys())
-    selected_files: list[str] = []
-    selected_tracks: list[PointArray] = []
-
-    # Precompute signatures
-    signatures = {f: signature_of(tracks_dtw[f]) for f in tracks_dtw}
-
-    # Smart first track
-    first_file = select_first_track(tracks_raw, min_length_km=min_length_km, temperature=0.5)
-    selected_files.append(first_file)
-    selected_tracks.append(tracks_dtw[first_file])
-    available_files.remove(first_file)
-    print(f"\n1. {item_label(by_key[first_file])} (first track selected)", file=sys.stderr)
-
-    # DTW greedy selection
     with ProcessPoolExecutor() as executor:
-        for i in range(1, num_files):
-            if not available_files:
-                break
-            print(f"Selecting file {i + 1}/{num_files}...", file=sys.stderr, end="\r")
-
-            min_sig_distances = []
-            for candidate in available_files:
-                sig = signatures[candidate]
-                min_dist = min(
-                    float(np.linalg.norm(sig - signature_of(sel))) for sel in selected_tracks
-                )
-                min_sig_distances.append(min_dist)
-
-            top_indices = np.argsort(min_sig_distances)[-100:]
-            top_candidates = [available_files[idx] for idx in top_indices]
-
-            dtw_futures: dict[Future[float], str] = {}
-            for candidate in top_candidates:
-                for sel_track in selected_tracks:
-                    future = executor.submit(
-                        compute_dtw_distance, tracks_dtw[candidate], sel_track
-                    )
-                    dtw_futures[future] = candidate
-
-            dtw_scores = {c: float("inf") for c in top_candidates}
-            for dtw_future in as_completed(dtw_futures):
-                candidate = dtw_futures[dtw_future]
-                dist = dtw_future.result()
-                dtw_scores[candidate] = min(dtw_scores[candidate], dist)
-
-            best_file = max(dtw_scores, key=lambda c: dtw_scores[c])
-            selected_files.append(best_file)
-            selected_tracks.append(tracks_dtw[best_file])
-            available_files.remove(best_file)
-
-            print(
-                f"{i + 1}. {item_label(by_key[best_file])} "
-                f"(DTW diversity score: {dtw_scores[best_file]:.2f})" + " " * 20,
-                file=sys.stderr,
-            )
+        selected_files = choose_diverse_keys(
+            tracks_raw,
+            tracks_dtw,
+            groups,
+            num_files,
+            min_length_km=min_length_km,
+            reference_dtw=reference_dtw,
+            executor=executor,
+            labels={key: item_label(by_key[key]) for key in tracks_raw},
+        )
 
     return [by_key[key] for key in selected_files]
 
@@ -306,12 +413,15 @@ def main() -> None:
 
     os.makedirs(destination, exist_ok=True)
 
-    selected = select_diverse_tracks(directory, num_files, min_length_km=10)
+    dest = Path(destination)
+    selected = select_diverse_tracks(
+        directory, num_files, min_length_km=MIN_TRACK_LENGTH_KM, reference_dir=dest
+    )
 
     if selected:
-        dest = Path(destination)
         print(f"\n--- Selected {len(selected)} diverse tracks ---", file=sys.stderr)
         print(f"Writing to {destination}...\n", file=sys.stderr)
+        clear_gpx(dest)
         if selected and isinstance(selected[0], Track):
             written = write_tracks(dest, [item for item in selected if isinstance(item, Track)])
         else:
