@@ -6,7 +6,7 @@ Guidance for working in this repository.
 
 Renders GPX tracks as artistic PNGs in many matplotlib styles.
 
-Pipeline: checkout `gpx-data` → sample tracks from city parquet files into `gpx/` → `gpx-art.py` applies each registered style → write `images/<style>-<track>.png`.
+Pipeline: select GPX tracks into `gpx/` → `gpx-art.py` applies each registered style → write `images/<style>-<track>.png`.
 
 Details: [docs/architecture.md](docs/architecture.md), [docs/artistic-direction.md](docs/artistic-direction.md), [docs/scripts.md](docs/scripts.md), [docs/usage.md](docs/usage.md). Keep README high-level; put operational detail in `docs/`.
 
@@ -16,11 +16,12 @@ Details: [docs/architecture.md](docs/architecture.md), [docs/artistic-direction.
 make install                          # uv sync → .venv
 make test                             # unittest discover -s tests
 make render                           # render all styles
-make gpx-data                         # clone/update gpx-data into DATA_DIR
-make dtwselect NUMBER_OF_GPX=20
-make random NUMBER_OF_GPX=20
+make dtwselect SOURCE_DIR=… NUMBER_OF_GPX=20
+make random SOURCE_DIR=… NUMBER_OF_GPX=20
 make plot                             # grid preview of gpx/
-make art                              # gpx-data + random + render
+make art SOURCE_DIR=…                 # random + render
+make art-parquet                      # personal ingest (make/parquet.mk)
+make help-parquet                     # personal targets
 make clean                            # clear gpx/* and images/*
 ```
 
@@ -38,9 +39,11 @@ uv run python -m unittest tests.test_gpx_art_core.TestGpxArtCore.test_style_deco
 |---|---|
 | `scripts/gpx-art.py` | Style registry + renderer + optional QR |
 | `scripts/dtw-select.py` | Diverse track selection (FastDTW) |
-| `scripts/sample-tracks.py` | Random sample from parquet/GPX |
 | `scripts/plot-gpx.py` | Visual preview |
-| `scripts/utils.py` | `get_files`, `get_df`, parquet load/sample/write |
+| `scripts/utils.py` | `get_files`, `get_df`, `get_lon_lat` |
+| `scripts/sample-tracks.py` | Personal parquet → GPX sample |
+| `scripts/parquet_tracks.py` | Personal parquet ingest helpers |
+| `make/parquet.mk` | Personal parquet Make targets |
 | `tests/` | unittest; loads scripts via `_module_loader.py` |
 | `gpx/`, `images/` | Working input/output (regenerated; large outputs not for commits) |
 

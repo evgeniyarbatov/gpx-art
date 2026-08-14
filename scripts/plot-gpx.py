@@ -38,14 +38,14 @@ def plot_track(ax: Axes, track_file: str) -> None:
 
 def main() -> None:
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <track_directory>")
+        print(f"Usage: {sys.argv[0]} <GPX_directory>")
         sys.exit(1)
 
     track_dir = sys.argv[1]
     track_files = [path for _, path in get_files(track_dir)]
 
     if not track_files:
-        print("No .parquet or .gpx files found in directory.")
+        print("No .gpx files found in directory.")
         sys.exit(1)
 
     visible_files = []

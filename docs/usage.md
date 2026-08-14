@@ -7,30 +7,37 @@
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv) (dependency management)
 - `make`
-- `git` (to clone `gpx-data`)
+- For `make random`: `find`, `shuf`, `xargs`, `cp`
 
-**Python packages** are declared in `pyproject.toml` and locked in `uv.lock` (installed via `uv sync` / `make install`): `gpxpy`, `matplotlib`, `numpy`, `pandas`, `scipy`, `fastdtw`, `shapely`, `geopandas`, `pyarrow`.
+If `shuf` is unavailable, use `make dtwselect` then `make render`.
+
+**Python packages** are declared in `pyproject.toml` and locked in `uv.lock` (installed via `uv sync` / `make install`): `gpxpy`, `matplotlib`, `numpy`, `pandas`, `scipy`, `fastdtw`, `shapely`.
 
 ## Setup
+
+1. Install dependencies:
 
 ```bash
 make install
 ```
 
-The default source is [gpx-data](https://github.com/evgeniyarbatov/gpx-data). `make random`, `make dtwselect`, and `make art` clone or update it under `~/Documents/data/gpx-art/gpx-data`.
+2. Point at your GPX library:
 
-To use a different library, pass `SOURCE_DIR` (a parquet tree or a folder of `.gpx` files).
+- Put files in `./source-gpx`, or
+- pass `SOURCE_DIR=/absolute/path/to/your/gpx` to Make targets.
 
 ## Quick start
 
+Full pipeline (clean → random sample → render):
+
 ```bash
-make art NUMBER_OF_GPX=20
+make art SOURCE_DIR=/absolute/path/to/your/gpx NUMBER_OF_GPX=20
 ```
 
 Diverse tracks then render:
 
 ```bash
-make dtwselect NUMBER_OF_GPX=20
+make dtwselect SOURCE_DIR=/absolute/path/to/your/gpx NUMBER_OF_GPX=20
 make plot
 make render
 ```
@@ -42,14 +49,32 @@ make render
 | `make install` | `uv sync` — create/update `.venv` |
 | `make lock` | Refresh `uv.lock` |
 | `make test` | Run unit tests |
-| `make clean` | Clear generated working tracks and `images/*` |
-| `make gpx-data` | Clone or update `gpx-data` into the data directory |
-| `make random` | Sample random tracks from parquet into `gpx/` |
-| `make dtwselect` | Sample diverse tracks via DTW into `gpx/` |
+| `make clean` | Clear generated `gpx/*` and `images/*` |
+| `make random` | Copy random GPX files from `SOURCE_DIR` into `gpx/` |
+| `make dtwselect` | Copy diverse GPX files via DTW into `gpx/` |
 | `make plot` | Grid preview of tracks in `gpx/` |
 | `make render` | Render all styles to `images/` |
 | `make art` | `random` then `render` (default target) |
 
-Variables: `SOURCE_DIR` (default `$(DATA_DIR)/gpx-data/data/parquet`), `NUMBER_OF_GPX` (default `20`), `GPX_DIR`, `IMAGES_DIR`.
+Variables: `SOURCE_DIR` (default `./source-gpx`), `NUMBER_OF_GPX` (default `20`), `GPX_DIR`, `IMAGES_DIR`.
 
 `GPX_DIR` and `IMAGES_DIR` default to `$(DATA_DIR)/gpx` and `$(DATA_DIR)/images`, where `DATA_DIR` defaults to `~/Documents/data/gpx-art` (`$(DATA_ROOT)/gpx-art`, `DATA_ROOT` defaulting to `~/Documents/data`). Override the root with `make <target> DATA_ROOT=/other/root`, or the exact path with `make <target> DATA_DIR=/tmp/run-42`.
+
+## Personal parquet source
+
+Optional lane in `make/parquet.mk`. Not listed by `make help`.
+
+```bash
+make art-parquet NUMBER_OF_GPX=20
+make help-parquet
+```
+
+| Target | Description |
+|---|---|
+| `make install-parquet` | Install the `parquet` extra (`geopandas`, `pyarrow`) |
+| `make gpx-data` | Clone or update `gpx-data` under `$(DATA_DIR)/gpx-data` |
+| `make random-parquet` | Sample parquet tracks and write GPX into `gpx/` |
+| `make dtwselect-parquet` | DTW-select parquet tracks and write GPX into `gpx/` |
+| `make art-parquet` | `random-parquet` then `render` |
+
+`PARQUET_DIR` defaults to `$(DATA_DIR)/gpx-data/data/parquet`.

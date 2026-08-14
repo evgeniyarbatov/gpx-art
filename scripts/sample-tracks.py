@@ -3,13 +3,13 @@
 import sys
 from pathlib import Path
 
-from utils import load_tracks, sample_tracks, write_tracks
+from parquet_tracks import load_tracks, sample_tracks, write_tracks
 
 
 def main() -> None:
     if len(sys.argv) != 4:
         print(
-            "Usage: python sample-tracks.py <source_dir> <num_files> <destination>",
+            "Usage: python sample-tracks.py <parquet_dir> <num_files> <destination>",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -33,7 +33,7 @@ def main() -> None:
 
     selected = sample_tracks(tracks, num_files)
     written = write_tracks(destination, selected)
-    print(f"Wrote {len(written)} tracks to {destination}", file=sys.stderr)
+    print(f"Wrote {len(written)} GPX files to {destination}", file=sys.stderr)
     for path in written:
         print(path)
 

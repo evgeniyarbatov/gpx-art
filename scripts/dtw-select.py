@@ -1,26 +1,72 @@
 #!/usr/bin/env python3
-"""
-Select diverse tracks from a parquet (or GPX) library using FastDTW.
-Writes selected tracks as one-track GeoParquet files.
-"""
+"""Select diverse GPX files using FastDTW. Parquet trees are written out as GPX."""
 
 import math
 import os
+import shutil
 import sys
 from concurrent.futures import Future, ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
+from defusedxml import ElementTree as ET
 from fastdtw import fastdtw
+from parquet_tracks import Track, load_tracks, write_tracks
 from scipy.spatial.distance import euclidean
-from utils import Track, load_tracks, write_tracks
 
 PointArray = npt.NDArray[np.float64]
+SourceItem = Path | Track
 
 
-def latlon_points(track: Track) -> PointArray:
-    return np.column_stack([track.lats, track.lons])
+def parse_gpx(filepath: Path) -> PointArray | None:
+    try:
+        tree = ET.parse(filepath)
+        root = tree.getroot()
+        if root is None:
+            return None
+        ns = {"gpx": "http://www.topografix.com/GPX/1/1"} if root.tag.endswith("gpx") else {}
+        points = []
+
+        for trkpt in root.findall(".//gpx:trkpt", ns):
+            lat, lon = trkpt.get("lat"), trkpt.get("lon")
+            if lat is not None and lon is not None:
+                points.append([float(lat), float(lon)])
+        if not points:
+            for trkpt in root.findall(".//trkpt"):
+                lat, lon = trkpt.get("lat"), trkpt.get("lon")
+                if lat is not None and lon is not None:
+                    points.append([float(lat), float(lon)])
+        return np.array(points) if points else None
+    except Exception as e:
+        print(f"Error parsing {filepath}: {e}", file=sys.stderr)
+        return None
+
+
+def load_source_items(directory: str) -> list[SourceItem]:
+    root = Path(directory)
+    parquet_files = sorted(path for path in root.rglob("*.parquet") if path.is_file())
+    if parquet_files:
+        return list(load_tracks(root))
+    return list(root.glob("*.gpx")) + list(root.glob("*.GPX"))
+
+
+def item_key(item: SourceItem) -> str:
+    if isinstance(item, Track):
+        return item.key
+    return str(item)
+
+
+def item_label(item: SourceItem) -> str:
+    if isinstance(item, Track):
+        return item.filename()
+    return item.name
+
+
+def item_points(item: SourceItem) -> PointArray | None:
+    if isinstance(item, Track):
+        return np.column_stack([item.lats, item.lons])
+    return parse_gpx(item)
 
 
 def downsample_track(points: PointArray | None, max_points: int = 150) -> PointArray | None:
@@ -41,9 +87,13 @@ def normalize_track(points: PointArray | None) -> PointArray | None:
     return result
 
 
-def process_track_points(
-    key: str, points: PointArray
+def process_source_item(
+    item: SourceItem,
 ) -> tuple[str, PointArray | None, PointArray | None]:
+    points = item_points(item)
+    key = item_key(item)
+    if points is None:
+        return key, None, None
     downsampled = downsample_track(points, max_points=150)
     normalized = normalize_track(downsampled)
     return key, points, normalized
@@ -131,8 +181,8 @@ def track_signature(track: PointArray | None, n_points: int = 100) -> PointArray
 
 def select_diverse_tracks(
     directory: str, num_files: int, min_length_km: float = 10
-) -> list[Track]:
-    loaded = load_tracks(directory)
+) -> list[SourceItem]:
+    loaded = load_source_items(directory)
     if not loaded:
         print(f"No tracks found in {directory}", file=sys.stderr)
         return []
@@ -147,11 +197,10 @@ def select_diverse_tracks(
 
     tracks_raw: dict[str, PointArray] = {}
     tracks_dtw: dict[str, PointArray] = {}
-    by_key = {track.key: track for track in loaded}
+    by_key = {item_key(item): item for item in loaded}
     with ProcessPoolExecutor() as executor:
         parse_futures = {
-            executor.submit(process_track_points, track.key, latlon_points(track)): track.key
-            for track in loaded
+            executor.submit(process_source_item, item): item_key(item) for item in loaded
         }
         for parse_future in as_completed(parse_futures):
             key, raw, dtw = parse_future.result()
@@ -180,7 +229,7 @@ def select_diverse_tracks(
     selected_files.append(first_file)
     selected_tracks.append(tracks_dtw[first_file])
     available_files.remove(first_file)
-    print(f"\n1. {by_key[first_file].filename()} (first track selected)", file=sys.stderr)
+    print(f"\n1. {item_label(by_key[first_file])} (first track selected)", file=sys.stderr)
 
     # DTW greedy selection
     with ProcessPoolExecutor() as executor:
@@ -220,7 +269,7 @@ def select_diverse_tracks(
             available_files.remove(best_file)
 
             print(
-                f"{i + 1}. {by_key[best_file].filename()} "
+                f"{i + 1}. {item_label(by_key[best_file])} "
                 f"(DTW diversity score: {dtw_scores[best_file]:.2f})" + " " * 20,
                 file=sys.stderr,
             )
@@ -234,7 +283,7 @@ def select_diverse_tracks(
 def main() -> None:
     if len(sys.argv) != 4:
         print(
-            "Usage: python dtw-select.py <source_dir> <num_files> <destination_directory>",
+            "Usage: python dtw-select.py <gpx_or_parquet_dir> <num_files> <destination_directory>",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -260,9 +309,19 @@ def main() -> None:
     selected = select_diverse_tracks(directory, num_files, min_length_km=10)
 
     if selected:
+        dest = Path(destination)
         print(f"\n--- Selected {len(selected)} diverse tracks ---", file=sys.stderr)
         print(f"Writing to {destination}...\n", file=sys.stderr)
-        written = write_tracks(Path(destination), selected)
+        if selected and isinstance(selected[0], Track):
+            written = write_tracks(dest, [item for item in selected if isinstance(item, Track)])
+        else:
+            written = []
+            for item in selected:
+                if not isinstance(item, Path):
+                    continue
+                dest_path = dest / item.name
+                shutil.copy2(item, dest_path)
+                written.append(dest_path)
         for path in written:
             print(f"✓ {path.name}", file=sys.stderr)
             print(path)

@@ -17,7 +17,7 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 
 **Behavior**
 
-- Enumerates every `.parquet` and `.gpx` in `<gpx_dir>` via `utils.get_files`.
+- Enumerates every `.gpx` in `<gpx_dir>` via `utils.get_files`.
 - For each track × style, extracts lon/lat, runs the style function, writes PNG.
 - Output name: `<style>-<track_name>.png` in `<images_dir>`.
 
@@ -35,37 +35,37 @@ Make wrapper: `make render`.
 
 ---
 
-## `scripts/sample-tracks.py`
-
-Random sample of tracks from a parquet tree (or a GPX folder).
-
-```bash
-uv run python scripts/sample-tracks.py <source_dir> <num_files> <destination_directory>
-```
-
-Loads every track under `<source_dir>` (city parquet files are multi-track), picks `<num_files>` of them, and writes one-track GeoParquet files to the destination.
-
-Make wrapper: `make random NUMBER_OF_GPX=20`.
-
----
-
 ## `scripts/dtw-select.py`
 
-Select a diverse subset of long tracks from a parquet (or GPX) library.
+Select a diverse subset of long tracks from a GPX library.
 
 ```bash
-uv run python scripts/dtw-select.py <source_dir> <num_files> <destination_directory>
+uv run python scripts/dtw-select.py <gpx_directory> <num_files> <destination_directory>
 ```
 
 **Pipeline**
 
-1. Load all tracks (recursive parquet / GPX).
+1. Parse all GPX files.
 2. Filter tracks shorter than 10 km.
 3. Downsample + normalize trajectories.
 4. Greedily select diverse tracks using FastDTW.
-5. Write selected tracks as one-track parquet files.
+5. Copy selected files to the destination directory.
 
-Make wrapper: `make dtwselect NUMBER_OF_GPX=20`.
+If the source directory is a parquet tree instead, tracks are loaded from city files and written as GPX.
+
+Make wrapper: `make dtwselect SOURCE_DIR=... NUMBER_OF_GPX=20`.
+
+---
+
+## `scripts/sample-tracks.py`
+
+Personal ingest: random sample from a `gpx-data` parquet tree, written as GPX.
+
+```bash
+uv run python scripts/sample-tracks.py <parquet_dir> <num_files> <destination_directory>
+```
+
+Make wrapper: `make random-parquet NUMBER_OF_GPX=20`.
 
 ---
 
@@ -74,10 +74,10 @@ Make wrapper: `make dtwselect NUMBER_OF_GPX=20`.
 Quick visual sanity check of the working set.
 
 ```bash
-uv run python scripts/plot-gpx.py <track_directory>
+uv run python scripts/plot-gpx.py <gpx_directory>
 ```
 
-- Builds a grid of valid tracks from `.parquet` and `.gpx` files.
+- Builds a grid of valid tracks.
 - Skips degenerate or blank tracks.
 - Opens an interactive matplotlib window.
 
@@ -89,8 +89,12 @@ Make wrapper: `make plot`.
 
 Shared helpers:
 
-- `get_files(input_dir)` — enumerate `.parquet` and `.gpx` files as `(name, path)` pairs.
-- `get_lon_lat(filepath)` — lon/lat arrays from a one-track parquet or GPX file.
-- `get_df(filepath)` — track points as a DataFrame (`time`, `lat`, `lon`, `elevation`; time/elevation are empty for parquet).
-- `load_tracks(directory)` — every track in a parquet tree or GPX folder.
-- `sample_tracks` / `write_tracks` — pick N tracks and write one-track GeoParquet files.
+- `get_files(input_dir)` — enumerate GPX files as `(name, path)` pairs.
+- `get_df(filepath)` — parse track points into a pandas DataFrame (`time`, `lat`, `lon`, `elevation`).
+- `get_lon_lat(filepath)` — lon/lat lists from a GPX file.
+
+---
+
+## `scripts/parquet_tracks.py`
+
+Helpers for the personal parquet ingest lane (`load_tracks`, `sample_tracks`, `write_tracks`). Not used by the public GPX path.

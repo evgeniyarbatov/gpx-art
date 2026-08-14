@@ -5,15 +5,17 @@ DATA_ROOT ?= $(HOME)/Documents/data
 REPO_NAME := $(notdir $(CURDIR))
 DATA_DIR  ?= $(DATA_ROOT)/$(REPO_NAME)
 
-GPX_DATA_DIR := $(DATA_DIR)/gpx-data
-GPX_DATA_REPO := git@github.com:evgeniyarbatov/gpx-data.git
-SOURCE_DIR ?= $(GPX_DATA_DIR)/data/parquet
+# ./source-gpx has no tracked content — override with a real GPX archive, e.g.
+# make art SOURCE_DIR=$(HOME)/Documents/your-gpx-dir
+SOURCE_DIR ?= ./source-gpx
 
 GPX_DIR = $(DATA_DIR)/gpx
 IMAGES_DIR = $(DATA_DIR)/images
 NUMBER_OF_GPX = 20
 
-.PHONY: install lock clean gpx-data random dtwselect plot render art run test help
+include make/parquet.mk
+
+.PHONY: install lock clean random dtwselect plot render art run test help
 
 default: run
 
@@ -28,20 +30,11 @@ lock:
 clean:
 	@rm -rf $(IMAGES_DIR)/* $(GPX_DIR)/*
 
-gpx-data:
-	@mkdir -p $(DATA_DIR)
-	@if [ -d $(GPX_DATA_DIR)/.git ]; then \
-		git -C $(GPX_DATA_DIR) fetch --depth 1 origin main; \
-		git -C $(GPX_DATA_DIR) reset --hard origin/main; \
-	else \
-		git clone --depth 1 $(GPX_DATA_REPO) $(GPX_DATA_DIR); \
-	fi
-
-random: install gpx-data clean
+random: install clean
 	@mkdir -p $(GPX_DIR)
-	@uv run python scripts/sample-tracks.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
+	@find $(SOURCE_DIR) -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
 
-dtwselect: install gpx-data clean
+dtwselect: install clean
 	@mkdir -p $(GPX_DIR)
 	@uv run python scripts/dtw-select.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
@@ -59,11 +52,10 @@ test: install
 help:
 	@echo "install       - uv sync deps"
 	@echo "lock          - refresh uv.lock"
-	@echo "clean         - remove generated tracks/images"
-	@echo "gpx-data      - clone or update gpx-data into $(GPX_DATA_DIR)"
-	@echo "random        - sample tracks from parquet into $(GPX_DIR)"
-	@echo "dtwselect     - select diverse tracks via DTW"
-	@echo "plot          - plot working-set tracks"
-	@echo "render        - render track art images"
+	@echo "clean         - remove generated gpx/images files"
+	@echo "random        - copy random GPX files from $(SOURCE_DIR) into $(GPX_DIR)"
+	@echo "dtwselect     - select GPX files via DTW"
+	@echo "plot          - plot GPX tracks"
+	@echo "render        - render GPX art images"
 	@echo "art           - random + render (default)"
 	@echo "test          - run unit tests"

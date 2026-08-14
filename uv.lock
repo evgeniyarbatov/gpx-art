@@ -278,13 +278,11 @@ source = { virtual = "." }
 dependencies = [
     { name = "defusedxml" },
     { name = "fastdtw" },
-    { name = "geopandas" },
     { name = "gpxpy" },
     { name = "matplotlib" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pandas" },
-    { name = "pyarrow" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "shapely" },
@@ -299,6 +297,10 @@ dev = [
     { name = "scipy-stubs", version = "1.17.1.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "scipy-stubs", version = "1.18.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "types-defusedxml" },
+]
+parquet = [
+    { name = "geopandas" },
+    { name = "pyarrow" },
     { name = "types-geopandas" },
 ]
 
@@ -306,12 +308,10 @@ dev = [
 requires-dist = [
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "fastdtw" },
-    { name = "geopandas" },
     { name = "gpxpy" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "pyarrow" },
     { name = "scipy" },
     { name = "shapely" },
 ]
@@ -324,6 +324,10 @@ dev = [
     { name = "ruff", specifier = ">=0.15.21" },
     { name = "scipy-stubs", specifier = ">=1.17.1.5" },
     { name = "types-defusedxml", specifier = ">=0.7.0.20260504" },
+]
+parquet = [
+    { name = "geopandas" },
+    { name = "pyarrow" },
     { name = "types-geopandas", specifier = ">=1.1.4.20260628" },
 ]
 

@@ -2,7 +2,7 @@
 
 Generate artistic images from GPX tracks.
 
-This project takes GPS tracks (from `gpx-data` parquet by default, or local GPX), renders each route in multiple visual styles, and saves PNG outputs.
+This project takes a set of GPX files, renders each route in multiple visual styles, and saves PNG outputs.
 
 ## Why
 
@@ -24,12 +24,12 @@ Taste criteria and how they map to code: [docs/artistic-direction.md](docs/artis
 
 ```bash
 make install
-make art NUMBER_OF_GPX=20
+make art SOURCE_DIR=/absolute/path/to/your/gpx NUMBER_OF_GPX=20
 ```
 
-This clones or updates [gpx-data](https://github.com/evgeniyarbatov/gpx-data), samples tracks from its per-city parquet files, and writes styled PNGs to `images/`.
+This cleans the working dirs, randomly selects tracks into `gpx/`, and writes styled PNGs to `images/`.
 
-Generated selections and rendered art live under `~/Documents/data/gpx-art/` by default (`gpx-data/`, `gpx/`, `images/`), not in the repo. Override with `DATA_ROOT=/other/root` (keeps the `gpx-art` subfolder) or `DATA_DIR=/exact/path`.
+Generated GPX selections and rendered art are written under `~/Documents/data/gpx-art/` by default (`gpx/`, `images/`), not into the repo. Override with `DATA_ROOT=/other/root` (keeps the `gpx-art` subfolder) or `DATA_DIR=/exact/path`.
 
 ## Documentation
 
