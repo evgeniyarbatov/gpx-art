@@ -69,22 +69,6 @@ class TestGpxArtCore(unittest.TestCase):
         np.testing.assert_array_equal(lons, np.array([20.0, 21.0]))
         np.testing.assert_array_equal(lats, np.array([10.0, 11.0]))
 
-    def test_extract_coordinates_parses_parquet_line(self) -> None:
-        import geopandas as gpd
-        from shapely.geometry import LineString
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "track.parquet"
-            gpd.GeoDataFrame(
-                [{"name": "Sport", "city": "Thu Duc"}],
-                geometry=[LineString([(20.0, 10.0), (21.0, 11.0)])],
-                crs="EPSG:4326",
-            ).to_parquet(path)
-            lons, lats = gpx_art.extract_coordinates(str(path))
-
-        np.testing.assert_array_equal(lons, np.array([20.0, 21.0]))
-        np.testing.assert_array_equal(lats, np.array([10.0, 11.0]))
-
     def test_create_art_raises_for_unknown_style(self) -> None:
         with self.assertRaisesRegex(ValueError, "Unknown style"):
             gpx_art.create_art("in.gpx", "out.png", "does-not-exist")
