@@ -7,35 +7,31 @@ All commands assume the project root and use `uv run` (or `make` targets that wr
 Main art generator.
 
 ```bash
-# all styles, with QR (needs GITHUB_TOKEN)
+# all styles
 uv run python scripts/gpx-art.py <gpx_dir> <images_dir>
 
-# all styles, no QR / no Gist
-uv run python scripts/gpx-art.py <gpx_dir> <images_dir> --no-qr
-
-# subset of styles, no QR
+# subset of styles
 uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
-  --styles enso,sumi,notan,haiga,kintsugi --no-qr
+  --styles enso,sumi,notan,haiga,kintsugi
 ```
 
 **Behavior**
 
 - Enumerates every `.gpx` in `<gpx_dir>` via `utils.get_files`.
-- For each track × style, extracts lon/lat, runs the style function, optionally overlays a QR, writes PNG.
+- For each track × style, extracts lon/lat, runs the style function, writes PNG.
 - Output name: `<style>-<track_name>.png` in `<images_dir>`.
 
 **Flags**
 
 | Flag | Effect |
 |---|---|
-| `--no-qr` | Skip Gist upload and QR overlay; no token needed |
 | `--styles s1,s2,...` | Render only the named styles |
 
 **Registered styles (57)**
 
 `bokashi`, `contour`, `decay`, `enso`, `enso-close`, `enso-ghost`, `enso-one`, `fude`, `gravel`, `grid`, `haiga`, `haiga-slash`, `haku`, `harai`, `hashi`, `haze`, `ikebana`, `in-seal`, `karesansui`, `kasumi`, `kintsugi`, `kintsugi-shard`, `kintsugi-vein`, `kiri`, `ma`, `maboroshi`, `network`, `nijimi`, `notan`, `notan-block`, `notan-fill`, `notan-invert`, `notan-split`, `painting`, `parallel`, `pulse`, `rain`, `rake`, `ribbon`, `sabi`, `scaffold`, `seki`, `shodo`, `shodo-breath`, `shodo-dash`, `shodo-lift`, `simplify`, `skeleton`, `stitch`, `suiboku`, `suiseki`, `sumi`, `sumi-dry`, `sumi-splash`, `sumi-wet`, `tome`, `tsuki`, `wabi`, `whisper`, `yugen`.
 
-Make wrappers: `make render` (with QR), `make render-no-qr`.
+Make wrapper: `make render`.
 
 ---
 
@@ -72,17 +68,6 @@ uv run python scripts/plot-gpx.py <gpx_directory>
 - Opens an interactive matplotlib window.
 
 Make wrapper: `make plot`.
-
----
-
-## `scripts/gist.py`
-
-GitHub Gist integration used by the QR path (not typically run alone).
-
-- Creates public gists via the GitHub API (`GITHUB_TOKEN` from `.env`).
-- Cache key: style name + SHA-256 of source text.
-- Cache store: `gists.db` (SQLite, project root).
-- Reuses the existing URL when the style source hash is unchanged.
 
 ---
 

@@ -123,7 +123,7 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 | Doc | Role |
 |---|---|
-| [architecture.md](architecture.md) | Pipeline, registry, QR/Gist |
+| [architecture.md](architecture.md) | Pipeline, registry, layout |
 | [scripts.md](scripts.md) | CLI and style catalog names |
 | [usage.md](usage.md) | Setup and Make targets |
 | **This file** | Taste, criteria, direction of travel |

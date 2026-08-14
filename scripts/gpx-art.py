@@ -4,19 +4,14 @@ import random
 import sys
 import time
 from collections.abc import Callable, Sequence
-from io import BytesIO
 
 import gpxpy
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-import qrcode
-from gist import get_gist_url
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 from matplotlib.patches import Circle, Rectangle
-from qrcode.image.pil import PilImage
 from utils import get_files
 
 FloatArray = npt.NDArray[np.float64]
@@ -2191,54 +2186,7 @@ def parallel(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
 # ============================================================================
 
 
-def add_qr_code(
-    fig: Figure, ax: Axes, bg_color: str, style_name: str, script_path: str = __file__
-) -> None:
-    """Add a small QR code in the bottom-right corner using axes-relative coordinates."""
-
-    # Extract the specific style function (your existing helper)
-    code = extract_style_source(script_path, style_name)
-
-    # Generate QR code
-    qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=10,
-        border=1,  # minimal white border
-        image_factory=PilImage,
-    )
-
-    # Get URL of Gist with source code
-    gist_url = get_gist_url(style_name, code)
-    qr.add_data(gist_url)
-    qr.make(fit=True)
-
-    # Create PIL image
-    img_qr = qr.make_image(fill_color="#C00000", back_color=bg_color)
-
-    # Convert PIL image to NumPy array
-    buf = BytesIO()
-    img_qr.save(buf, format="PNG")
-    buf.seek(0)
-    img_arr = plt.imread(buf)
-
-    # Create OffsetImage with small zoom
-    zoom_factor = 0.1  # adjust size relative to axes
-    offset_img = OffsetImage(img_arr, zoom=zoom_factor)
-
-    # Place QR at bottom-right corner (axes fraction coordinates)
-    ab = AnnotationBbox(
-        offset_img,
-        (1, 0),  # coordinates in axes fraction (1=right, 0=bottom)
-        frameon=False,
-        xycoords="axes fraction",
-        box_alignment=(1, 0),  # align bottom-right corner
-    )
-
-    ax.add_artist(ab)
-
-
-def create_art(gpx_filename: str, image_filename: str, style_name: str, qr: bool = True) -> None:
+def create_art(gpx_filename: str, image_filename: str, style_name: str) -> None:
     """Create art from GPX file using specified style"""
     start_time = time.time()  # ⏱ Start timing
 
@@ -2253,8 +2201,6 @@ def create_art(gpx_filename: str, image_filename: str, style_name: str, qr: bool
         return
 
     fig, bg_color = STYLES[style_name](lons, lats)
-    if qr:
-        add_qr_code(fig, plt.gca(), bg_color, style_name)
     save_figure(fig, image_filename, bg_color)
 
     end_time = time.time()  # ⏱ End timing
@@ -2263,34 +2209,30 @@ def create_art(gpx_filename: str, image_filename: str, style_name: str, qr: bool
     print(f"Created {style_name}: {image_filename} ({duration:.2f} seconds)")
 
 
-def main(gpx_dir: str, images_dir: str, styles: list[str] | None = None, qr: bool = True) -> None:
+def main(gpx_dir: str, images_dir: str, styles: list[str] | None = None) -> None:
     os.makedirs(images_dir, exist_ok=True)
     style_names = styles if styles is not None else sorted(STYLES.keys())
     for name, gpx_path in get_files(gpx_dir):
         for style_name in style_names:
             output_filename = os.path.join(images_dir, f"{style_name}-{name}.png")
-            create_art(gpx_path, output_filename, style_name, qr=qr)
+            create_art(gpx_path, output_filename, style_name)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python gpx-art.py <gpx_dir> <images_dir> [--styles s1,s2,...] [--no-qr]")
+        print("Usage: python gpx-art.py <gpx_dir> <images_dir> [--styles s1,s2,...]")
         sys.exit(1)
 
     gpx_dir, images_dir = sys.argv[1], sys.argv[2]
     styles = None
-    qr = True
     args = sys.argv[3:]
     i = 0
     while i < len(args):
         if args[i] == "--styles" and i + 1 < len(args):
             styles = [s.strip() for s in args[i + 1].split(",") if s.strip()]
             i += 2
-        elif args[i] == "--no-qr":
-            qr = False
-            i += 1
         else:
             print(f"Unknown argument: {args[i]}")
             sys.exit(1)
 
-    main(gpx_dir, images_dir, styles=styles, qr=qr)
+    main(gpx_dir, images_dir, styles=styles)
