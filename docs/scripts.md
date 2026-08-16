@@ -12,7 +12,7 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir>
 
 # subset of styles
 uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
-  --styles enso,sumi,notan,haiga,kintsugi
+  --styles contour,network,sumi-wet
 ```
 
 **Behavior**
@@ -27,9 +27,9 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 |---|---|
 | `--styles s1,s2,...` | Render only the named styles |
 
-**Registered styles (57)**
+**Registered styles (9)**
 
-`bokashi`, `contour`, `decay`, `enso`, `enso-close`, `enso-ghost`, `enso-one`, `fude`, `gravel`, `grid`, `haiga`, `haiga-slash`, `haku`, `harai`, `hashi`, `haze`, `ikebana`, `in-seal`, `karesansui`, `kasumi`, `kintsugi`, `kintsugi-shard`, `kintsugi-vein`, `kiri`, `ma`, `maboroshi`, `network`, `nijimi`, `notan`, `notan-block`, `notan-fill`, `notan-invert`, `notan-split`, `painting`, `parallel`, `pulse`, `rain`, `rake`, `ribbon`, `sabi`, `scaffold`, `seki`, `shodo`, `shodo-breath`, `shodo-dash`, `shodo-lift`, `simplify`, `skeleton`, `stitch`, `suiboku`, `suiseki`, `sumi`, `sumi-dry`, `sumi-splash`, `sumi-wet`, `tome`, `tsuki`, `wabi`, `whisper`, `yugen`.
+`contour`, `kasumi`, `network`, `painting`, `scaffold`, `simplify`, `stitch`, `sumi-wet`, `yugen`.
 
 Make wrapper: `make render`.
 
