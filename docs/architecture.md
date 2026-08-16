@@ -56,7 +56,7 @@ def scaffold(lons, lats):
 - New styles are added by defining another `@style(...)` function in `gpx-art.py`; no central switch statement.
 - `extract_style_source` parses `gpx-art.py` with the AST to pull the full source of a single `@style` function by name.
 
-Path helpers (`essence_path`, `flow_path`, `gap_mask`, ink strokes, palettes, etc.) are shared utilities used by many styles.
+Path helpers (`flow_path`, `pad_limits`, `ink_stroke`, palettes, etc.) are shared utilities used by many styles.
 
 ## Track selection
 

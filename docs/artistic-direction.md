@@ -14,14 +14,10 @@ Patterns that repeatedly produce keepers (curated examples live outside the repo
 
 | Quality | Why it reads | Style examples |
 |---|---|---|
-| **Variable pressure** | Thick at turns / intent, thin on runs | `shodo`, `sumi`, `shodo-breath` |
-| **Attack–release envelopes** | Each phrase has a beginning and end | `shodo-lift`, `harai`, `tome` |
-| **Brush lifts / silence** | Gaps are composition, not missing data | `shodo-lift`, `shodo-dash`, `haku` |
-| **Spontaneous texture** | Spatter, fray, particles, drip | `decay`, `sumi-splash`, `sumi-dry`, `sumi-wet` |
-| **Mass / multi-layer** | Form against empty, or cloth of parallel lines | `notan-fill`, `ribbon`, `parallel` |
-| **Imperfect hand** | Jitter, offset ghosts, uneven wash | `wabi`, `yugen`, `suiboku` |
+| **Spontaneous texture** | Spatter, fray, particles, drip | `sumi-wet` |
+| **Imperfect hand** | Jitter, offset ghosts, uneven wash | `yugen`, `kasumi` |
 
-Bold graphic silhouette (`notan-fill`) and quiet atmosphere (`tsuki`, `yugen`) both work when they are *decisive*, not when they are a thin default line.
+Quiet atmosphere (`yugen`, `kasumi`) works when it is *decisive*, not when it is a thin default line.
 
 ## What fails (avoid or rework)
 
@@ -46,7 +42,7 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 | `phrase_bounds` | Split the walk into brush phrases at long segments |
 | `attack_release` | Sin envelope: soft start, full mid, soft exit |
 | `path_normals` | Bleed, fray, and offset *across* the stroke |
-| `flow_path` / `essence_path` | Organic density vs structural bones |
+| `flow_path` | Organic mid-density path |
 | `ink_stroke` | Rounded contact with paper |
 
 **Composition defaults**
@@ -58,57 +54,24 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 ## Style families
 
-### Shodō (calligraphy) — lead direction
-
-`shodo`, `shodo-lift`, `shodo-dash`, `shodo-breath`, `harai`, `tome`, `fude`, `haku`
-
-- Phrases, not polylines.
-- Extreme pressure range is welcome; timid mid-gray strokes are not.
-- Lifts and rests matter as much as ink.
-- New styles in this family should answer: *where does the brush touch, press, and leave?*
-
 ### Sumi (ink)
 
-`sumi`, `sumi-dry`, `sumi-wet`, `sumi-splash`, `nijimi`, `bokashi`, `suiboku`
+`sumi-wet`
 
-- **sumi**: living core — pressure + pace + slight ghost.
-- **dry**: broken contact, directional fray, flying white.
-- **wet**: pools and drips at energy peaks, broken spine — not evenly spaced blobs.
-- **suiboku**: offset washes and mist under a firm core — distinct from “draw the same line four times.”
-
-### Structure
-
-`skeleton`, `tome`, essence-based bones
-
-- Structure should still feel written: incomplete segments, pressure on bones, ink at stops.
-- Avoid “node-link diagram with markers.”
+- Pools and drips at energy peaks, broken spine — not evenly spaced blobs.
 
 ### Atmosphere / yūgen
 
-`whisper`, `yugen`, `kasumi`, `haze`, `maboroshi`, `ma`
+`yugen`, `kasumi`
 
 - Quiet ≠ empty of idea. Fragments, veils, and partial path are interesting; a single faint full polyline is not.
-- `whisper` especially: ghost phrases and soft offsets, still almost gone.
-
-### Garden / stone
-
-`suiseki`, `karesansui`, `rake`, `gravel`, `seki`, `hashi`
-
-- Prefer sparse stones and sand over dense mechanical rake fields.
-- Path may appear only as whisper or placement, not a second map on top of the garden.
-
-### Notan / graphic
-
-`notan*`, `ribbon`, `parallel`
-
-- Decisiveness of mass and counterspace. Keep these bold; do not dilute into thin ink lines.
 
 ## Decision checklist for a new or revised style
 
 1. **One sentence of intent** (e.g. “long inhale strokes with rests between breaths”).
 2. **Which grammar tools?** pressure / phrases / lifts / texture / mass.
 3. **What fails if we only draw `flow_path` once?** If nothing fails, the style is too plain.
-4. **Is it distinct from nearest neighbors?** (e.g. `suiboku` vs `nijimi` vs `sumi`.)
+4. **Is it distinct from nearest neighbors?**
 5. **Does empty space work hard?** Or is the frame crowded without reason?
 6. **Render on curved and boxy tracks** — a style that only sings on one shape is unfinished.
 
