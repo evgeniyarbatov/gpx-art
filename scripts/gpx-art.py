@@ -516,6 +516,141 @@ def sumi_wet(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     return fig, bg
 
 
+@style("sumi-dry")
+def sumi_dry(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Split dry brush: directional fray, flying white, wild hair at turns."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = flow_path(lons, lats, 650)
+    p = turn_pressure(xs, ys, smooth=7)
+    extent = path_extent(xs, ys)
+    rng = np.random.default_rng(7)
+    nx, ny = path_normals(xs, ys)
+    contact = True
+    run = int(rng.integers(12, 30))
+    for i in range(len(xs) - 1):
+        run -= 1
+        if run <= 0:
+            contact = not contact
+            run = int(rng.integers(6, 22) if contact else rng.integers(4, 14))
+        if not contact:
+            continue
+        spread = extent * (0.0015 + 0.012 * p[i])
+        n_hairs = int(rng.integers(2, 4 + int(p[i] * 5)))
+        for h in range(n_hairs):
+            side = (h - (n_hairs - 1) / 2) / max(n_hairs - 1, 1)
+            ox = nx[i] * side * spread + rng.normal(0, spread * 0.25)
+            oy = ny[i] * side * spread + rng.normal(0, spread * 0.25)
+            ox2 = ox + nx[i] * rng.normal(0, spread * 0.4)
+            oy2 = oy + ny[i] * rng.normal(0, spread * 0.4)
+            ink_stroke(
+                ax,
+                [xs[i] + ox, xs[i + 1] + ox2],
+                [ys[i] + oy, ys[i + 1] + oy2],
+                ink,
+                lw=float(rng.uniform(0.25, 1.1 + p[i] * 1.2)),
+                alpha=float(rng.uniform(0.15, 0.55 + p[i] * 0.25)),
+            )
+        if p[i] > 0.55 and rng.random() < 0.35:
+            for _ in range(int(rng.integers(3, 9))):
+                ang = rng.uniform(0, 2 * np.pi)
+                r = extent * float(rng.uniform(0.004, 0.03))
+                ink_stroke(
+                    ax,
+                    [xs[i], xs[i] + np.cos(ang) * r],
+                    [ys[i], ys[i] + np.sin(ang) * r],
+                    ink,
+                    lw=float(rng.uniform(0.2, 0.7)),
+                    alpha=float(rng.uniform(0.12, 0.4)),
+                )
+    pad_limits(ax, lons, lats, 0.14)
+    return fig, bg
+
+
+# --- Shodō (書道) ---
+
+
+@style("shodo")
+def shodo(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Fude pressure: turn + pace, under-wash, ink stops."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = flow_path(lons, lats, 720)
+    energy = np.clip(0.7 * turn_pressure(xs, ys, smooth=9) + 0.3 * pace_weights(xs, ys), 0, 1)
+    extent = path_extent(xs, ys)
+    rng = np.random.default_rng(2)
+    for i in range(0, len(xs) - 1, 2):
+        if energy[i] < 0.4:
+            continue
+        ink_stroke(
+            ax,
+            xs[i : i + 2],
+            ys[i : i + 2],
+            ink,
+            lw=3.0 + energy[i] * 10.0,
+            alpha=0.04 + energy[i] * 0.08,
+        )
+    for i in range(len(xs) - 1):
+        ink_stroke(
+            ax,
+            xs[i : i + 2],
+            ys[i : i + 2],
+            ink,
+            lw=0.45 + energy[i] * 9.5,
+            alpha=0.4 + energy[i] * 0.55,
+        )
+        if energy[i] > 0.78 and rng.random() < 0.2:
+            ax.add_patch(
+                Circle(
+                    (xs[i], ys[i]),
+                    extent * float(rng.uniform(0.004, 0.016)),
+                    color=ink,
+                    alpha=float(rng.uniform(0.25, 0.65)),
+                    linewidth=0,
+                )
+            )
+    pad_limits(ax, lons, lats, 0.12)
+    return fig, bg
+
+
+@style("shodo-lift")
+def shodo_lift(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Phrases with attack–release; brush lifts; ink dots at attacks."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = flow_path(lons, lats, 620)
+    bounds = phrase_bounds(xs, ys, percentile=87)
+    extent = path_extent(xs, ys)
+    rng = np.random.default_rng(4)
+    p = turn_pressure(xs, ys, smooth=7)
+    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
+        if b - a < 3 or rng.random() < 0.14:
+            continue
+        env = attack_release(b - a - 1, float(rng.uniform(0.45, 0.9)))
+        for i, j in enumerate(range(a, b - 1)):
+            e = env[i] * (0.75 + 0.25 * p[j])
+            ink_stroke(
+                ax,
+                xs[j : j + 2],
+                ys[j : j + 2],
+                ink,
+                lw=0.4 + e * 6.5,
+                alpha=0.25 + e * 0.7,
+            )
+        if rng.random() < 0.55:
+            ax.add_patch(
+                Circle(
+                    (xs[a], ys[a]),
+                    extent * float(rng.uniform(0.003, 0.012)),
+                    color=ink,
+                    alpha=float(rng.uniform(0.35, 0.75)),
+                    linewidth=0,
+                )
+            )
+    pad_limits(ax, lons, lats, 0.12)
+    return fig, bg
+
+
 # --- Yūgen / Ma / Wabi ---
 
 

@@ -14,7 +14,9 @@ Patterns that repeatedly produce keepers (curated examples live outside the repo
 
 | Quality | Why it reads | Style examples |
 |---|---|---|
-| **Spontaneous texture** | Spatter, fray, particles, drip | `sumi-wet` |
+| **Variable pressure** | Thick at turns / intent, thin on runs | `shodo` |
+| **Attack–release / lifts** | Each phrase has a beginning and a silence | `shodo-lift` |
+| **Spontaneous texture** | Spatter, fray, particles, drip | `sumi-wet`, `sumi-dry` |
 | **Imperfect hand** | Jitter, offset ghosts, uneven wash | `yugen`, `kasumi` |
 
 Quiet atmosphere (`yugen`, `kasumi`) works when it is *decisive*, not when it is a thin default line.
@@ -54,11 +56,19 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 ## Style families
 
+### Shodō (calligraphy)
+
+`shodo`, `shodo-lift`
+
+- Phrases, not polylines. Extreme pressure range is welcome; timid mid-gray strokes are not.
+- Lifts and rests matter as much as ink.
+
 ### Sumi (ink)
 
-`sumi-wet`
+`sumi-wet`, `sumi-dry`
 
-- Pools and drips at energy peaks, broken spine — not evenly spaced blobs.
+- **wet**: pools and drips at energy peaks, broken spine — not evenly spaced blobs.
+- **dry**: broken contact, directional fray, flying white.
 
 ### Atmosphere / yūgen
 
@@ -89,6 +99,7 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 | [architecture.md](architecture.md) | Pipeline, registry, layout |
 | [scripts.md](scripts.md) | CLI and style catalog names |
 | [usage.md](usage.md) | Setup and Make targets |
+| [learnings/style-catalog.md](learnings/style-catalog.md) | What the catalog covers; what stays deleted |
 | **This file** | Taste, criteria, direction of travel |
 
 When taste and a working style conflict, re-read this file, then change the code — not the other way around.
