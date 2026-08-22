@@ -4,14 +4,17 @@ The catalog is not missing names. It is missing ideas. ~70 styles were tried and
 
 ## Current
 
-Two generations, twelve styles:
+Three generations, fourteen styles:
 
 | Generation | Styles | What they do |
 |---|---|---|
 | Early graphic | `contour`, `stitch`, `scaffold`, `painting`, `network`, `simplify` | Offsets, dashes, wireframe, blob wash, node graph, stacked RDP |
 | Ink | `sumi-wet`, `sumi-dry`, `yugen`, `kasumi`, `shodo`, `shodo-lift` | Wet pools, dry fray, mist, haze, pressure stroke, phrases with lifts |
+| Austere | `breath`, `thread` | One pass, pace-only width or density, nothing else |
 
 The six graphic styles survived a cut because they look distinct on a wall. They do not use the shared ink grammar. `sumi-wet` / `yugen` / `kasumi` were the only ink keepers after the last cut; `shodo`, `shodo-lift`, and `sumi-dry` fill the holes that cut left.
+
+A batch of ten more ink-family styles (`notan-fill`, `kintsugi`, `suiseki`, `boro`, `suminagashi`, `kuroji`, `kirihari`, `tomari`, `kado`, `nawa`) was built and then reverted in the same session: individually each passed the distinctness checklist, but as a group they drifted toward decoration — fills, gold accents, collage, rope twists — away from "reveal the run's essence." `breath` and `thread` replaced that direction: reduce to the one signal (pace/effort) instead of adding more marks.
 
 ## Holes these three fill
 
@@ -20,6 +23,8 @@ The six graphic styles survived a cut because they look distinct on a wall. They
 | `shodo` | One stroke with extreme turn+pace pressure, under-wash, ink stops | Catalog had wet blobs and mist, no fude line | `sumi`, `fude`, `wabi` |
 | `shodo-lift` | Phrases with attack–release; lifts are the composition | Distinct from a continuous `shodo` | `shodo-dash`, `shodo-breath`, `harai`, `tome` |
 | `sumi-dry` | Split contact, directional fray, flying white at turns | Opposite of `sumi-wet` | `haku`, `sumi-splash`, `nijimi` |
+| `breath` | One stroke, width = pace only, nothing else | Catalog had no undecorated single-pass style; this is the deliberate exception to "plain line" | `pulse`, `stride`, `cadence` |
+| `thread` | One fixed-width stroke, ink density = pace only | Same idea as `breath` in a different channel (color, not width) — keep both, do not add a third variable-only austere style without a genuinely new channel | `wisp`, `trace` |
 
 One style per idea. Rewrite against current helpers; do not paste old functions back.
 

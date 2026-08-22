@@ -25,11 +25,12 @@ Quiet atmosphere (`yugen`, `kasumi`) works when it is *decisive*, not when it is
 
 | Failure mode | Symptom | Typical fix |
 |---|---|---|
-| **Plain continuous line** | Uniform width/alpha, no phrase | Pressure + envelopes + lifts |
+| **Plain continuous line** | Uniform width/alpha, no phrase | Pressure + envelopes + lifts (ink family) — or, in the austere family, this *is* the point; see below |
 | **Predictable layers** | Same path at N fixed widths | Offset, break, or energy-modulate each pass |
 | **Static diagram** | Joint dots + equal bones | Calligraphic bones, incomplete structure, ink pools |
 | **Mechanical ornament** | Rake grids, even spacing as decoration | Sparse stones, sand grain, one whisper of path |
 | **Costume without grammar** | Name implies ink culture; code is a gray polyline | Use shared brush helpers or drop the name |
+| **Overdecoration (austere family only)** | Fills, accents, collage, multi-layer texture | One pass, one variable (pace), nothing else |
 
 If a style needs a paragraph of apology to explain the image, it is not ready.
 
@@ -75,6 +76,13 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 `yugen`, `kasumi`
 
 - Quiet ≠ empty of idea. Fragments, veils, and partial path are interesting; a single faint full polyline is not.
+
+### Austere
+
+`breath`, `thread`
+
+- The deliberate exception to "plain continuous line is a failure": one pass, one variable — pace alone, smoothed so it reads as a slow arc, not GPS jitter. No texture, fills, lifts, phrase breaks, or accents. `breath` varies width; `thread` varies ink density (opaque color mix, never alpha-on-alpha, which beads at the seams). Essence over decoration — the run's effort is the only thing allowed to speak.
+- Generous margin (`pad_ratio` ≥ 0.2) and the plain `ZEN_MINIMAL` palette, not the warm sumi wash — this family is not ink-culture vocabulary, it's the run reduced to a single fact.
 
 ## Decision checklist for a new or revised style
 
