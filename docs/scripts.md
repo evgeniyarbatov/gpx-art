@@ -27,9 +27,9 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 |---|---|
 | `--styles s1,s2,...` | Render only the named styles |
 
-**Registered styles (12)**
+**Registered styles (14)**
 
-`contour`, `kasumi`, `network`, `painting`, `scaffold`, `shodo`, `shodo-lift`, `simplify`, `stitch`, `sumi-dry`, `sumi-wet`, `yugen`.
+`breath`, `contour`, `kasumi`, `network`, `painting`, `scaffold`, `shodo`, `shodo-lift`, `simplify`, `stitch`, `sumi-dry`, `sumi-wet`, `thread`, `yugen`.
 
 Make wrapper: `make render`.
 

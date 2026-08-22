@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from matplotlib.axes import Axes
+from matplotlib.colors import to_hex, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.patches import Circle
 from utils import get_files, get_lon_lat
@@ -225,6 +226,16 @@ def path_normals(xs: FloatArray, ys: FloatArray) -> tuple[FloatArray, FloatArray
     dy = np.gradient(ys)
     L = np.hypot(dx, dy) + 1e-12
     return -dy / L, dx / L
+
+
+def smooth_series(values: FloatArray, window: int) -> FloatArray:
+    """Centered moving average, edge-padded — turns point-level GPS noise into a slow arc."""
+    if len(values) <= window or window <= 1:
+        return values
+    k = window if window % 2 == 1 else window + 1
+    padded = np.pad(values, k // 2, mode="edge")
+    result: FloatArray = np.convolve(padded, np.ones(k) / k, mode="valid")
+    return result
 
 
 # ============================================================================
@@ -712,6 +723,44 @@ def kasumi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
                 )
             )
     pad_limits(ax, lons, lats, 0.18)
+    return fig, bg
+
+
+# ============================================================================
+# AUSTERE
+# One pass, one variable: pace alone. No texture, fills, lifts, or accents.
+# ============================================================================
+
+
+@style("breath")
+def breath(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """A single stroke; width breathes with pace alone."""
+    bg, ink = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg)
+    xs, ys = flow_path(lons, lats, 800)
+    w = smooth_series(pace_weights(xs, ys), 31)
+    min_lw, max_lw = 1.0, 5.0
+    for i in range(len(xs) - 1):
+        ink_stroke(
+            ax, xs[i : i + 2], ys[i : i + 2], ink, lw=min_lw + (max_lw - min_lw) * w[i], alpha=0.92
+        )
+    pad_limits(ax, lons, lats, 0.22)
+    return fig, bg
+
+
+@style("thread")
+def thread(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """A single fixed-width stroke; only ink density breathes with pace."""
+    bg, ink = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg)
+    xs, ys = flow_path(lons, lats, 800)
+    w = smooth_series(pace_weights(xs, ys), 31)
+    ink_rgb = np.array(to_rgb(ink))
+    faint_rgb = np.array(to_rgb(bg)) * 0.4 + ink_rgb * 0.6
+    for i in range(len(xs) - 1):
+        color = to_hex(faint_rgb + (ink_rgb - faint_rgb) * w[i])
+        ink_stroke(ax, xs[i : i + 2], ys[i : i + 2], color, lw=1.4, alpha=0.95)
+    pad_limits(ax, lons, lats, 0.22)
     return fig, bg
 
 
