@@ -31,6 +31,14 @@ This cleans the working dirs, randomly selects tracks into `gpx/`, and writes st
 
 Generated GPX selections and rendered art are written under `~/Documents/data/gpx-art/` by default (`gpx/`, `images/`), not into the repo. Override with `DATA_ROOT=/other/root` (keeps the `gpx-art` subfolder) or `DATA_DIR=/exact/path`.
 
+To render a single GPX file instead of a sample:
+
+```bash
+make art-file GPX=/absolute/path/to/track.gpx
+```
+
+See [docs/usage.md](docs/usage.md) for restricting to specific styles.
+
 ## Documentation
 
 | Doc | Contents |
