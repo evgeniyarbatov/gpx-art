@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from matplotlib.axes import Axes
-from matplotlib.colors import to_hex, to_rgb
 from matplotlib.figure import Figure
 from matplotlib.patches import Circle
 from utils import get_files, get_lon_lat
@@ -726,41 +725,43 @@ def kasumi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     return fig, bg
 
 
-# ============================================================================
-# AUSTERE
-# One pass, one variable: pace alone. No texture, fills, lifts, or accents.
-# ============================================================================
-
-
-@style("breath")
-def breath(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """A single stroke; width breathes with pace alone."""
+@style("glimpse")
+def glimpse(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """A tight, random zoom on one curvy fragment of the run; austere pace-only line."""
     bg, ink = random.choice(ZEN_MINIMAL)
     fig, ax = create_figure(bg)
-    xs, ys = flow_path(lons, lats, 800)
-    w = smooth_series(pace_weights(xs, ys), 31)
-    min_lw, max_lw = 1.0, 5.0
-    for i in range(len(xs) - 1):
+    xs, ys = flow_path(lons, lats, 900)
+    p = turn_pressure(xs, ys, smooth=5)
+    window = max(20, len(xs) // 12)
+    curviness = smooth_series(p, window)
+
+    order = np.argsort(curviness)[::-1]
+    peaks: list[int] = []
+    for idx in order:
+        if all(abs(int(idx) - c) >= window for c in peaks):
+            peaks.append(int(idx))
+        if len(peaks) >= 10:
+            break
+
+    center = random.choice(peaks)
+    half = window // 2
+    a, b = max(0, center - half), min(len(xs), center + half)
+    if b - a < 5:
+        a, b = 0, len(xs)
+    seg_x, seg_y = xs[a:b], ys[a:b]
+
+    w = smooth_series(pace_weights(seg_x, seg_y), 9)
+    min_lw, max_lw = 1.2, 5.5
+    for i in range(len(seg_x) - 1):
         ink_stroke(
-            ax, xs[i : i + 2], ys[i : i + 2], ink, lw=min_lw + (max_lw - min_lw) * w[i], alpha=0.92
+            ax,
+            seg_x[i : i + 2],
+            seg_y[i : i + 2],
+            ink,
+            lw=min_lw + (max_lw - min_lw) * w[i],
+            alpha=0.92,
         )
-    pad_limits(ax, lons, lats, 0.22)
-    return fig, bg
-
-
-@style("thread")
-def thread(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """A single fixed-width stroke; only ink density breathes with pace."""
-    bg, ink = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg)
-    xs, ys = flow_path(lons, lats, 800)
-    w = smooth_series(pace_weights(xs, ys), 31)
-    ink_rgb = np.array(to_rgb(ink))
-    faint_rgb = np.array(to_rgb(bg)) * 0.4 + ink_rgb * 0.6
-    for i in range(len(xs) - 1):
-        color = to_hex(faint_rgb + (ink_rgb - faint_rgb) * w[i])
-        ink_stroke(ax, xs[i : i + 2], ys[i : i + 2], color, lw=1.4, alpha=0.95)
-    pad_limits(ax, lons, lats, 0.22)
+    pad_limits(ax, seg_x, seg_y, 0.28)
     return fig, bg
 
 
@@ -792,30 +793,36 @@ def create_art(gpx_filename: str, image_filename: str, style_name: str) -> None:
     print(f"Created {style_name}: {image_filename} ({duration:.2f} seconds)")
 
 
-def main(gpx_dir: str, images_dir: str, styles: list[str] | None = None) -> None:
+def main(gpx_dir: str, images_dir: str, styles: list[str] | None = None, repeat: int = 1) -> None:
     os.makedirs(images_dir, exist_ok=True)
     style_names = styles if styles is not None else sorted(STYLES.keys())
     for name, gpx_path in get_files(gpx_dir):
         for style_name in style_names:
-            output_filename = os.path.join(images_dir, f"{style_name}-{name}.png")
-            create_art(gpx_path, output_filename, style_name)
+            for r in range(1, repeat + 1):
+                suffix = f"{style_name}-{r}" if repeat > 1 else style_name
+                output_filename = os.path.join(images_dir, f"{suffix}-{name}.png")
+                create_art(gpx_path, output_filename, style_name)
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python gpx-art.py <gpx_dir> <images_dir> [--styles s1,s2,...]")
+        print("Usage: python gpx-art.py <gpx_dir> <images_dir> [--styles s1,s2,...] [--repeat N]")
         sys.exit(1)
 
     gpx_dir, images_dir = sys.argv[1], sys.argv[2]
     styles = None
+    repeat = 1
     args = sys.argv[3:]
     i = 0
     while i < len(args):
         if args[i] == "--styles" and i + 1 < len(args):
             styles = [s.strip() for s in args[i + 1].split(",") if s.strip()]
             i += 2
+        elif args[i] == "--repeat" and i + 1 < len(args):
+            repeat = int(args[i + 1])
+            i += 2
         else:
             print(f"Unknown argument: {args[i]}")
             sys.exit(1)
 
-    main(gpx_dir, images_dir, styles=styles)
+    main(gpx_dir, images_dir, styles=styles, repeat=repeat)

@@ -48,12 +48,12 @@ render: install
 art: random render
 
 art-file: install
-	@test -n "$(GPX)" || (echo "Usage: make art-file GPX=path/to/file.gpx [STYLES=style1,style2]" && exit 1)
+	@test -n "$(GPX)" || (echo "Usage: make art-file GPX=path/to/file.gpx [STYLES=style1,style2] [REPEAT=n]" && exit 1)
 	@test -f "$(GPX)" || (echo "GPX file not found: $(GPX)" && exit 1)
 	@rm -rf $(SINGLE_DIR)
 	@mkdir -p $(SINGLE_DIR) $(IMAGES_DIR)
 	@cp "$(GPX)" $(SINGLE_DIR)/
-	@uv run python scripts/gpx-art.py $(SINGLE_DIR) $(IMAGES_DIR) $(if $(STYLES),--styles $(STYLES),)
+	@uv run python scripts/gpx-art.py $(SINGLE_DIR) $(IMAGES_DIR) $(if $(STYLES),--styles $(STYLES),) $(if $(REPEAT),--repeat $(REPEAT),)
 
 test: install
 	@uv run python -m unittest discover -s tests -p "test_*.py" -v
@@ -67,5 +67,5 @@ help:
 	@echo "plot          - plot GPX tracks"
 	@echo "render        - render GPX art images"
 	@echo "art           - random + render (default)"
-	@echo "art-file      - render a single GPX file: make art-file GPX=path/to/file.gpx [STYLES=s1,s2]"
+	@echo "art-file      - render a single GPX file: make art-file GPX=path/to/file.gpx [STYLES=s1,s2] [REPEAT=n]"
 	@echo "test          - run unit tests"

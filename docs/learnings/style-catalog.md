@@ -4,27 +4,29 @@ The catalog is not missing names. It is missing ideas. ~70 styles were tried and
 
 ## Current
 
-Three generations, fourteen styles:
+Three generations, thirteen styles:
 
 | Generation | Styles | What they do |
 |---|---|---|
 | Early graphic | `contour`, `stitch`, `scaffold`, `painting`, `network`, `simplify` | Offsets, dashes, wireframe, blob wash, node graph, stacked RDP |
 | Ink | `sumi-wet`, `sumi-dry`, `yugen`, `kasumi`, `shodo`, `shodo-lift` | Wet pools, dry fray, mist, haze, pressure stroke, phrases with lifts |
-| Austere | `breath`, `thread` | One pass, pace-only width or density, nothing else |
+| Austere | `glimpse` | Random tight zoom on one curvy fragment; pace-only line, nothing else |
 
 The six graphic styles survived a cut because they look distinct on a wall. They do not use the shared ink grammar. `sumi-wet` / `yugen` / `kasumi` were the only ink keepers after the last cut; `shodo`, `shodo-lift`, and `sumi-dry` fill the holes that cut left.
 
-A batch of ten more ink-family styles (`notan-fill`, `kintsugi`, `suiseki`, `boro`, `suminagashi`, `kuroji`, `kirihari`, `tomari`, `kado`, `nawa`) was built and then reverted in the same session: individually each passed the distinctness checklist, but as a group they drifted toward decoration — fills, gold accents, collage, rope twists — away from "reveal the run's essence." `breath` and `thread` replaced that direction: reduce to the one signal (pace/effort) instead of adding more marks.
+Two false starts in the same session, both reverted:
 
-## Holes these three fill
+1. A batch of ten more ink-family styles (`notan-fill`, `kintsugi`, `suiseki`, `boro`, `suminagashi`, `kuroji`, `kirihari`, `tomari`, `kado`, `nawa`) — individually each passed the distinctness checklist, but as a group drifted toward decoration (fills, gold accents, collage, rope twists), away from "reveal the run's essence."
+2. `breath` / `thread` — a pace-only single line over the *whole* route, reducing to one signal instead of adding marks. Correct instinct, wrong target: a full-route overview is mostly straight streets, so an undecorated whole-route line reads as flat no matter how honest the reduction is. `glimpse` keeps the pace-only line but crops to a single genuinely curvy fragment instead — the reduction needed a subject, not just fewer variables.
+
+## Holes these four fill
 
 | Style | Intent | Why it is not a duplicate | Do not also add |
 |---|---|---|---|
 | `shodo` | One stroke with extreme turn+pace pressure, under-wash, ink stops | Catalog had wet blobs and mist, no fude line | `sumi`, `fude`, `wabi` |
 | `shodo-lift` | Phrases with attack–release; lifts are the composition | Distinct from a continuous `shodo` | `shodo-dash`, `shodo-breath`, `harai`, `tome` |
 | `sumi-dry` | Split contact, directional fray, flying white at turns | Opposite of `sumi-wet` | `haku`, `sumi-splash`, `nijimi` |
-| `breath` | One stroke, width = pace only, nothing else | Catalog had no undecorated single-pass style; this is the deliberate exception to "plain line" | `pulse`, `stride`, `cadence` |
-| `thread` | One fixed-width stroke, ink density = pace only | Same idea as `breath` in a different channel (color, not width) — keep both, do not add a third variable-only austere style without a genuinely new channel | `wisp`, `trace` |
+| `glimpse` | Tight, random zoom on one curvy fragment; pace-only width, nothing else | Only style that crops instead of drawing the whole track; `--repeat` gives several genuinely different fragments per GPX | `zoom`, `crop`, `snippet` — the crop mechanism is the idea, don't fork it by name only |
 
 One style per idea. Rewrite against current helpers; do not paste old functions back.
 
@@ -44,7 +46,7 @@ Those families map to the taste-doc failures: predictable layers, static diagram
 - `ribbon` / `parallel` — `contour` already is stacked offsets
 - `enso*` — how you walk, not a mark style
 - `tsuki`, `haiga`, `in-seal`, `ikebana` — props on the page
-- `breath` / `ridge` — need time and elevation in the style signature; different project
+- `ridge` — needs time and elevation in the style signature; different project
 
 ## A fourth only if
 

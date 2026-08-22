@@ -19,17 +19,18 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 
 - Enumerates every `.gpx` in `<gpx_dir>` via `utils.get_files`.
 - For each track × style, extracts lon/lat, runs the style function, writes PNG.
-- Output name: `<style>-<track_name>.png` in `<images_dir>`.
+- Output name: `<style>-<track_name>.png` in `<images_dir>` (or `<style>-<n>-<track_name>.png` when `--repeat` > 1).
 
 **Flags**
 
 | Flag | Effect |
 |---|---|
 | `--styles s1,s2,...` | Render only the named styles |
+| `--repeat N` | Render each style N times per track (e.g. `glimpse`, which picks a random fragment each call) |
 
-**Registered styles (14)**
+**Registered styles (13)**
 
-`breath`, `contour`, `kasumi`, `network`, `painting`, `scaffold`, `shodo`, `shodo-lift`, `simplify`, `stitch`, `sumi-dry`, `sumi-wet`, `thread`, `yugen`.
+`contour`, `glimpse`, `kasumi`, `network`, `painting`, `scaffold`, `shodo`, `shodo-lift`, `simplify`, `stitch`, `sumi-dry`, `sumi-wet`, `yugen`.
 
 Make wrapper: `make render`.
 

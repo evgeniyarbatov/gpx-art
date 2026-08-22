@@ -55,11 +55,11 @@ make render
 | `make plot` | Grid preview of tracks in `gpx/` |
 | `make render` | Render all styles to `images/` |
 | `make art` | `random` then `render` (default target) |
-| `make art-file` | Render a single GPX file: `make art-file GPX=path/to/file.gpx [STYLES=style1,style2]` |
+| `make art-file` | Render a single GPX file: `make art-file GPX=path/to/file.gpx [STYLES=style1,style2] [REPEAT=n]` |
 
 Variables: `SOURCE_DIR` (default `./source-gpx`), `NUMBER_OF_GPX` (default `20`), `GPX_DIR`, `IMAGES_DIR`.
 
-`art-file` writes to `IMAGES_DIR` using every registered style, or only those listed in `STYLES` (comma-separated, matching names in [docs/scripts.md](docs/scripts.md)).
+`art-file` writes to `IMAGES_DIR` using every registered style, or only those listed in `STYLES` (comma-separated, matching names in [docs/scripts.md](docs/scripts.md)). `REPEAT=n` renders each style n times per file (output `<style>-<n>-<track>.png`) — useful for `glimpse`, which picks a different random fragment each call.
 
 `GPX_DIR` and `IMAGES_DIR` default to `$(DATA_DIR)/gpx` and `$(DATA_DIR)/images`, where `DATA_DIR` defaults to `~/Documents/data/gpx-art` (`$(DATA_ROOT)/gpx-art`, `DATA_ROOT` defaulting to `~/Documents/data`). Override the root with `make <target> DATA_ROOT=/other/root`, or the exact path with `make <target> DATA_DIR=/tmp/run-42`.
 
