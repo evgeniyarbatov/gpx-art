@@ -79,10 +79,12 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 ### Austere
 
-`breath`, `thread`
+`glimpse`
 
-- The deliberate exception to "plain continuous line is a failure": one pass, one variable — pace alone, smoothed so it reads as a slow arc, not GPS jitter. No texture, fills, lifts, phrase breaks, or accents. `breath` varies width; `thread` varies ink density (opaque color mix, never alpha-on-alpha, which beads at the seams). Essence over decoration — the run's effort is the only thing allowed to speak.
-- Generous margin (`pad_ratio` ≥ 0.2) and the plain `ZEN_MINIMAL` palette, not the warm sumi wash — this family is not ink-culture vocabulary, it's the run reduced to a single fact.
+- The deliberate exception to "plain continuous line is a failure": one pass, one variable — pace alone, smoothed so it reads as a slow arc, not GPS jitter. No texture, fills, lifts, phrase breaks, or accents.
+- Whole-route overviews of ordinary runs read as flat and repetitive — most of a route is straight streets. `glimpse` cuts to one genuinely curvy fragment instead: find several well-separated high-curvature windows (non-max suppression on `turn_pressure`, so candidates don't all cluster on the same bend), pick one at random (unseeded — a different fragment every render), crop tight to just that fragment. The randomness plus the tight crop is what makes a single curve read as *interesting* instead of *minimal-for-its-own-sake*.
+- `--repeat N` on the CLI (`REPEAT=n` on `make art-file`) renders N fragments from the same GPX in one run — genuinely different crops, not the same line redrawn.
+- Generous margin (`pad_ratio` ≥ 0.25) and the plain `ZEN_MINIMAL` palette, not the warm sumi wash — this family is not ink-culture vocabulary, it's one true moment of the run, reduced to a single fact (pace).
 
 ## Decision checklist for a new or revised style
 
