@@ -330,37 +330,6 @@ def painting(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     return fig, bg_color
 
 
-@style("negative-space")
-def negative_space(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Painting inverted: ink covers the whole frame; the route is erased back to paper."""
-    bg_color = "#f9f6f0"
-    ink_color = "#1b1b1b"
-    fig, ax = create_figure(bg_color)
-
-    norm_lons = (lons - lons.min()) / (lons.max() - lons.min() + 1e-12)
-    norm_lats = (lats - lats.min()) / (lats.max() - lats.min() + 1e-12)
-
-    rng = np.random.default_rng(29)
-    for _ in range(2200):
-        cx, cy = rng.uniform(-0.05, 1.05), rng.uniform(-0.05, 1.05)
-        size = rng.uniform(0.02, 0.07)
-        alpha = rng.uniform(0.05, 0.2)
-        ax.add_patch(Circle((cx, cy), size, color=ink_color, alpha=alpha, linewidth=0))
-
-    xs, ys = downsample_path(norm_lons, norm_lats, min(220, len(norm_lons)))
-    for x, y in zip(xs, ys, strict=False):
-        for _ in range(int(rng.integers(2, 5))):
-            ox = rng.normal(0, 0.006)
-            oy = rng.normal(0, 0.006)
-            r = rng.uniform(0.018, 0.032)
-            ax.add_patch(Circle((x + ox, y + oy), r, color=bg_color, alpha=1.0, linewidth=0))
-
-    ax.set_xlim(-0.05, 1.05)
-    ax.set_ylim(-0.05, 1.05)
-
-    return fig, bg_color
-
-
 @style("notan-fill")
 def notan_fill(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """The route as one solid mass: a skyline silhouette filled black, not a line."""
@@ -428,6 +397,120 @@ def tempo_grid(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
             )
         pad_limits(ax, seg_x, seg_y, 0.15)
 
+    return fig, bg_color
+
+
+@style("pulse-bars")
+def pulse_bars(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Rhythm strip: the route abstracted into bars, no shape at all, just pace+turn per chunk."""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = plt.subplots(dpi=300, figsize=(8, 3))
+    ax.set_facecolor(bg_color)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.axis("off")
+
+    xs, ys = flow_path(lons, lats, 900)
+    energy = np.clip(0.6 * pace_weights(xs, ys) + 0.4 * turn_pressure(xs, ys, smooth=9), 0, 1)
+
+    n_bars = 44
+    bounds = np.linspace(0, len(xs), n_bars + 1).astype(int)
+    heights = np.array(
+        [
+            energy[a:b].mean() if b > a else 0.0
+            for a, b in zip(bounds[:-1], bounds[1:], strict=False)
+        ]
+    )
+    heights = 0.08 + 0.92 * heights / (heights.max() + 1e-12)
+
+    for i, h in enumerate(heights):
+        ax.bar(i, h, width=0.7, color=fg_color, alpha=0.85, linewidth=0)
+
+    ax.set_xlim(-1, n_bars)
+    ax.set_ylim(0, 1.05)
+    return fig, bg_color
+
+
+@style("ribcage")
+def ribcage(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Anatomical spine: a coarse-simplified backbone with short ribs, not a scaffold to ground."""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    fig, ax = create_figure(bg_color)
+
+    gpx = gpxpy.gpx.GPX()
+    gpx_track = gpxpy.gpx.GPXTrack()
+    gpx.tracks.append(gpx_track)
+    gpx_segment = gpxpy.gpx.GPXTrackSegment()
+    gpx_track.segments.append(gpx_segment)
+    for lon, lat in zip(lons, lats, strict=False):
+        gpx_segment.points.append(gpxpy.gpx.GPXTrackPoint(lat, lon))
+    gpx.simplify(100)
+
+    spine_lons, spine_lats = [], []
+    for track in gpx.tracks:
+        for segment in track.segments:
+            for point in segment.points:
+                spine_lons.append(point.longitude)
+                spine_lats.append(point.latitude)
+    xs, ys = np.array(spine_lons), np.array(spine_lats)
+    if len(xs) < 4:
+        xs, ys = flow_path(lons, lats, 60)
+
+    ax.plot(xs, ys, color=fg_color, linewidth=1.6, alpha=0.85, solid_capstyle="round")
+
+    nx, ny = path_normals(xs, ys)
+    p = turn_pressure(xs, ys, smooth=3)
+    extent = path_extent(xs, ys)
+    min_gap = extent * 0.025
+    last_x, last_y = None, None
+    for i in range(len(xs)):
+        if last_x is not None and np.hypot(xs[i] - last_x, ys[i] - last_y) < min_gap:
+            continue
+        rib = extent * (0.01 + 0.05 * p[i])
+        ax.plot(
+            [xs[i] - nx[i] * rib, xs[i] + nx[i] * rib],
+            [ys[i] - ny[i] * rib, ys[i] + ny[i] * rib],
+            color=fg_color,
+            linewidth=0.7,
+            alpha=0.35 + 0.35 * p[i],
+        )
+        last_x, last_y = xs[i], ys[i]
+
+    pad_limits(ax, lons, lats, 0.12)
+    return fig, bg_color
+
+
+@style("corridor")
+def corridor(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Filled mass from local spread, not distance-from-baseline: thick where the route loops."""
+    bg_color, fg_color = "#f9f6f0", "#141414"
+    fig, ax = create_figure(bg_color)
+
+    n_bins = 140
+    edges = np.linspace(lons.min(), lons.max(), n_bins + 1)
+    bin_idx = np.clip(np.digitize(lons, edges) - 1, 0, n_bins - 1)
+    top = np.full(n_bins, np.nan)
+    bottom = np.full(n_bins, np.nan)
+    for b in range(n_bins):
+        mask = bin_idx == b
+        if mask.any():
+            top[b] = lats[mask].max()
+            bottom[b] = lats[mask].min()
+    valid = ~np.isnan(top)
+    if valid.sum() >= 2:
+        idxs = np.arange(n_bins)
+        top = np.interp(idxs, idxs[valid], top[valid])
+        bottom = np.interp(idxs, idxs[valid], bottom[valid])
+    elif valid.any():
+        top[:] = top[valid][0]
+        bottom[:] = bottom[valid][0]
+
+    centers = (edges[:-1] + edges[1:]) / 2
+    poly_x = np.concatenate([centers, centers[::-1]])
+    poly_y = np.concatenate([top, bottom[::-1]])
+    ax.fill(poly_x, poly_y, color=fg_color, alpha=0.9, linewidth=0)
+
+    pad_limits(ax, lons, lats, 0.12)
     return fig, bg_color
 
 
@@ -592,40 +675,6 @@ def sumi_wet(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
                 alpha=0.15 + env[i] * 0.35,
             )
     pad_limits(ax, lons, lats, 0.18)
-    return fig, bg
-
-
-# --- Kintsugi (金継ぎ) ---
-
-
-@style("kintsugi")
-def kintsugi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Plain ink line; gold seam only at GPS gaps and direction reversals."""
-    bg, ink, gold = SUMI_WASH, SUMI_INK, "#b8860b"
-    fig, ax = create_figure(bg)
-    xs, ys = flow_path(lons, lats, 600)
-    ink_stroke(ax, xs, ys, ink, lw=1.1, alpha=0.55)
-
-    d = segment_lengths(xs, ys)
-    gap_thr = np.percentile(d, 96)
-    dx, dy = np.diff(xs), np.diff(ys)
-    seg_len = np.hypot(dx, dy) + 1e-12
-    cos_turn = (dx[:-1] * dx[1:] + dy[:-1] * dy[1:]) / (seg_len[:-1] * seg_len[1:])
-    rng = np.random.default_rng(11)
-    for i in range(len(xs) - 1):
-        is_gap = d[i] > gap_thr
-        is_reversal = i > 0 and i - 1 < len(cos_turn) and cos_turn[i - 1] < -0.7
-        if not (is_gap or is_reversal):
-            continue
-        ink_stroke(
-            ax,
-            xs[i : i + 2],
-            ys[i : i + 2],
-            gold,
-            lw=float(rng.uniform(1.8, 3.2)),
-            alpha=float(rng.uniform(0.75, 1.0)),
-        )
-    pad_limits(ax, lons, lats, 0.14)
     return fig, bg
 
 

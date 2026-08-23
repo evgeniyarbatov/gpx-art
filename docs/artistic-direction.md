@@ -16,8 +16,7 @@ Patterns that repeatedly produce keepers (curated examples live outside the repo
 |---|---|---|
 | **Variable pressure** | Thick at turns / intent, thin on runs | `shodo` |
 | **Spontaneous texture** | Spatter, fray, particles, drip | `sumi-wet` |
-| **Rare accent** | A single non-ink color, used only where the data justifies it | `kintsugi` |
-| **Distinct graphic idea, not costume** | A structural conceit (dashes, wireframe, wash, node graph, layered simplification, mass fill, erasure, small multiples) that reads on its own | `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `negative-space`, `tempo-grid` |
+| **Distinct graphic idea, not costume** | A structural conceit (dashes, wireframe, wash, node graph, layered simplification, mass fill, small multiples, rhythm strip, anatomical ribs, spread mass) that reads on its own | `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `pulse-bars`, `ribcage`, `corridor` |
 
 ## What fails (avoid or rework)
 
@@ -66,17 +65,11 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 - Pools and drips at energy peaks, broken spine — not evenly spaced blobs.
 
-### Kintsugi (gold repair)
-
-`kintsugi`
-
-- Plain, quiet ink line. Gold appears only at GPS gaps and direction reversals — the rare accent this doc's composition defaults allow, spent on data-justified moments, not decoration.
-
 ### Early graphic
 
-`stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `negative-space`, `tempo-grid`
+`stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `pulse-bars`, `ribcage`, `corridor`
 
-- Not ink-culture vocabulary; each earns its place on a distinct structural idea (dashes + cross-marks, wireframe bracing, wash blobs, node graph, stacked simplification passes, skyline mass fill, whole-frame erasure, small-multiples grid) rather than pressure/texture grammar.
+- Not ink-culture vocabulary; each earns its place on a distinct structural idea (dashes + cross-marks, wireframe bracing, wash blobs, node graph, stacked simplification passes, skyline mass fill, small-multiples grid, abstracted rhythm strip, anatomical ribs off a simplified spine, spread-based mass) rather than pressure/texture grammar.
 
 ## Decision checklist for a new or revised style
 
