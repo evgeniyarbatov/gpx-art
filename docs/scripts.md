@@ -12,7 +12,7 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir>
 
 # subset of styles
 uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
-  --styles contour,network,sumi-wet
+  --styles network,sumi-wet
 ```
 
 **Behavior**
@@ -26,11 +26,11 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 | Flag | Effect |
 |---|---|
 | `--styles s1,s2,...` | Render only the named styles |
-| `--repeat N` | Render each style N times per track (e.g. `glimpse`, which picks a random fragment each call) |
+| `--repeat N` | Render each style N times per track |
 
-**Registered styles (13)**
+**Registered styles (11)**
 
-`contour`, `glimpse`, `kasumi`, `network`, `painting`, `scaffold`, `shodo`, `shodo-lift`, `simplify`, `stitch`, `sumi-dry`, `sumi-wet`, `yugen`.
+`kintsugi`, `negative-space`, `network`, `notan-fill`, `painting`, `scaffold`, `shodo`, `simplify`, `stitch`, `sumi-wet`, `tempo-grid`.
 
 Make wrapper: `make render`.
 

@@ -15,22 +15,19 @@ Patterns that repeatedly produce keepers (curated examples live outside the repo
 | Quality | Why it reads | Style examples |
 |---|---|---|
 | **Variable pressure** | Thick at turns / intent, thin on runs | `shodo` |
-| **Attack–release / lifts** | Each phrase has a beginning and a silence | `shodo-lift` |
-| **Spontaneous texture** | Spatter, fray, particles, drip | `sumi-wet`, `sumi-dry` |
-| **Imperfect hand** | Jitter, offset ghosts, uneven wash | `yugen`, `kasumi` |
-
-Quiet atmosphere (`yugen`, `kasumi`) works when it is *decisive*, not when it is a thin default line.
+| **Spontaneous texture** | Spatter, fray, particles, drip | `sumi-wet` |
+| **Rare accent** | A single non-ink color, used only where the data justifies it | `kintsugi` |
+| **Distinct graphic idea, not costume** | A structural conceit (dashes, wireframe, wash, node graph, layered simplification, mass fill, erasure, small multiples) that reads on its own | `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `negative-space`, `tempo-grid` |
 
 ## What fails (avoid or rework)
 
 | Failure mode | Symptom | Typical fix |
 |---|---|---|
-| **Plain continuous line** | Uniform width/alpha, no phrase | Pressure + envelopes + lifts (ink family) — or, in the austere family, this *is* the point; see below |
+| **Plain continuous line** | Uniform width/alpha, no phrase | Pressure + envelopes + lifts (ink family), or a distinct structural conceit (graphic family) |
 | **Predictable layers** | Same path at N fixed widths | Offset, break, or energy-modulate each pass |
 | **Static diagram** | Joint dots + equal bones | Calligraphic bones, incomplete structure, ink pools |
 | **Mechanical ornament** | Rake grids, even spacing as decoration | Sparse stones, sand grain, one whisper of path |
 | **Costume without grammar** | Name implies ink culture; code is a gray polyline | Use shared brush helpers or drop the name |
-| **Overdecoration (austere family only)** | Fills, accents, collage, multi-layer texture | One pass, one variable (pace), nothing else |
 
 If a style needs a paragraph of apology to explain the image, it is not ready.
 
@@ -59,32 +56,27 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 ### Shodō (calligraphy)
 
-`shodo`, `shodo-lift`
+`shodo`
 
 - Phrases, not polylines. Extreme pressure range is welcome; timid mid-gray strokes are not.
-- Lifts and rests matter as much as ink.
 
 ### Sumi (ink)
 
-`sumi-wet`, `sumi-dry`
+`sumi-wet`
 
-- **wet**: pools and drips at energy peaks, broken spine — not evenly spaced blobs.
-- **dry**: broken contact, directional fray, flying white.
+- Pools and drips at energy peaks, broken spine — not evenly spaced blobs.
 
-### Atmosphere / yūgen
+### Kintsugi (gold repair)
 
-`yugen`, `kasumi`
+`kintsugi`
 
-- Quiet ≠ empty of idea. Fragments, veils, and partial path are interesting; a single faint full polyline is not.
+- Plain, quiet ink line. Gold appears only at GPS gaps and direction reversals — the rare accent this doc's composition defaults allow, spent on data-justified moments, not decoration.
 
-### Austere
+### Early graphic
 
-`glimpse`
+`stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `negative-space`, `tempo-grid`
 
-- The deliberate exception to "plain continuous line is a failure": one pass, one variable — pace alone, smoothed so it reads as a slow arc, not GPS jitter. No texture, fills, lifts, phrase breaks, or accents.
-- Whole-route overviews of ordinary runs read as flat and repetitive — most of a route is straight streets. `glimpse` cuts to one genuinely curvy fragment instead: find several well-separated high-curvature windows (non-max suppression on `turn_pressure`, so candidates don't all cluster on the same bend), pick one at random (unseeded — a different fragment every render), crop tight to just that fragment. The randomness plus the tight crop is what makes a single curve read as *interesting* instead of *minimal-for-its-own-sake*.
-- `--repeat N` on the CLI (`REPEAT=n` on `make art-file`) renders N fragments from the same GPX in one run — genuinely different crops, not the same line redrawn.
-- Generous margin (`pad_ratio` ≥ 0.25) and the plain `ZEN_MINIMAL` palette, not the warm sumi wash — this family is not ink-culture vocabulary, it's one true moment of the run, reduced to a single fact (pace).
+- Not ink-culture vocabulary; each earns its place on a distinct structural idea (dashes + cross-marks, wireframe bracing, wash blobs, node graph, stacked simplification passes, skyline mass fill, whole-frame erasure, small-multiples grid) rather than pressure/texture grammar.
 
 ## Decision checklist for a new or revised style
 

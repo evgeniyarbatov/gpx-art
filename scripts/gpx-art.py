@@ -227,41 +227,9 @@ def path_normals(xs: FloatArray, ys: FloatArray) -> tuple[FloatArray, FloatArray
     return -dy / L, dx / L
 
 
-def smooth_series(values: FloatArray, window: int) -> FloatArray:
-    """Centered moving average, edge-padded — turns point-level GPS noise into a slow arc."""
-    if len(values) <= window or window <= 1:
-        return values
-    k = window if window % 2 == 1 else window + 1
-    padded = np.pad(values, k // 2, mode="edge")
-    result: FloatArray = np.convolve(padded, np.ones(k) / k, mode="valid")
-    return result
-
-
 # ============================================================================
 # STYLE IMPLEMENTATIONS
 # ============================================================================
-
-
-@style("contour")
-def contour(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Topographic contour-like parallel lines"""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-
-    # Create multiple offset versions of the track
-    for offset in np.linspace(-0.002, 0.002, 12):
-        offset_lons = np.array(lons) + offset * np.cos(np.linspace(0, 2 * np.pi, len(lons)))
-        offset_lats = np.array(lats) + offset * np.sin(np.linspace(0, 2 * np.pi, len(lats)))
-        ax.plot(
-            offset_lons,
-            offset_lats,
-            color=fg_color,
-            linewidth=0.8,
-            alpha=0.4,
-            solid_capstyle="round",
-        )
-
-    return fig, bg_color
 
 
 @style("stitch")
@@ -358,6 +326,107 @@ def painting(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
 
     ax.set_xlim(-0.05, 1.05)
     ax.set_ylim(-0.05, 1.05)
+
+    return fig, bg_color
+
+
+@style("negative-space")
+def negative_space(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Painting inverted: ink covers the whole frame; the route is erased back to paper."""
+    bg_color = "#f9f6f0"
+    ink_color = "#1b1b1b"
+    fig, ax = create_figure(bg_color)
+
+    norm_lons = (lons - lons.min()) / (lons.max() - lons.min() + 1e-12)
+    norm_lats = (lats - lats.min()) / (lats.max() - lats.min() + 1e-12)
+
+    rng = np.random.default_rng(29)
+    for _ in range(2200):
+        cx, cy = rng.uniform(-0.05, 1.05), rng.uniform(-0.05, 1.05)
+        size = rng.uniform(0.02, 0.07)
+        alpha = rng.uniform(0.05, 0.2)
+        ax.add_patch(Circle((cx, cy), size, color=ink_color, alpha=alpha, linewidth=0))
+
+    xs, ys = downsample_path(norm_lons, norm_lats, min(220, len(norm_lons)))
+    for x, y in zip(xs, ys, strict=False):
+        for _ in range(int(rng.integers(2, 5))):
+            ox = rng.normal(0, 0.006)
+            oy = rng.normal(0, 0.006)
+            r = rng.uniform(0.018, 0.032)
+            ax.add_patch(Circle((x + ox, y + oy), r, color=bg_color, alpha=1.0, linewidth=0))
+
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+
+    return fig, bg_color
+
+
+@style("notan-fill")
+def notan_fill(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """The route as one solid mass: a skyline silhouette filled black, not a line."""
+    bg_color, fg_color = "#f9f6f0", "#141414"
+    fig, ax = create_figure(bg_color)
+
+    n_bins = 120
+    edges = np.linspace(lons.min(), lons.max(), n_bins + 1)
+    bin_idx = np.clip(np.digitize(lons, edges) - 1, 0, n_bins - 1)
+    skyline = np.full(n_bins, np.nan)
+    for b in range(n_bins):
+        mask = bin_idx == b
+        if mask.any():
+            skyline[b] = lats[mask].max()
+    valid = ~np.isnan(skyline)
+    if valid.sum() >= 2:
+        skyline = np.interp(np.arange(n_bins), np.flatnonzero(valid), skyline[valid])
+    elif valid.any():
+        skyline[:] = skyline[valid][0]
+
+    centers = (edges[:-1] + edges[1:]) / 2
+    base = lats.min() - (lats.max() - lats.min()) * 0.06
+    poly_x = np.concatenate([centers, centers[::-1]])
+    poly_y = np.concatenate([skyline, np.full(n_bins, base)])
+    ax.fill(poly_x, poly_y, color=fg_color, alpha=0.95, linewidth=0)
+
+    pad_limits(ax, lons, lats, 0.1)
+    return fig, bg_color
+
+
+@style("tempo-grid")
+def tempo_grid(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Small multiples: the route split into equal-count chunks, one panel per chunk."""
+    bg_color, fg_color = random.choice(ZEN_MINIMAL)
+    xs, ys = flow_path(lons, lats, 900)
+
+    cols, n_chunks = 4, 12
+    rows = -(-n_chunks // cols)
+    fig, axes = plt.subplots(rows, cols, dpi=300, figsize=(cols * 1.6, rows * 1.6))
+    fig.patch.set_facecolor(bg_color)
+
+    bounds = np.linspace(0, len(xs), n_chunks + 1).astype(int)
+    weights = pace_weights(xs, ys)
+    for i, ax in enumerate(axes.flat):
+        ax.set_facecolor(bg_color)
+        ax.set_aspect("equal", "datalim")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.axis("off")
+        if i >= n_chunks:
+            continue
+        a, b = bounds[i], bounds[i + 1]
+        if b - a < 2:
+            continue
+        seg_x, seg_y = xs[a:b], ys[a:b]
+        w = weights[a:b]
+        for j in range(len(seg_x) - 1):
+            ink_stroke(
+                ax,
+                seg_x[j : j + 2],
+                seg_y[j : j + 2],
+                fg_color,
+                lw=0.8 + w[j] * 2.6,
+                alpha=0.85,
+            )
+        pad_limits(ax, seg_x, seg_y, 0.15)
 
     return fig, bg_color
 
@@ -526,53 +595,36 @@ def sumi_wet(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     return fig, bg
 
 
-@style("sumi-dry")
-def sumi_dry(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Split dry brush: directional fray, flying white, wild hair at turns."""
-    bg, ink = SUMI_WASH, SUMI_INK
+# --- Kintsugi (金継ぎ) ---
+
+
+@style("kintsugi")
+def kintsugi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Plain ink line; gold seam only at GPS gaps and direction reversals."""
+    bg, ink, gold = SUMI_WASH, SUMI_INK, "#b8860b"
     fig, ax = create_figure(bg)
-    xs, ys = flow_path(lons, lats, 650)
-    p = turn_pressure(xs, ys, smooth=7)
-    extent = path_extent(xs, ys)
-    rng = np.random.default_rng(7)
-    nx, ny = path_normals(xs, ys)
-    contact = True
-    run = int(rng.integers(12, 30))
+    xs, ys = flow_path(lons, lats, 600)
+    ink_stroke(ax, xs, ys, ink, lw=1.1, alpha=0.55)
+
+    d = segment_lengths(xs, ys)
+    gap_thr = np.percentile(d, 96)
+    dx, dy = np.diff(xs), np.diff(ys)
+    seg_len = np.hypot(dx, dy) + 1e-12
+    cos_turn = (dx[:-1] * dx[1:] + dy[:-1] * dy[1:]) / (seg_len[:-1] * seg_len[1:])
+    rng = np.random.default_rng(11)
     for i in range(len(xs) - 1):
-        run -= 1
-        if run <= 0:
-            contact = not contact
-            run = int(rng.integers(6, 22) if contact else rng.integers(4, 14))
-        if not contact:
+        is_gap = d[i] > gap_thr
+        is_reversal = i > 0 and i - 1 < len(cos_turn) and cos_turn[i - 1] < -0.7
+        if not (is_gap or is_reversal):
             continue
-        spread = extent * (0.0015 + 0.012 * p[i])
-        n_hairs = int(rng.integers(2, 4 + int(p[i] * 5)))
-        for h in range(n_hairs):
-            side = (h - (n_hairs - 1) / 2) / max(n_hairs - 1, 1)
-            ox = nx[i] * side * spread + rng.normal(0, spread * 0.25)
-            oy = ny[i] * side * spread + rng.normal(0, spread * 0.25)
-            ox2 = ox + nx[i] * rng.normal(0, spread * 0.4)
-            oy2 = oy + ny[i] * rng.normal(0, spread * 0.4)
-            ink_stroke(
-                ax,
-                [xs[i] + ox, xs[i + 1] + ox2],
-                [ys[i] + oy, ys[i + 1] + oy2],
-                ink,
-                lw=float(rng.uniform(0.25, 1.1 + p[i] * 1.2)),
-                alpha=float(rng.uniform(0.15, 0.55 + p[i] * 0.25)),
-            )
-        if p[i] > 0.55 and rng.random() < 0.35:
-            for _ in range(int(rng.integers(3, 9))):
-                ang = rng.uniform(0, 2 * np.pi)
-                r = extent * float(rng.uniform(0.004, 0.03))
-                ink_stroke(
-                    ax,
-                    [xs[i], xs[i] + np.cos(ang) * r],
-                    [ys[i], ys[i] + np.sin(ang) * r],
-                    ink,
-                    lw=float(rng.uniform(0.2, 0.7)),
-                    alpha=float(rng.uniform(0.12, 0.4)),
-                )
+        ink_stroke(
+            ax,
+            xs[i : i + 2],
+            ys[i : i + 2],
+            gold,
+            lw=float(rng.uniform(1.8, 3.2)),
+            alpha=float(rng.uniform(0.75, 1.0)),
+        )
     pad_limits(ax, lons, lats, 0.14)
     return fig, bg
 
@@ -620,148 +672,6 @@ def shodo(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
                 )
             )
     pad_limits(ax, lons, lats, 0.12)
-    return fig, bg
-
-
-@style("shodo-lift")
-def shodo_lift(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Phrases with attack–release; brush lifts; ink dots at attacks."""
-    bg, ink = SUMI_WASH, SUMI_INK
-    fig, ax = create_figure(bg)
-    xs, ys = flow_path(lons, lats, 620)
-    bounds = phrase_bounds(xs, ys, percentile=87)
-    extent = path_extent(xs, ys)
-    rng = np.random.default_rng(4)
-    p = turn_pressure(xs, ys, smooth=7)
-    for a, b in zip(bounds[:-1], bounds[1:], strict=False):
-        if b - a < 3 or rng.random() < 0.14:
-            continue
-        env = attack_release(b - a - 1, float(rng.uniform(0.45, 0.9)))
-        for i, j in enumerate(range(a, b - 1)):
-            e = env[i] * (0.75 + 0.25 * p[j])
-            ink_stroke(
-                ax,
-                xs[j : j + 2],
-                ys[j : j + 2],
-                ink,
-                lw=0.4 + e * 6.5,
-                alpha=0.25 + e * 0.7,
-            )
-        if rng.random() < 0.55:
-            ax.add_patch(
-                Circle(
-                    (xs[a], ys[a]),
-                    extent * float(rng.uniform(0.003, 0.012)),
-                    color=ink,
-                    alpha=float(rng.uniform(0.35, 0.75)),
-                    linewidth=0,
-                )
-            )
-    pad_limits(ax, lons, lats, 0.12)
-    return fig, bg
-
-
-# --- Yūgen / Ma / Wabi ---
-
-
-@style("yugen")
-def yugen(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Mist layers: the path half-seen through veils."""
-    bg = SUMI_WASH
-    fig, ax = create_figure(bg)
-    xs, ys = flow_path(lons, lats, 450)
-    extent = path_extent(xs, ys)
-    rng = np.random.default_rng(3)
-    p = turn_pressure(xs, ys, smooth=11)
-    for _ in range(7):
-        ox = rng.normal(0, extent * 0.01)
-        oy = rng.normal(0, extent * 0.01)
-        for i in range(0, len(xs) - 1, 2):
-            ink_stroke(
-                ax,
-                xs[i : i + 2] + ox,
-                ys[i : i + 2] + oy,
-                SUMI_INK,
-                lw=float(rng.uniform(0.8, 3.5)) * (0.6 + 0.4 * p[i]),
-                alpha=float(rng.uniform(0.03, 0.1)),
-            )
-    for i in range(len(xs) - 1):
-        ink_stroke(
-            ax,
-            xs[i : i + 2],
-            ys[i : i + 2],
-            SUMI_INK,
-            lw=0.6 + p[i] * 2.4,
-            alpha=0.12 + p[i] * 0.28,
-        )
-    pad_limits(ax, lons, lats, 0.16)
-    return fig, bg
-
-
-@style("kasumi")
-def kasumi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Haze: soft discs along the path, no hard spine."""
-    bg = SUMI_WASH
-    fig, ax = create_figure(bg)
-    n = min(120, len(lons))
-    idx = np.linspace(0, len(lons) - 1, n).astype(int)
-    extent = path_extent(lons, lats)
-    for i in idx:
-        for _ in range(random.randint(2, 5)):
-            r = extent * random.uniform(0.008, 0.035)
-            ax.add_patch(
-                Circle(
-                    (
-                        lons[i] + random.gauss(0, r * 0.4),
-                        lats[i] + random.gauss(0, r * 0.4),
-                    ),
-                    r,
-                    color=SUMI_INK,
-                    alpha=random.uniform(0.025, 0.09),
-                    linewidth=0,
-                )
-            )
-    pad_limits(ax, lons, lats, 0.18)
-    return fig, bg
-
-
-@style("glimpse")
-def glimpse(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """A tight, random zoom on one curvy fragment of the run; austere pace-only line."""
-    bg, ink = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg)
-    xs, ys = flow_path(lons, lats, 900)
-    p = turn_pressure(xs, ys, smooth=5)
-    window = max(20, len(xs) // 12)
-    curviness = smooth_series(p, window)
-
-    order = np.argsort(curviness)[::-1]
-    peaks: list[int] = []
-    for idx in order:
-        if all(abs(int(idx) - c) >= window for c in peaks):
-            peaks.append(int(idx))
-        if len(peaks) >= 10:
-            break
-
-    center = random.choice(peaks)
-    half = window // 2
-    a, b = max(0, center - half), min(len(xs), center + half)
-    if b - a < 5:
-        a, b = 0, len(xs)
-    seg_x, seg_y = xs[a:b], ys[a:b]
-
-    w = smooth_series(pace_weights(seg_x, seg_y), 9)
-    min_lw, max_lw = 1.2, 5.5
-    for i in range(len(seg_x) - 1):
-        ink_stroke(
-            ax,
-            seg_x[i : i + 2],
-            seg_y[i : i + 2],
-            ink,
-            lw=min_lw + (max_lw - min_lw) * w[i],
-            alpha=0.92,
-        )
-    pad_limits(ax, seg_x, seg_y, 0.28)
     return fig, bg
 
 

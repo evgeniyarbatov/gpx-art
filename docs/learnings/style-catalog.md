@@ -1,58 +1,40 @@
 # Style catalog
 
-The catalog is not missing names. It is missing ideas. ~70 styles were tried and cut in waves; restoring the zoo fights [artistic-direction.md](../artistic-direction.md).
+The catalog is not missing names. It is missing ideas. ~76 styles were tried and cut in waves; restoring the zoo fights [artistic-direction.md](../artistic-direction.md).
 
 ## Current
 
-Three generations, thirteen styles:
+Three generations, eleven styles:
 
 | Generation | Styles | What they do |
 |---|---|---|
-| Early graphic | `contour`, `stitch`, `scaffold`, `painting`, `network`, `simplify` | Offsets, dashes, wireframe, blob wash, node graph, stacked RDP |
-| Ink | `sumi-wet`, `sumi-dry`, `yugen`, `kasumi`, `shodo`, `shodo-lift` | Wet pools, dry fray, mist, haze, pressure stroke, phrases with lifts |
-| Austere | `glimpse` | Random tight zoom on one curvy fragment; pace-only line, nothing else |
+| Early graphic | `stitch`, `scaffold`, `painting`, `network`, `simplify` | Dashes, wireframe, blob wash, node graph, stacked RDP |
+| Ink | `sumi-wet`, `shodo` | Wet pools, pressure stroke |
+| Graphic, second wave | `kintsugi`, `notan-fill`, `negative-space`, `tempo-grid` | Gold seam at gaps/reversals, skyline mass fill, whole-frame erasure, small-multiples grid |
 
-The six graphic styles survived a cut because they look distinct on a wall. They do not use the shared ink grammar. `sumi-wet` / `yugen` / `kasumi` were the only ink keepers after the last cut; `shodo`, `shodo-lift`, and `sumi-dry` fill the holes that cut left.
-
-Two false starts in the same session, both reverted:
-
-1. A batch of ten more ink-family styles (`notan-fill`, `kintsugi`, `suiseki`, `boro`, `suminagashi`, `kuroji`, `kirihari`, `tomari`, `kado`, `nawa`) — individually each passed the distinctness checklist, but as a group drifted toward decoration (fills, gold accents, collage, rope twists), away from "reveal the run's essence."
-2. `breath` / `thread` — a pace-only single line over the *whole* route, reducing to one signal instead of adding marks. Correct instinct, wrong target: a full-route overview is mostly straight streets, so an undecorated whole-route line reads as flat no matter how honest the reduction is. `glimpse` keeps the pace-only line but crops to a single genuinely curvy fragment instead — the reduction needed a subject, not just fewer variables.
-
-## Holes these four fill
-
-| Style | Intent | Why it is not a duplicate | Do not also add |
-|---|---|---|---|
-| `shodo` | One stroke with extreme turn+pace pressure, under-wash, ink stops | Catalog had wet blobs and mist, no fude line | `sumi`, `fude`, `wabi` |
-| `shodo-lift` | Phrases with attack–release; lifts are the composition | Distinct from a continuous `shodo` | `shodo-dash`, `shodo-breath`, `harai`, `tome` |
-| `sumi-dry` | Split contact, directional fray, flying white at turns | Opposite of `sumi-wet` | `haku`, `sumi-splash`, `nijimi` |
-| `glimpse` | Tight, random zoom on one curvy fragment; pace-only width, nothing else | Only style that crops instead of drawing the whole track; `--repeat` gives several genuinely different fragments per GPX | `zoom`, `crop`, `snippet` — the crop mechanism is the idea, don't fork it by name only |
-
-One style per idea. Rewrite against current helpers; do not paste old functions back.
+The seven-style set held up on the wall across every prior cut. Everything else in the ink/atmosphere/austere experiments below was judged not distinct or not strong enough to keep, even though each passed the distinctness checklist in isolation — a reminder that the checklist is necessary, not sufficient. The second-wave four were each proposed against a specific hole (rare accent, filled mass, whole-frame inversion, small multiples) and rendered on a real track before being kept — see git history around the commit that added them.
 
 ## Stay deleted
 
-Three waves:
+Four waves:
 
 1. **Artist costume** — `picasso`, `dali`, `rembrandt`, `kusama`, `cubist`, … Costume without grammar.
 2. **Geometric toys** — `cascade`, `field`, `hatch`, `radial`, `shatter`, `spoke`, `vortex`, `weave`. Mechanical ornament.
-3. **Japanese-lens zoo** (62 → 9) — four `enso*`, five `notan*`, three `kintsugi*`, eight `shodo*`/`harai`/`tome`/`fude`/`haku`, garden set (`rake`, `gravel`, `karesansui`, `suiseki`, `seki`, `hashi`), atmosphere twins (`whisper`, `haze`, `maboroshi`, `ma`, `kiri`, `tsuki`). Same idea, many names.
+3. **Japanese-lens zoo** (62 → 9) — four `enso*`, five `notan*`, three `kintsugi*` (`kintsugi-vein`, `kintsugi-shard`, and an earlier plain `kintsugi` — the current `kintsugi` is a new take, gold restricted to gaps/reversals only), eight `shodo*`/`harai`/`tome`/`fude`/`haku`, garden set (`rake`, `gravel`, `karesansui`, `suiseki`, `seki`, `hashi`), atmosphere twins (`whisper`, `haze`, `maboroshi`, `ma`, `kiri`, `tsuki`). Same idea, many names.
+4. **Second ink cut** (13 → 7) — `contour` (graphic; redundant with `stitch`'s offset idea once judged on a wall), `sumi-dry` (dry-brush fray read as noise, not as a distinct mark from `sumi-wet`), `shodo-lift` (phrase/lift structure didn't add enough over plain `shodo`), `yugen` + `kasumi` (quiet mist/haze read as thin default line more often than "decisive"), `glimpse` (random-crop austere line — clever mechanism, but judged too gimmicky as a whole "style").
 
-Those families map to the taste-doc failures: predictable layers, static diagrams, rake grids, a Japanese name on a gray polyline.
+Those families map to the taste-doc failures: predictable layers, static diagrams, rake grids, a Japanese name on a gray polyline, or (wave 4) a genuinely distinct idea that still didn't earn a place.
 
 ### Leave buried
 
-- `whisper` / `haze` / `maboroshi` / `ma` — too close to `yugen`/`kasumi`
-- `ribbon` / `parallel` — `contour` already is stacked offsets
+- `whisper` / `haze` / `maboroshi` / `ma` — too close to `yugen`/`kasumi` (also both now cut)
+- `ribbon` / `parallel` — `stitch`/`contour` territory already covered and cut once
 - `enso*` — how you walk, not a mark style
 - `tsuki`, `haiga`, `in-seal`, `ikebana` — props on the page
 - `ridge` — needs time and elevation in the style signature; different project
+- `sumi-dry`, `shodo-lift`, `yugen`, `kasumi`, `glimpse`, `contour` — tried, kept for a while, cut in wave 4; do not re-add under a new name without a genuinely different mechanism
+- `kintsugi-vein`, `kintsugi-shard` — the wave-3 gold-accent variants; the current `kintsugi` already spends the rare-accent budget, don't add siblings
 
-## A fourth only if
+## A fifth only if
 
-One, not three:
-
-- `notan-fill` — black mass under the skyline (graphic hole the six old styles do not fill)
-- `skeleton` — incomplete pressure-weighted bones (only if you want structure-as-writing; `scaffold`/`network` already occupy “diagram”)
-- `suiseki` — sparse stones, sand, one ink whisper (README still says stone and sand). Old `rake`/`gravel`/`karesansui` stay dead.
-- `kintsugi` — gold only at GPS gaps and reversals. Skip unless opening the rare-accent door; the three `kintsugi-*` variants stay dead.
+- **`elevation-terrace`** — stack the route at N vertical offsets keyed to elevation gain instead of a fixed offset. Needs `get_df` elevation, not just lon/lat, so it requires extending `StyleFunc` to pass elevation to every style (touches all 11 signatures, not just this one). Deliberately not built yet — do it as its own change, not bundled into an unrelated style addition.
