@@ -50,9 +50,11 @@ art: random render
 art-file: install
 	@test -n "$(GPX)" || (echo "Usage: make art-file GPX=path/to/file.gpx [STYLES=style1,style2] [REPEAT=n]" && exit 1)
 	@test -f "$(GPX)" || (echo "GPX file not found: $(GPX)" && exit 1)
-	@rm -rf $(SINGLE_DIR)
-	@mkdir -p $(SINGLE_DIR) $(IMAGES_DIR)
-	@cp "$(GPX)" $(SINGLE_DIR)/
+	@tmp_gpx=$$(mktemp "$${TMPDIR:-/tmp}/art-file-gpx.XXXXXX") && \
+		cp "$(GPX)" "$$tmp_gpx" && \
+		rm -rf $(SINGLE_DIR) $(IMAGES_DIR) && \
+		mkdir -p $(SINGLE_DIR) $(IMAGES_DIR) && \
+		mv "$$tmp_gpx" "$(SINGLE_DIR)/$$(basename "$(GPX)")"
 	@uv run python scripts/gpx-art.py $(SINGLE_DIR) $(IMAGES_DIR) $(if $(STYLES),--styles $(STYLES),) $(if $(REPEAT),--repeat $(REPEAT),)
 
 test: install

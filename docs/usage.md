@@ -59,7 +59,7 @@ make render
 
 Variables: `SOURCE_DIR` (default `./source-gpx`), `NUMBER_OF_GPX` (default `20`), `GPX_DIR`, `IMAGES_DIR`.
 
-`art-file` writes to `IMAGES_DIR` using every registered style, or only those listed in `STYLES` (comma-separated, matching names in [docs/scripts.md](docs/scripts.md)). `REPEAT=n` renders each style n times per file (output `<style>-<n>-<track>.png`) — useful for `glimpse`, which picks a different random fragment each call.
+`art-file` clears `IMAGES_DIR` first, then writes to it using every registered style, or only those listed in `STYLES` (comma-separated, matching names in [docs/scripts.md](docs/scripts.md)). `REPEAT=n` renders each style n times per file (output `<style>-<n>-<track>.png`) — useful for styles with per-render randomness (e.g. `painting`, `network`).
 
 `GPX_DIR` and `IMAGES_DIR` default to `$(DATA_DIR)/gpx` and `$(DATA_DIR)/images`, where `DATA_DIR` defaults to `~/Documents/data/gpx-art` (`$(DATA_ROOT)/gpx-art`, `DATA_ROOT` defaulting to `~/Documents/data`). Override the root with `make <target> DATA_ROOT=/other/root`, or the exact path with `make <target> DATA_DIR=/tmp/run-42`.
 
