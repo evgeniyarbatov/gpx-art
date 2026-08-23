@@ -400,37 +400,6 @@ def tempo_grid(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     return fig, bg_color
 
 
-@style("pulse-bars")
-def pulse_bars(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Rhythm strip: the route abstracted into bars, no shape at all, just pace+turn per chunk."""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = plt.subplots(dpi=300, figsize=(8, 3))
-    ax.set_facecolor(bg_color)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.axis("off")
-
-    xs, ys = flow_path(lons, lats, 900)
-    energy = np.clip(0.6 * pace_weights(xs, ys) + 0.4 * turn_pressure(xs, ys, smooth=9), 0, 1)
-
-    n_bars = 44
-    bounds = np.linspace(0, len(xs), n_bars + 1).astype(int)
-    heights = np.array(
-        [
-            energy[a:b].mean() if b > a else 0.0
-            for a, b in zip(bounds[:-1], bounds[1:], strict=False)
-        ]
-    )
-    heights = 0.08 + 0.92 * heights / (heights.max() + 1e-12)
-
-    for i, h in enumerate(heights):
-        ax.bar(i, h, width=0.7, color=fg_color, alpha=0.85, linewidth=0)
-
-    ax.set_xlim(-1, n_bars)
-    ax.set_ylim(0, 1.05)
-    return fig, bg_color
-
-
 @style("ribcage")
 def ribcage(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Anatomical spine: a coarse-simplified backbone with short ribs, not a scaffold to ground."""
