@@ -4,7 +4,15 @@
 
 This document is a walking path, not a sprint. Each phase builds on the last. The goal is not more output, but deeper seeing.
 
----
+## Connects to
+
+Before the phases: this isn't the only project treating a personal trace as raw material for art, and it shouldn't evolve in isolation from its siblings.
+
+- **[private]** — explicitly named "companion spirit to gpx-art" (its own description says so): abstract stills from running footage instead of GPX lines. Same body-as-source-material idea, different sensor (camera vs. GPS).
+- **[private]** — same spirit again, this time from phone-recorded street sound, optionally GPX-aligned. A three-way "GPX / video / sound as raw material" family worth naming explicitly rather than leaving implicit.
+- **star-art**, **[private]** — same "data as line art" instinct, different data source (night sky, personal drawing style) — worth cross-pollinating style/composition ideas (the *ma*/negative-space thinking here could inform star-art's compositions too).
+- **[private]** — the pipeline that feeds this repo tracks from Strava/Android/Casio; a documented schema there protects this repo from silent breakage.
+- **[private]** — shares the OSM+DEM rendering lineage; the "form before footstep" phase here (designing a route to draw a shape) could eventually want 3D terrain context that this sibling already renders.
 
 ## Where you are now
 
@@ -24,8 +32,6 @@ You have already done something rare: you treat a GPS trace not as a map, not as
 The images already breathe. Skeleton reduces a run to its turning bones. Painting scatters ink along the path. Contour stacks parallel lines like topography or fabric. Decay lets the trace dissolve — time made visible.
 
 But you are still standing at the shore. The line holds far more than you have asked of it.
-
----
 
 ## Dimensions not yet explored
 
@@ -104,13 +110,9 @@ Art from the body can invite other bodies.
 - "Draw this shape in your city" — same form, different geography
 - Open the style registry: contributors add `@style` functions, QR proves authorship
 
----
-
 ## The path forward — one step at a time
 
 Each phase is self-contained. Finish one before rushing to the next. Walk, don't run.
-
----
 
 ### Phase 1 — Deepen the line you have
 *Stay in lat/lon. Make the existing styles irreplaceable.*
@@ -125,8 +127,6 @@ Add optional layout parameters: margin ratio, anchor (lower-left, center, floati
 Pick one route you love. Render all styles. Hang them in a row. Notice which styles *lie* about the walk and which *tell the truth*. Remove or rewrite the liars.
 
 **Deliverable:** A curated folder `series/ensho-v1/` — one track, best 8 styles, composed layout.
-
----
 
 ### Phase 2 — Let the body speak through data
 *Introduce time, elevation, speed — still one line, but the line breathes.*
@@ -144,8 +144,6 @@ Plan one route designed for `breath`: start fast (thin), pause at a bench (thick
 
 **Deliverable:** One GPX walked on purpose + three new body-aware styles.
 
----
-
 ### Phase 3 — Form before footstep
 *Design the shape, then walk it.*
 
@@ -159,8 +157,6 @@ Choose one kanji or letter with few strokes (一, 人, 山, O). Sketch it on a m
 Small JSON or GPX templates: circle, spiral, horizon, zigzag. A `make route` helper that exports a target polyline for navigation apps.
 
 **Deliverable:** Three intentional walks with before/after sketches and final art.
-
----
 
 ### Phase 4 — Time and sequence
 *The line moves; let the viewer move with it.*
@@ -176,8 +172,6 @@ One afternoon experiment. If it sings, keep it. If not, let it go.
 
 **Deliverable:** One animation + one seasonal quadtych.
 
----
-
 ### Phase 5 — Object and wall
 *Leave the screen.*
 
@@ -191,8 +185,6 @@ Try three aspect ratios: 1:3 scroll, 1:1 square, 3:1 panorama. The same track te
 Under or beside each print, handwrite a haiku from the walk. 5-7-5 or free. The text is not metadata — it is part of the work.
 
 **Deliverable:** One exhibition-ready physical piece with haiku.
-
----
 
 ### Phase 6 — Place, people, collection
 *From project to practice.*
@@ -208,8 +200,6 @@ Document how to add a `@style` function. Accept contributions. DTW-select divers
 
 **Deliverable:** A named collection with title, order, and one paragraph of artist statement.
 
----
-
 ## Principles to carry
 
 1. **Restriction is the medium.** Two coordinates and a line is not a limitation — it is the frame that makes the art possible.
@@ -219,8 +209,6 @@ Document how to add a `@style` function. Accept contributions. DTW-select divers
 5. **One track, many truths.** No single style owns a walk. Diversity of seeing beats diversity of data.
 6. **Provenance matters.** The QR → Gist idea is already profound. Keep it. The artwork knows how it was made.
 7. **Go slow.** One new style per month is faster than twenty styles in a weekend.
-
----
 
 ## Next single step
 
@@ -233,7 +221,5 @@ If you do only one thing after reading this:
 > Write one haiku in the margin.
 
 That is Phase 1 and Phase 3 in a single walk. The roadmap begins with your feet.
-
----
 
 *「行雲流水」 — like clouds moving, like water flowing. The line does not insist.*
