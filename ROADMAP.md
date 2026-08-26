@@ -8,11 +8,7 @@ This document is a walking path, not a sprint. Each phase builds on the last. Th
 
 Before the phases: this isn't the only project treating a personal trace as raw material for art, and it shouldn't evolve in isolation from its siblings.
 
-- **[private]** — explicitly named "companion spirit to gpx-art" (its own description says so): abstract stills from running footage instead of GPX lines. Same body-as-source-material idea, different sensor (camera vs. GPS).
-- **[private]** — same spirit again, this time from phone-recorded street sound, optionally GPX-aligned. A three-way "GPX / video / sound as raw material" family worth naming explicitly rather than leaving implicit.
-- **star-art**, **[private]** — same "data as line art" instinct, different data source (night sky, personal drawing style) — worth cross-pollinating style/composition ideas (the *ma*/negative-space thinking here could inform star-art's compositions too).
-- **[private]** — the pipeline that feeds this repo tracks from Strava/Android/Casio; a documented schema there protects this repo from silent breakage.
-- **[private]** — shares the OSM+DEM rendering lineage; the "form before footstep" phase here (designing a route to draw a shape) could eventually want 3D terrain context that this sibling already renders.
+- **star-art** — same "data as line art" instinct, different data source (night sky) — worth cross-pollinating style/composition ideas (the *ma*/negative-space thinking here could inform star-art's compositions too).
 
 ## Where you are now
 
