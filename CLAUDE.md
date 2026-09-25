@@ -16,6 +16,7 @@ Details: [docs/architecture.md](docs/architecture.md), [docs/artistic-direction.
 make install                          # uv sync → .venv
 make test                             # unittest discover -s tests
 make render                           # render all styles
+make render-ground                    # elevation styles → images-ground/
 make dtwselect SOURCE_DIR=… NUMBER_OF_GPX=20
 make random SOURCE_DIR=… NUMBER_OF_GPX=20
 make plot                             # grid preview of gpx/
@@ -38,6 +39,7 @@ uv run python -m unittest tests.test_gpx_art_core.TestGpxArtCore.test_style_deco
 | Path | Role |
 |---|---|
 | `scripts/gpx-art.py` | Style registry + renderer + optional QR |
+| `scripts/ground-art.py` | Elevation styles (`breath`, `terrace`, `stone`) |
 | `scripts/dtw-select.py` | Diverse track selection (FastDTW) |
 | `scripts/plot-gpx.py` | Visual preview |
 | `scripts/utils.py` | `get_files`, `get_df`, `get_lon_lat`, `path_length_km` |

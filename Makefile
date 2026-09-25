@@ -11,12 +11,13 @@ SOURCE_DIR ?= ./source-gpx
 
 GPX_DIR = $(DATA_DIR)/gpx
 IMAGES_DIR = $(DATA_DIR)/images
+GROUND_DIR = $(DATA_DIR)/images-ground
 SINGLE_DIR = $(DATA_DIR)/gpx-single
 NUMBER_OF_GPX = 20
 
 include make/parquet.mk
 
-.PHONY: install lock clean random dtwselect plot render art art-file run test help
+.PHONY: install lock clean random dtwselect plot render render-ground ground-file art art-file run test help
 
 default: run
 
@@ -45,6 +46,18 @@ plot: install
 render: install
 	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
 
+render-ground: install
+	@mkdir -p $(GROUND_DIR)
+	@uv run python scripts/ground-art.py $(GPX_DIR) $(GROUND_DIR)
+
+ground-file: install
+	@test -n "$(GPX)" || (echo "Usage: make ground-file GPX=path/to/file.gpx [STYLES=breath,terrace,stone]" && exit 1)
+	@test -f "$(GPX)" || (echo "GPX file not found: $(GPX)" && exit 1)
+	@mkdir -p $(GROUND_DIR)
+	@tmp=$$(mktemp -d) && cp "$(GPX)" "$$tmp/" && \
+		uv run python scripts/ground-art.py "$$tmp" $(GROUND_DIR) $(if $(STYLES),--styles $(STYLES),); \
+		status=$$?; rm -rf "$$tmp"; exit $$status
+
 art: random render
 
 art-file: install
@@ -68,6 +81,8 @@ help:
 	@echo "dtwselect     - select GPX files via DTW"
 	@echo "plot          - plot GPX tracks"
 	@echo "render        - render GPX art images"
+	@echo "render-ground - render elevation styles (breath, terrace, stone) into images-ground/"
+	@echo "ground-file   - one GPX through the elevation styles: make ground-file GPX=path [STYLES=breath,stone]"
 	@echo "art           - random + render (default)"
 	@echo "art-file      - render a single GPX file: make art-file GPX=path/to/file.gpx [STYLES=s1,s2] [REPEAT=n]"
 	@echo "test          - run unit tests"

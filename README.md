@@ -39,6 +39,28 @@ make art-file GPX=/absolute/path/to/track.gpx
 
 See [docs/usage.md](docs/usage.md) for restricting to specific styles.
 
+## Elevation
+
+Three styles read the elevation already stored in the GPX. They need an `<ele>` stream. A track without one is skipped. Output goes to `images-ground/`, separate from `make render`.
+
+```bash
+make ground-file GPX=/absolute/path/to/track.gpx
+```
+
+That writes `breath`, `terrace`, and `stone`. Limit the set with `STYLES=breath,stone`.
+
+To render whatever is already in the working `gpx/` directory:
+
+```bash
+make render-ground
+```
+
+| Style | What it draws |
+|---|---|
+| `breath` | Distance across, elevation up. Heavier ink on the climbs. |
+| `terrace` | The map cut into shelves keyed to elevation. |
+| `stone` | The route as a shadow, the same line lifted by elevation. |
+
 ## Documentation
 
 | Doc | Contents |

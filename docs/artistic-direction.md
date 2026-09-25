@@ -71,6 +71,12 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 - Not ink-culture vocabulary; each earns its place on a distinct structural idea (dashes + cross-marks, wireframe bracing, wash blobs, node graph, stacked simplification passes, skyline mass fill, small-multiples grid, anatomical ribs off a simplified spine, spread-based mass) rather than pressure/texture grammar.
 
+### Ground
+
+`breath`, `terrace`, `stone` — in `scripts/ground-art.py`, not the lat/lon registry.
+
+Elevation chooses the axes (`breath`), the shelf (`terrace`), or the lift off the plan-view shadow (`stone`). Same ink and paper. A color ramp of height is still a failure.
+
 ## Decision checklist for a new or revised style
 
 1. **One sentence of intent** (e.g. “long inhale strokes with rests between breaths”).

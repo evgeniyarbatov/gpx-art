@@ -29,6 +29,7 @@ SOURCE_DIR (your GPX library)
 | Path | Role |
 |---|---|
 | `scripts/gpx-art.py` | Main generator: style registry, rendering |
+| `scripts/ground-art.py` | Elevation styles (`breath`, `terrace`, `stone`); separate registry |
 | `scripts/dtw-select.py` | Diverse GPX selection via FastDTW |
 | `scripts/plot-gpx.py` | Visual grid preview of tracks in `gpx/` |
 | `scripts/utils.py` | Shared GPX listing and parse helpers |
@@ -55,6 +56,8 @@ def scaffold(lons, lats):
 - `create_art` looks up the style, draws the track, and saves the PNG.
 - New styles are added by defining another `@style(...)` function in `gpx-art.py`; no central switch statement.
 - `extract_style_source` parses `gpx-art.py` with the AST to pull the full source of a single `@style` function by name.
+
+`ground-art.py` is a second registry. Its styles take a track with elevation and write to `images-ground/`. `make render` does not call them. A track with no elevation is skipped.
 
 Path helpers (`flow_path`, `pad_limits`, `ink_stroke`, palettes, etc.) are shared utilities used by many styles.
 

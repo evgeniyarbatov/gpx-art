@@ -54,6 +54,8 @@ make render
 | `make dtwselect` | Copy diverse GPX files via DTW into `gpx/` |
 | `make plot` | Grid preview of tracks in `gpx/` |
 | `make render` | Render all styles to `images/` |
+| `make render-ground` | Render `breath`, `terrace`, `stone` to `images-ground/` |
+| `make ground-file` | One GPX through those styles: `make ground-file GPX=path [STYLES=breath,stone]` |
 | `make art` | `random` then `render` (default target) |
 | `make art-file` | Render a single GPX file: `make art-file GPX=path/to/file.gpx [STYLES=style1,style2] [REPEAT=n]` |
 
@@ -61,7 +63,7 @@ Variables: `SOURCE_DIR` (default `./source-gpx`), `NUMBER_OF_GPX` (default `20`)
 
 `art-file` clears `IMAGES_DIR` first, then writes to it using every registered style, or only those listed in `STYLES` (comma-separated, matching names in [docs/scripts.md](docs/scripts.md)). `REPEAT=n` renders each style n times per file (output `<style>-<n>-<track>.png`) — useful for styles with per-render randomness (e.g. `painting`, `network`).
 
-`GPX_DIR` and `IMAGES_DIR` default to `$(DATA_DIR)/gpx` and `$(DATA_DIR)/images`, where `DATA_DIR` defaults to `~/Documents/data/gpx-art` (`$(DATA_ROOT)/gpx-art`, `DATA_ROOT` defaulting to `~/Documents/data`). Override the root with `make <target> DATA_ROOT=/other/root`, or the exact path with `make <target> DATA_DIR=/tmp/run-42`.
+`GPX_DIR` and `IMAGES_DIR` default to `$(DATA_DIR)/gpx` and `$(DATA_DIR)/images`, where `DATA_DIR` defaults to `~/Documents/data/gpx-art` (`$(DATA_ROOT)/gpx-art`, `DATA_ROOT` defaulting to `~/Documents/data`). `make render-ground` and `make ground-file` write to `$(DATA_DIR)/images-ground`. Override the root with `make <target> DATA_ROOT=/other/root`, or the exact path with `make <target> DATA_DIR=/tmp/run-42`.
 
 ## Personal parquet source
 

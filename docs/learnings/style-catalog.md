@@ -29,15 +29,21 @@ Those families map to the taste-doc failures: predictable layers, static diagram
 ### Leave buried
 
 - `whisper` / `haze` / `maboroshi` / `ma` — too close to `yugen`/`kasumi` (also both now cut)
-- `ribbon` / `parallel` — `stitch`/`contour` territory already covered and cut once
+- `ribbon` / `parallel` — `stitch`/`contour` territory already covered and cut once. The ground style `stone` is a different mechanism (plan shadow plus an elevation lift); do not revive the parallel-line `ribbon`
 - `enso*` — how you walk, not a mark style
 - `tsuki`, `haiga`, `in-seal`, `ikebana` — props on the page
-- `ridge` — needs time and elevation in the style signature; different project
+- `ridge` — faint contours behind a lat/lon stroke. The ground lane is the elevation work; this one stays buried
 - `sumi-dry`, `shodo-lift`, `yugen`, `kasumi`, `glimpse`, `contour` — tried, kept for a while, cut in wave 4; do not re-add under a new name without a genuinely different mechanism
 - `kintsugi`, `kintsugi-vein`, `kintsugi-shard` — the gold-accent idea has now been tried twice (wave 3 and wave 5) and cut both times; leave the rare-accent idea alone
 - `negative-space` — cut in wave 5; don't re-add a `painting` inversion under a new name without a genuinely different mechanism
 - `pulse-bars` — cut in wave 6; don't re-add a route-as-abstract-rhythm-strip idea under a new name without a genuinely different mechanism
 
-## A next one only if
+## Ground
 
-- **`elevation-terrace`** — stack the route at N vertical offsets keyed to elevation gain instead of a fixed offset. Needs `get_df` elevation, not just lon/lat, so it requires extending `StyleFunc` to pass elevation to every style (touches all 11 signatures, not just this one). Deliberately not built yet — do it as its own change, not bundled into an unrelated style addition.
+Second registry, `scripts/ground-art.py`. Not part of `make render`. Elevation comes from the GPX.
+
+| Style | What it does |
+|---|---|
+| `breath` | Distance × elevation, low on the page. Wash under the line, thick ink on sustained climbs |
+| `terrace` | The map shape stepped onto shelves keyed to elevation. This is the `elevation-terrace` idea, kept out of the lat/lon signatures |
+| `stone` | Plan-view shadow with the same stroke lifted by elevation |

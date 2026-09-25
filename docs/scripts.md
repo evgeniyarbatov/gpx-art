@@ -36,6 +36,27 @@ Make wrapper: `make render`.
 
 ---
 
+## `scripts/ground-art.py`
+
+Elevation styles. Same directory contract as `gpx-art.py`, separate registry, so lat/lon styles stay on longitude and latitude only.
+
+```bash
+uv run python scripts/ground-art.py <gpx_dir> <images_dir>
+uv run python scripts/ground-art.py <gpx_dir> <images_dir> --styles breath,stone
+```
+
+| Style | What it draws |
+|---|---|
+| `breath` | Distance across, elevation up. Wash under the line, thick ink on sustained climbs, empty sky. |
+| `terrace` | The map shape cut onto shelves keyed to elevation. |
+| `stone` | The plan-view line as a shadow, the same line lifted by elevation. |
+
+Tracks without an `<ele>` stream are skipped. Output: `<style>-<track>.png`.
+
+Make wrappers: `make render-ground` (the working set in `gpx/`), `make ground-file GPX=path`. Both write to `images-ground/`.
+
+---
+
 ## `scripts/dtw-select.py`
 
 Select a diverse subset of long tracks from a GPX library.
