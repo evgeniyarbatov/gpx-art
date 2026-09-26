@@ -12,6 +12,7 @@ SOURCE_DIR ?= ./source-gpx
 GPX_DIR = $(DATA_DIR)/gpx
 IMAGES_DIR = $(DATA_DIR)/images
 GROUND_DIR = $(DATA_DIR)/images-ground
+GROUND_GPX_DIR ?= gpx
 SINGLE_DIR = $(DATA_DIR)/gpx-single
 NUMBER_OF_GPX = 20
 
@@ -48,7 +49,7 @@ render: install
 
 render-ground: install
 	@mkdir -p $(GROUND_DIR)
-	@uv run python scripts/ground-art.py $(GPX_DIR) $(GROUND_DIR)
+	@uv run python scripts/ground-art.py $(GROUND_GPX_DIR) $(GROUND_DIR)
 
 ground-file: install
 	@test -n "$(GPX)" || (echo "Usage: make ground-file GPX=path/to/file.gpx [STYLES=breath,terrace,stone]" && exit 1)
@@ -81,7 +82,7 @@ help:
 	@echo "dtwselect     - select GPX files via DTW"
 	@echo "plot          - plot GPX tracks"
 	@echo "render        - render GPX art images"
-	@echo "render-ground - render elevation styles (breath, terrace, stone) into images-ground/"
+	@echo "render-ground - render elevation styles (breath, terrace, stone) from $(GROUND_GPX_DIR) into $(GROUND_DIR)"
 	@echo "ground-file   - one GPX through the elevation styles: make ground-file GPX=path [STYLES=breath,stone]"
 	@echo "art           - random + render (default)"
 	@echo "art-file      - render a single GPX file: make art-file GPX=path/to/file.gpx [STYLES=s1,s2] [REPEAT=n]"
