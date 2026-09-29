@@ -1,5 +1,7 @@
 # GPX Art
 
+[![tests](https://github.com/evgeniyarbatov/gpx-art/actions/workflows/tests.yml/badge.svg)](https://github.com/evgeniyarbatov/gpx-art/actions/workflows/tests.yml)
+
 Generate artistic images from GPX tracks.
 
 This project takes a set of GPX files, renders each route in multiple visual styles, and saves PNG outputs.
