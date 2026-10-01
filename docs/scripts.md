@@ -120,3 +120,20 @@ Shared helpers:
 ## `scripts/parquet_tracks.py`
 
 Helpers for the personal parquet ingest lane (`load_tracks`, `sample_tracks`, `write_tracks`). `sample_tracks` enforces the 10 km floor and covers every city file. Not used by the public GPX path.
+
+---
+
+## `scripts/render.py`
+
+One track, one style, reproducible. Generic entry point for pipelines that drive gpx-art from outside.
+
+```bash
+uv run python scripts/render.py --seed 7 --params params.json --out out/ --inputs track.gpx [--size preview|full]
+uv run python scripts/render.py --list-styles
+```
+
+- `params.json` is `{"style": "<name>"}`; any style from `gpx-art.py` or `ground-art.py`.
+- Seeds `random` and `numpy.random`, so the same seed, params and track give the same PNG.
+- Writes `<out>/render.png`. `preview` is ~1024 px on the long side; `full` is 300 dpi.
+- `--list-styles` prints `[{name, input, description}]` as JSON.
+- Installed as a package (`pip install git+…`), the same CLI is `gpx-art-render` or `python -m gpx_art.render`.
