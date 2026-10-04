@@ -71,6 +71,14 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 - Not ink-culture vocabulary; each earns its place on a distinct structural idea (dashes + cross-marks, wireframe bracing, wash blobs, node graph, stacked simplification passes, skyline mass fill, small-multiples grid, anatomical ribs off a simplified spine, spread-based mass) rather than pressure/texture grammar.
 
+### New axis
+
+`enso-gap` — in the lat/lon registry, but its subject is the closure error, not the path. A closed loop leaves only a hair and a seal.
+
+### Series
+
+`palimpsest` — in `scripts/series-art.py`. The axis is repetition over weeks: darkness is split across passes so it reads as weight, not saturation. Recency is wetness, never hue.
+
 ### Ground
 
 `breath`, `terrace`, `stone` — in `scripts/ground-art.py`, not the lat/lon registry.
