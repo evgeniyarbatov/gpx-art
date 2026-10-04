@@ -76,7 +76,6 @@ make help-parquet
 
 | Target | Description |
 |---|---|
-| `make install-parquet` | Install the `parquet` extra (`geopandas`, `pyarrow`) |
 | `make data-repo` | Clone or update `GPX_DATA_REPO` (set in gitignored `make/local.mk`) under `$(DATA_DIR)/gpx-data` |
 | `make random-parquet` | Sample ≥10 km tracks from every parquet file into `gpx/` |
 | `make dtwselect-parquet` | Same pool, FastDTW-diverse, not near the current `gpx/` set |
