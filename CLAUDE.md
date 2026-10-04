@@ -24,6 +24,7 @@ make random SOURCE_DIR=… NUMBER_OF_GPX=20
 make plot                             # grid preview of gpx/
 make art SOURCE_DIR=…                 # random + render
 make art-parquet                      # parquet DTW sample (100) + render
+make pipeline                         # art-parquet + render-ground + series: all images
 make help-parquet                     # personal targets
 make clean                            # clear gpx/* and images/*
 ```

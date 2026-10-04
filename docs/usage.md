@@ -76,6 +76,7 @@ make help-parquet
 
 | Target | Description |
 |---|---|
+| `make pipeline` | `art-parquet`, then `render-ground` and `series` (defaults `CITY=Ho Chi Minh City`, `CLUSTERS=1,3,4`, `SERIES=hcmc`): every image in one run |
 | `make data-repo` | Clone or update `GPX_DATA_REPO` (set in gitignored `make/local.mk`) under `$(DATA_DIR)/gpx-data` |
 | `make random-parquet` | Sample ≥10 km tracks from every parquet file into `gpx/` |
 | `make dtwselect-parquet` | Same pool, FastDTW-diverse, not near the current `gpx/` set |
