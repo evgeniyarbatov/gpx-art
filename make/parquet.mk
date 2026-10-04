@@ -1,15 +1,17 @@
-GPX_DATA_DIR := $(DATA_DIR)/[private]
-GPX_DATA_REPO := git@github.com:evgeniyarbatov/[private].git
+# make/local.mk (gitignored) sets GPX_DATA_REPO so the private repo name stays out of git.
+-include make/local.mk
+GPX_DATA_DIR ?= $(DATA_DIR)/gpx-data
 PARQUET_DIR ?= $(GPX_DATA_DIR)/data/parquet
 
-.PHONY: series-report series install-parquet [private] random-parquet dtwselect-parquet art-parquet help-parquet
+.PHONY: series-report series install-parquet data-repo random-parquet dtwselect-parquet art-parquet help-parquet
 
 random-parquet dtwselect-parquet art-parquet: NUMBER_OF_GPX = 100
 
 install-parquet:
 	@uv sync --group parquet
 
-[private]:
+data-repo:
+	@test -n "$(GPX_DATA_REPO)" || (echo "Set GPX_DATA_REPO in make/local.mk" && exit 1)
 	@mkdir -p $(DATA_DIR)
 	@if [ -d $(GPX_DATA_DIR)/.git ]; then \
 		git -C $(GPX_DATA_DIR) fetch --depth 1 origin main; \
@@ -18,11 +20,11 @@ install-parquet:
 		git clone --depth 1 $(GPX_DATA_REPO) $(GPX_DATA_DIR); \
 	fi
 
-random-parquet: install-parquet [private] clean
+random-parquet: install-parquet data-repo clean
 	@mkdir -p $(GPX_DIR)
 	@uv run python scripts/sample-tracks.py $(PARQUET_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
-dtwselect-parquet: install-parquet [private]
+dtwselect-parquet: install-parquet data-repo
 	@mkdir -p $(GPX_DIR)
 	@uv run python scripts/dtw-select.py $(PARQUET_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
@@ -42,7 +44,7 @@ series: install-parquet
 
 help-parquet:
 	@echo "install-parquet    - uv sync including geopandas/pyarrow"
-	@echo "[private]           - clone or update [private] into $(GPX_DATA_DIR)"
+	@echo "data-repo          - clone or update GPX_DATA_REPO into $(GPX_DATA_DIR)"
 	@echo "random-parquet     - sample ≥10km tracks from every parquet file"
 	@echo "dtwselect-parquet  - DTW-select ≥10km tracks, covering every file"
 	@echo "series-report      - repeated walks in one city, ranked by size: CITY=..."

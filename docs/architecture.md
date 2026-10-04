@@ -85,6 +85,6 @@ Path helpers (`flow_path`, `pad_limits`, `ink_stroke`, palettes, etc.) are share
 
 ## Personal parquet source
 
-`make/parquet.mk` is a separate ingest lane (`make art-parquet`). It checkouts a private `[private]` repo, FastDTW-selects ≥10 km tracks from every city parquet, and writes ordinary GPX into the same `gpx/` working set. Render and plot stay GPX-only. Default sample size is 100.
+`make/parquet.mk` is a separate ingest lane (`make art-parquet`). It clones the private data repo named by `GPX_DATA_REPO` in the gitignored `make/local.mk`, FastDTW-selects ≥10 km tracks from every city parquet, and writes ordinary GPX into the same `gpx/` working set. Render and plot stay GPX-only. Default sample size is 100.
 
 A city parquet holds one row per activity (source is the parent folder: `android`, `casio`, `strava`): `name`, `city`, LineString `geometry` simplified at 10 m, and per-vertex `times` and `elevations` when the source had them. Simplification is time-synchronized, so stops and recording gaps survive as vertices with a time jump. Selected tracks are written to `gpx/` with `<time>` and `<ele>`.
