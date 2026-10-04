@@ -3,6 +3,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import gpxpy
+import pandas as pd
 from _module_loader import load_script_module
 
 try:
@@ -46,6 +48,37 @@ class TestParquetTracks(unittest.TestCase):
             self.assertEqual(tracks[0].origin, "strava/thu_duc.parquet")
             self.assertEqual(tracks[1].name, "Run")
             self.assertEqual(tracks[1].index, 1)
+
+    def test_times_and_elevations_reach_written_gpx(self) -> None:
+        assert gpd is not None and LineString is not None
+        times = pd.to_datetime(["2026-01-01T00:00:00Z", "2026-01-01T00:05:00Z"])
+        frame = gpd.GeoDataFrame(
+            [
+                {
+                    "name": "Run",
+                    "city": "Thu Duc",
+                    "times": list(times),
+                    "elevations": [5.0, None],
+                },
+                {"name": "Old", "city": "Thu Duc", "times": None, "elevations": None},
+            ],
+            geometry=[LineString([(106.7, 10.7), (106.71, 10.71)])] * 2,
+            crs="EPSG:4326",
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "strava" / "thu_duc.parquet"
+            path.parent.mkdir(parents=True)
+            frame.to_parquet(path)
+            timed, untimed = parquet_tracks.load_tracks(tmpdir)
+            self.assertIsNone(untimed.times)
+            self.assertEqual(timed.elevations, [5.0, None])
+
+            out = Path(tmpdir) / "run.gpx"
+            parquet_tracks.write_gpx(out, timed)
+            points = gpxpy.parse(out.read_text()).tracks[0].segments[0].points
+            self.assertEqual(points[1].time, times[1].to_pydatetime())
+            self.assertEqual(points[0].elevation, 5.0)
+            self.assertIsNone(points[1].elevation)
 
 
 class TestParquetSample(unittest.TestCase):

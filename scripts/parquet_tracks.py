@@ -3,7 +3,9 @@ import re
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import gpxpy
 import gpxpy.gpx
@@ -36,6 +38,8 @@ class Track:
     lons: list[float]
     lats: list[float]
     origin: str = ""
+    times: list[datetime] | None = None
+    elevations: list[float | None] | None = None
 
     @property
     def key(self) -> str:
@@ -68,6 +72,11 @@ def _line_coords(geometry: BaseGeometry) -> tuple[list[float], list[float]] | No
     return [float(lon) for lon, lat in coords], [float(lat) for lon, lat in coords]
 
 
+def _cell_list(row: pd.Series, column: str) -> list[Any] | None:  # type: ignore[type-arg]
+    value = row.get(column)
+    return None if value is None else list(value)
+
+
 def load_parquet_file(path: Path, origin: str = "") -> list[Track]:
     import geopandas as gpd
 
@@ -84,6 +93,8 @@ def load_parquet_file(path: Path, origin: str = "") -> list[Track]:
         source = _cell_str(row, "source", source_from_dir)
         city = _cell_str(row, "city", path.stem)
         name = _cell_str(row, "name", path.stem)
+        times = _cell_list(row, "times")
+        elevations = _cell_list(row, "elevations")
         tracks.append(
             Track(
                 source=source,
@@ -93,6 +104,10 @@ def load_parquet_file(path: Path, origin: str = "") -> list[Track]:
                 lons=lons,
                 lats=lats,
                 origin=file_origin,
+                times=list(pd.to_datetime(times, utc=True).to_pydatetime()) if times else None,
+                elevations=[None if pd.isna(e) else float(e) for e in elevations]
+                if elevations
+                else None,
             )
         )
     return tracks
@@ -152,8 +167,13 @@ def write_gpx(path: Path, track: Track) -> None:
     gpx = gpxpy.gpx.GPX()
     gpx_track = gpxpy.gpx.GPXTrack(name=track.name)
     segment = gpxpy.gpx.GPXTrackSegment()
-    for lon, lat in zip(track.lons, track.lats, strict=True):
-        segment.points.append(gpxpy.gpx.GPXTrackPoint(latitude=lat, longitude=lon))
+    n = len(track.lons)
+    times: Sequence[datetime | None] = track.times or [None] * n
+    elevations = track.elevations or [None] * n
+    for lon, lat, time, elevation in zip(track.lons, track.lats, times, elevations, strict=True):
+        segment.points.append(
+            gpxpy.gpx.GPXTrackPoint(latitude=lat, longitude=lon, time=time, elevation=elevation)
+        )
     gpx_track.segments.append(segment)
     gpx.tracks.append(gpx_track)
     path.write_text(gpx.to_xml())
