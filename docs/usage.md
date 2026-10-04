@@ -56,6 +56,7 @@ make render
 | `make render` | Render all styles to `images/` |
 | `make render-ground` | Render `breath`, `terrace`, `stone` to `images-ground/` |
 | `make ground-file` | One GPX through those styles: `make ground-file GPX=path [STYLES=breath,stone]` |
+| `make render-series` | Series styles on a folder of timed GPX: `make render-series SERIES_DIR=dir [STYLES=palimpsest]` → `images-series/` |
 | `make art` | `random` then `render` (default target) |
 | `make art-file` | Render a single GPX file: `make art-file GPX=path/to/file.gpx [STYLES=style1,style2] [REPEAT=n]` |
 
@@ -81,5 +82,8 @@ make help-parquet
 | `make random-parquet` | Sample ≥10 km tracks from every parquet file into `gpx/` |
 | `make dtwselect-parquet` | Same pool, FastDTW-diverse, not near the current `gpx/` set |
 | `make art-parquet` | `dtwselect-parquet` then `render` |
+| `make series-report` | Rank `CITY`'s repeated-walk clusters |
+| `make series` | Select `CLUSTERS` into `series/<SERIES>/`, then `render-series` |
+| `make city` | Every walk in `CITY` into `series/<SERIES>-city/`, rendered as `remembered-city` |
 
 Parquet targets default to 100 tracks (`NUMBER_OF_GPX=100`). Override with `make art-parquet NUMBER_OF_GPX=40`. `PARQUET_DIR` defaults to `$(DATA_DIR)/gpx-data/data/parquet`. City files with no track ≥10 km are skipped.
