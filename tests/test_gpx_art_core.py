@@ -143,3 +143,21 @@ class TestGpxArtCore(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestEnsoGap(unittest.TestCase):
+    def _loop(self, sweep: float) -> tuple[np.ndarray, np.ndarray]:
+        t = np.linspace(0, sweep, 200)
+        return 106.7 + 0.01 * np.cos(t), 10.8 + 0.01 * np.sin(t)
+
+    def test_closed_loop_leaves_a_seal_and_no_chord(self) -> None:
+        fig, _ = gpx_art.enso_gap(*self._loop(2 * np.pi))
+        ax = fig.axes[0]
+        self.assertEqual(len(ax.patches), 1)
+        self.assertEqual(len(ax.lines), 1)
+
+    def test_open_loop_draws_the_missing_chord(self) -> None:
+        fig, _ = gpx_art.enso_gap(*self._loop(1.5 * np.pi))
+        ax = fig.axes[0]
+        self.assertEqual(len(ax.patches), 0)
+        self.assertGreater(len(ax.lines), 100)
