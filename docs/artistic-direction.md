@@ -65,6 +65,8 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 - Pools and drips at energy peaks, broken spine — not evenly spaced blobs.
 
+`suminagashi` — marbling, not brushwork: drops of ink and water land where the body slowed, and the route drags them as a comb. The route itself is only a hair.
+
 ### Early graphic
 
 `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `ribcage`, `corridor`
@@ -78,6 +80,10 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 ### Series
 
 `palimpsest` — in `scripts/series-art.py`. The axis is repetition over weeks: darkness is split across passes so it reads as weight, not saturation. Recency is wetness, never hue.
+
+`desordres` — after Vera Molnár: the same loop in a grid of days. The shared route is a hair; only the drift from the other days earns ink.
+
+`remembered-city` — after Harry Beck: every walked street as a 45° diagram, centre enlarged. Weight is repetition; streets never walked do not exist. It has no ink grammar, so it earns its place only if the diagram does not read as a map.
 
 ### Ground
 

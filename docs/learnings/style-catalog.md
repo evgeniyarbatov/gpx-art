@@ -4,12 +4,12 @@ The catalog is not missing names. It is missing ideas. ~76 styles were tried and
 
 ## Current
 
-Three generations, twelve styles:
+Three generations, thirteen styles:
 
 | Generation | Styles | What they do |
 |---|---|---|
 | Early graphic | `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `ribcage`, `corridor` | Dashes, wireframe, blob wash, node graph, stacked RDP, skyline mass fill, small-multiples grid, spine + data-driven ribs, spread-based mass |
-| Ink | `sumi-wet`, `shodo` | Wet pools, pressure stroke |
+| Ink | `sumi-wet`, `shodo`, `suminagashi` | Wet pools, pressure stroke, marbled drops combed by the route |
 | New axis | `enso-gap` | Closure error: the missing chord is the stroke, the walked loop a hair |
 
 The seven-style set held up on the wall across every prior cut. Everything else in the ink/atmosphere/austere experiments below was judged not distinct or not strong enough to keep, even though each passed the distinctness checklist in isolation — a reminder that the checklist is necessary, not sufficient. `notan-fill` and `tempo-grid` were proposed against specific holes (filled mass, small multiples), rendered on a real track, and kept; `kintsugi` and `negative-space` from the same batch were rendered and cut — see wave 5. `pulse-bars`, `ribcage`, and `corridor` were a third batch, each proposed against the surviving nine's register (bold single-mechanism graphic idea) rather than a hole in the ink family; `ribcage` and `corridor` were kept, `pulse-bars` was cut — see wave 6.
@@ -56,3 +56,5 @@ Third registry, `scripts/series-art.py`. Many walks of one ground onto one sheet
 | Style | What it does |
 |---|---|
 | `palimpsest` | Repetition sets pressure, recency sets wetness; streets walked once fray as flying white |
+| `desordres` | One cell per day in the same frame; drift from the other days is the only ink |
+| `remembered-city` | Every walked street as a 45° transit diagram; weight is repetition |

@@ -31,7 +31,7 @@ SOURCE_DIR (your GPX library)
 | `scripts/gpx-art.py` | Main generator: style registry, rendering |
 | `scripts/ground-art.py` | Elevation styles (`breath`, `terrace`, `stone`); separate registry |
 | `scripts/series.py` | Repeated-walk clusters from the personal parquet; writes a series as GPX |
-| `scripts/series-art.py` | Series styles (`palimpsest`): many walks → one sheet; separate registry |
+| `scripts/series-art.py` | Series styles (`palimpsest`, `desordres`, `remembered-city`): many walks → one sheet; separate registry |
 | `scripts/dtw-select.py` | Diverse GPX selection via FastDTW |
 | `scripts/plot-gpx.py` | Visual grid preview of tracks in `gpx/` |
 | `scripts/utils.py` | Shared GPX listing and parse helpers |

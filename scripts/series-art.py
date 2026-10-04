@@ -11,6 +11,8 @@ from matplotlib.axes import Axes
 from matplotlib.collections import LineCollection
 from matplotlib.colors import to_rgb
 from matplotlib.figure import Figure
+from scipy.ndimage import binary_closing, maximum_filter
+from scipy.spatial import cKDTree
 from utils import get_df, get_files
 
 plt.switch_backend("Agg")
@@ -92,6 +94,119 @@ def passages(
     return so_far, total
 
 
+def drift(paths: Sequence[tuple[FloatArray, FloatArray]]) -> list[FloatArray]:
+    """Per point: median distance (m) to each other walk — how far this day strayed from the rest."""
+    trees = [cKDTree(np.column_stack(p)) for p in paths]
+    out: list[FloatArray] = []
+    for k, (xs, ys) in enumerate(paths):
+        pts = np.column_stack([xs, ys])
+        others = [trees[j].query(pts)[0] for j in range(len(paths)) if j != k]
+        out.append(np.median(np.vstack(others), axis=0) if others else np.zeros(len(xs)))
+    return out
+
+
+def grid_angle(paths: Sequence[tuple[FloatArray, FloatArray]]) -> float:
+    """Street-grid orientation modulo 90°, weighted by length."""
+    acc = 0j
+    for xs, ys in paths:
+        dx, dy = np.diff(xs), np.diff(ys)
+        acc += complex((np.hypot(dx, dy) * np.exp(4j * np.arctan2(dy, dx))).sum())
+    return float(np.angle(acc) / 4)
+
+
+def rdp(pts: FloatArray, eps: float) -> FloatArray:
+    if len(pts) < 3:
+        return pts
+    a, b = pts[0], pts[-1]
+    ab = b - a
+    n = float(np.hypot(*ab))
+    if n > 0:
+        d = np.abs(ab[0] * (pts[:, 1] - a[1]) - ab[1] * (pts[:, 0] - a[0])) / n
+    else:
+        d = np.hypot(pts[:, 0] - a[0], pts[:, 1] - a[1])
+    i = int(np.argmax(d))
+    if d[i] > eps:
+        return np.vstack([rdp(pts[: i + 1], eps)[:-1], rdp(pts[i:], eps)])
+    return np.vstack([a, b])
+
+
+def octilinear(a: npt.NDArray[np.int64], b: npt.NDArray[np.int64]) -> list[tuple[int, int]]:
+    """Unit grid steps from a to b: the diagonal run, then the straight run."""
+    dx, dy = int(b[0] - a[0]), int(b[1] - a[1])
+    diag = min(abs(dx), abs(dy))
+    sx, sy = int(np.sign(dx)), int(np.sign(dy))
+    rx, ry = dx - sx * diag, dy - sy * diag
+    straight = (int(np.sign(rx)), int(np.sign(ry)))
+    return [(sx, sy)] * diag + [straight] * (abs(rx) + abs(ry))
+
+
+def thin(img: npt.NDArray[np.bool_]) -> npt.NDArray[np.bool_]:
+    """Zhang–Suen thinning to a one-cell-wide, 8-connected skeleton."""
+    cur = img.astype(np.uint8)
+    changed = True
+    while changed:
+        changed = False
+        for step in (0, 1):
+            p = np.pad(cur, 1)
+            n = [
+                p[:-2, 1:-1],
+                p[:-2, 2:],
+                p[1:-1, 2:],
+                p[2:, 2:],
+                p[2:, 1:-1],
+                p[2:, :-2],
+                p[1:-1, :-2],
+                p[:-2, :-2],
+            ]
+            count = sum(n)
+            transitions = sum((n[i] == 0) & (n[(i + 1) % 8] == 1) for i in range(8))
+            if step == 0:
+                gate = (n[0] * n[2] * n[4] == 0) & (n[2] * n[4] * n[6] == 0)
+            else:
+                gate = (n[0] * n[2] * n[6] == 0) & (n[0] * n[4] * n[6] == 0)
+            kill = (cur == 1) & (count >= 2) & (count <= 6) & (transitions == 1) & gate
+            if kill.any():
+                cur[kill] = 0
+                changed = True
+    return cur.astype(bool)
+
+
+def skeleton_chains(sk: npt.NDArray[np.bool_]) -> list[npt.NDArray[np.int64]]:
+    """Runs of skeleton cells (row, col) between junctions and ends; closed loops included."""
+    on = {(int(r), int(c)) for r, c in zip(*np.nonzero(sk), strict=True)}
+
+    def neighbours(cell: tuple[int, int]) -> list[tuple[int, int]]:
+        r, c = cell
+        out = [(r + dr, c + dc) for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+        out = [x for x in out if x in on]
+        for dr, dc in ((1, 1), (1, -1), (-1, 1), (-1, -1)):
+            # an orthogonal neighbour already bridges this diagonal
+            if (r + dr, c + dc) in on and (r + dr, c) not in on and (r, c + dc) not in on:
+                out.append((r + dr, c + dc))
+        return out
+
+    adj = {cell: neighbours(cell) for cell in on}
+    nodes = {cell for cell, nb in adj.items() if len(nb) != 2}
+    walked: set[tuple[tuple[int, int], tuple[int, int]]] = set()
+    chains: list[npt.NDArray[np.int64]] = []
+    for start in [*sorted(nodes), *sorted(on)]:
+        for nxt in adj[start]:
+            if (start, nxt) in walked:
+                continue
+            chain = [start, nxt]
+            walked |= {(start, nxt), (nxt, start)}
+            prev, cur = start, nxt
+            while cur not in nodes and cur != start:
+                ahead = [x for x in adj[cur] if x != prev]
+                if not ahead or (cur, ahead[0]) in walked:
+                    break
+                prev, cur = cur, ahead[0]
+                walked |= {(prev, cur), (cur, prev)}
+                chain.append(cur)
+            chains.append(np.array(chain, dtype=np.int64))
+    return chains
+
+
 def _blank(bg: str) -> tuple[Figure, Axes]:
     fig, ax = plt.subplots(figsize=(10, 10), dpi=300)
     fig.patch.set_facecolor(bg)
@@ -141,6 +256,107 @@ def palimpsest(walks: Sequence[Walk]) -> tuple[Figure, str]:
     cx, cy = (allx.max() + allx.min()) / 2, (ally.max() + ally.min()) / 2
     ax.set_xlim(cx - span / 2 - pad, cx + span / 2 + pad)
     ax.set_ylim(cy - span / 2 - pad, cy + span / 2 + pad)
+    return fig, bg
+
+
+@style("desordres")
+def desordres(walks: Sequence[Walk]) -> tuple[Figure, str]:
+    """One cell per day, same frame: the shared route is a hair, the day's drift is the stroke."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = _blank(bg)
+    paths = [resample(xs, ys, 8.0) for xs, ys in to_metres(walks)]
+    allx = np.concatenate([p[0] for p in paths])
+    ally = np.concatenate([p[1] for p in paths])
+    # percentiles keep one wild detour from shrinking every other cell
+    fx, fy = np.percentile(allx, [1, 99]), np.percentile(ally, [1, 99])
+    cx, cy = float(fx.mean()), float(fy.mean())
+    px, py = max(float(np.ptp(fx)), 1.0) * 1.15, max(float(np.ptp(fy)), 1.0) * 1.15
+    cols = max(1, round(np.sqrt(len(paths) * py / px)))
+    rows = -(-len(paths) // cols)
+    rgb = to_rgb(ink)
+    segments: list[FloatArray] = []
+    widths: list[float] = []
+    colors: list[tuple[float, float, float, float]] = []
+    for k, ((xs, ys), strayed) in enumerate(zip(paths, drift(paths), strict=True)):
+        d = np.clip(strayed / 60.0, 0.0, 1.0)
+        r, c = divmod(k, cols)
+        ox, oy = c * px - cx, -r * py - cy
+        for i in range(len(xs) - 1):
+            segments.append(np.array([[xs[i] + ox, ys[i] + oy], [xs[i + 1] + ox, ys[i + 1] + oy]]))
+            widths.append(0.18 + 1.6 * d[i] ** 1.2)
+            colors.append((*rgb, 0.35 + 0.6 * d[i]))
+    ax.add_collection(LineCollection(segments, linewidths=widths, colors=colors, capstyle="round"))
+    w, h = cols * px, rows * py
+    margin = max(w, h) * 0.08
+    ax.set_xlim(-px / 2 - margin, w - px / 2 + margin)
+    ax.set_ylim(-(h - py / 2) - margin, py / 2 + margin)
+    return fig, bg
+
+
+@style("remembered-city")
+def remembered_city(walks: Sequence[Walk]) -> tuple[Figure, str]:
+    """Streets walked, redrawn at 45° like a tube map; weight is how often, the rest is left out."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = _blank(bg)
+    cell = 60.0
+    paths = [resample(xs, ys, 5.0) for xs, ys in to_metres(walks)]
+    rot = -grid_angle(paths)
+    turn = np.array([[np.cos(rot), np.sin(rot)], [-np.sin(rot), np.cos(rot)]])
+    centre = np.median(np.vstack([np.column_stack(p) for p in paths]), axis=0)
+    grids = []
+    for xs, ys in paths:
+        p = (np.column_stack([xs, ys]) - centre) @ turn
+        r = np.hypot(p[:, 0], p[:, 1]) + 1e-9
+        # Beck: the centre swells, the edges shrink
+        p = p * ((r / 1000.0) ** -0.35)[:, None]
+        grids.append(np.round(p / cell).astype(np.int64))
+    lo = np.vstack(grids).min(axis=0) - 3
+    hi = np.vstack(grids).max(axis=0) + 3
+    count = np.zeros((hi[1] - lo[1] + 1, hi[0] - lo[0] + 1), dtype=np.int64)
+    for g in grids:
+        cells = np.unique(g - lo, axis=0)
+        count[cells[:, 1], cells[:, 0]] += 1
+    # closing merges the same street recorded a cell apart before it is thinned to one line
+    skeleton = thin(binary_closing(count > 0, structure=np.ones((3, 3), dtype=bool)))
+    weight = maximum_filter(count, size=3)
+    chains = skeleton_chains(skeleton)
+    ends: dict[tuple[int, int], int] = {}
+    for ch in chains:
+        for e in (tuple(ch[0]), tuple(ch[-1])):
+            ends[e] = ends.get(e, 0) + 1
+    # a short dead-end spur is GPS wander off a street, not a street
+    chains = [
+        ch for ch in chains if len(ch) > 3 or (ends[tuple(ch[0])] > 1 and ends[tuple(ch[-1])] > 1)
+    ]
+    lines: list[tuple[float, FloatArray]] = []
+    for ch in chains:
+        corners = rdp(ch[:, ::-1].astype(float), 1.8).astype(np.int64)
+        x, y = int(corners[0][0]), int(corners[0][1])
+        route = [(x, y)]
+        for a, b in zip(corners[:-1], corners[1:], strict=True):
+            for dx, dy in octilinear(a, b):
+                x, y = x + dx, y + dy
+                route.append((x, y))
+        lines.append((float(np.median(weight[ch[:, 0], ch[:, 1]])), np.array(route, dtype=float)))
+    lines.sort(key=lambda line: line[0])
+    peak = np.log1p(max(int(weight.max()), 1))
+    rgb, paper = np.array(to_rgb(ink)), np.array(to_rgb(bg))
+    # opaque greys, not alpha, so crossings and joints do not stack into dots
+    t = [float(np.log1p(w) / peak) for w, _ in lines]
+    ax.add_collection(
+        LineCollection(
+            [route for _, route in lines],
+            linewidths=[0.5 + 7.0 * v**1.6 for v in t],
+            colors=[tuple(paper + (rgb - paper) * (0.45 + 0.55 * v)) for v in t],
+            capstyle="round",
+            joinstyle="round",
+        )
+    )
+    pts = np.vstack([route for _, route in lines])
+    span = float(np.ptp(pts, axis=0).max()) * 1.12 + 1.0
+    mx, my = (pts.min(axis=0) + pts.max(axis=0)) / 2
+    ax.set_xlim(mx - span / 2, mx + span / 2)
+    ax.set_ylim(my - span / 2, my + span / 2)
     return fig, bg
 
 

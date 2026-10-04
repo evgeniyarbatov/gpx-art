@@ -6,7 +6,7 @@ CITY ?= Ho Chi Minh City
 CLUSTERS ?= 1,3,4
 SERIES ?= hcmc
 
-.PHONY: pipeline series-report series data-repo random-parquet dtwselect-parquet art-parquet help-parquet
+.PHONY: pipeline series-report series city data-repo random-parquet dtwselect-parquet art-parquet help-parquet
 
 random-parquet dtwselect-parquet art-parquet: NUMBER_OF_GPX = 100
 
@@ -37,6 +37,7 @@ pipeline: art-parquet
 	@rm -rf $(GROUND_DIR)/*
 	@$(MAKE) render-ground
 	@$(MAKE) series
+	@$(MAKE) city
 	@echo "Images: $(IMAGES_DIR) $(GROUND_DIR) $(SERIES_IMAGES_DIR)"
 
 series-report: install
@@ -46,11 +47,16 @@ series: install
 	@uv run python scripts/series.py select $(PARQUET_DIR) --city "$(CITY)" --clusters $(CLUSTERS) $(SERIES_ROOT)/$(SERIES)
 	@$(MAKE) render-series SERIES_DIR=$(SERIES_ROOT)/$(SERIES)
 
+city: install
+	@uv run python scripts/series.py select $(PARQUET_DIR) --city "$(CITY)" --clusters all $(SERIES_ROOT)/$(SERIES)-city
+	@$(MAKE) render-series SERIES_DIR=$(SERIES_ROOT)/$(SERIES)-city STYLES=remembered-city
+
 help-parquet:
 	@echo "data-repo          - clone or update GPX_DATA_REPO into $(GPX_DATA_DIR)"
 	@echo "random-parquet     - sample ≥10km tracks from every parquet file"
 	@echo "dtwselect-parquet  - DTW-select ≥10km tracks, covering every file"
-	@echo "pipeline           - art-parquet + render-ground + series: every image in one run"
+	@echo "pipeline           - art-parquet + render-ground + series + city: every image in one run"
 	@echo "series-report      - repeated walks in one city, ranked by size (CITY=$(CITY))"
 	@echo "series             - select clusters into a series and render it (CITY, CLUSTERS=$(CLUSTERS), SERIES=$(SERIES))"
+	@echo "city               - every walk in CITY as one remembered-city map"
 	@echo "art-parquet        - dtwselect-parquet + render (default 100)"

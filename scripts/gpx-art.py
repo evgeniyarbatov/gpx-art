@@ -11,7 +11,8 @@ import numpy as np
 import numpy.typing as npt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Polygon
+from scipy.ndimage import gaussian_filter, map_coordinates
 from utils import get_files, get_lon_lat
 
 FloatArray = npt.NDArray[np.float64]
@@ -225,6 +226,30 @@ def path_normals(xs: FloatArray, ys: FloatArray) -> tuple[FloatArray, FloatArray
     dy = np.gradient(ys)
     L = np.hypot(dx, dy) + 1e-12
     return -dy / L, dx / L
+
+
+def marble_drop(rings: list[FloatArray], centre: FloatArray, r: float) -> list[FloatArray]:
+    """A drop of radius r on water pushes every ring already floating outward, area-preserving."""
+    out = []
+    for ring in rings:
+        d = ring - centre
+        n2 = np.maximum((d**2).sum(axis=1, keepdims=True), 1e-18)
+        out.append(centre + d * np.sqrt(1 + r * r / n2))
+    return out
+
+
+def refine_ring(ring: FloatArray, max_step: float) -> FloatArray:
+    """Subdivide a closed ring so no edge is longer than max_step."""
+    nxt = np.roll(ring, -1, axis=0)
+    k = np.maximum(1, np.ceil(np.linalg.norm(nxt - ring, axis=1) / max_step).astype(int))
+    if k.max() == 1:
+        return ring
+    return np.vstack(
+        [
+            ring[i] + (nxt[i] - ring[i]) * (np.arange(k[i])[:, None] / k[i])
+            for i in range(len(ring))
+        ]
+    )
 
 
 # ============================================================================
@@ -735,6 +760,78 @@ def enso_gap(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     allx = np.concatenate([xs, cx])
     ally = np.concatenate([ys, cy])
     pad_limits(ax, allx, ally, 0.18)
+    return fig, bg
+
+
+@style("suminagashi")
+def suminagashi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Ink drops land where the body slowed; the route is the comb dragged through the water."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs, ys = flow_path(lons, lats, 900)
+    extent = path_extent(xs, ys)
+    xs, ys = (xs - xs.min()) / extent, (ys - ys.min()) / extent
+    k = 15
+    slow = np.convolve(np.pad(pace_weights(xs, ys), k // 2, mode="edge"), np.ones(k) / k, "valid")
+    floor = np.percentile(slow, 55)
+    centres: list[int] = []
+    for i in np.argsort(-slow):
+        if slow[i] < floor or len(centres) == 9:
+            break
+        if all(abs(i - j) > len(xs) // 14 for j in centres):
+            centres.append(int(i))
+    rng = np.random.default_rng(5)
+    theta = np.linspace(0, 2 * np.pi, 240, endpoint=False)
+    unit = np.column_stack([np.cos(theta), np.sin(theta)])
+    rings: list[FloatArray] = []
+    inked: list[bool] = []
+    for i in sorted(centres):
+        c = np.array([xs[i], ys[i]])
+        strength = (slow[i] - slow.min()) / (np.ptp(slow) + 1e-12)
+        r0 = 0.005 + 0.006 * strength
+        # alternate ink and clear water at one centre, as the brushes do in turn
+        for m in range(8 + 2 * int(strength * 7)):
+            r = r0 * (0.9 if m % 2 == 0 else 1.1) * float(rng.uniform(0.8, 1.2))
+            rings = [*marble_drop(rings, c, r), c + unit * r]
+            inked.append(m % 2 == 0)
+    rings = [refine_ring(ring, 0.004) for ring in rings]
+    dist = np.concatenate([[0.0], np.cumsum(np.hypot(np.diff(xs), np.diff(ys)))])
+    t = np.arange(0.0, dist[-1], 0.002)
+    route = np.column_stack([np.interp(t, dist, xs), np.interp(t, dist, ys)])
+    tangent = np.gradient(route, axis=0)
+    tangent /= np.linalg.norm(tangent, axis=1, keepdims=True) + 1e-12
+    # blurred tangents give a smooth drag field: overlapping laps cancel instead of shredding rings
+    lo = np.vstack([*rings, route]).min(axis=0) - 0.15
+    span = float((np.vstack([*rings, route]).max(axis=0) + 0.15 - lo).max())
+    res = 600
+    ij = ((route - lo) / span * (res - 1)).astype(int)
+    fx, fy = np.zeros((res, res)), np.zeros((res, res))
+    np.add.at(fx, (ij[:, 1], ij[:, 0]), tangent[:, 0])
+    np.add.at(fy, (ij[:, 1], ij[:, 0]), tangent[:, 1])
+    sigma = 0.012 / span * res
+    fx, fy = gaussian_filter(fx, sigma), gaussian_filter(fy, sigma)
+    peak = float(np.hypot(fx, fy).max()) + 1e-12
+    steps, reach = 30, 0.22
+    for _ in range(steps):
+        moved = []
+        for ring in rings:
+            g = ((ring - lo) / span * (res - 1)).T[::-1]
+            v = np.column_stack([map_coordinates(fx, g, order=1), map_coordinates(fy, g, order=1)])
+            moved.append(refine_ring(ring + v / peak * reach / steps, 0.003))
+        rings = moved
+    for ring, is_ink in zip(rings, inked, strict=True):
+        ax.add_patch(
+            Polygon(
+                ring,
+                closed=True,
+                facecolor=ink if is_ink else bg,
+                alpha=0.78 if is_ink else 1.0,
+                linewidth=0,
+            )
+        )
+    ink_stroke(ax, xs, ys, ink, lw=0.3, alpha=0.12)
+    allp = np.vstack([*rings, route])
+    pad_limits(ax, allp[:, 0], allp[:, 1], 0.1)
     return fig, bg
 
 

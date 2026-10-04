@@ -161,3 +161,27 @@ class TestEnsoGap(unittest.TestCase):
         ax = fig.axes[0]
         self.assertEqual(len(ax.patches), 0)
         self.assertGreater(len(ax.lines), 100)
+
+
+class TestSuminagashi(unittest.TestCase):
+    def test_drop_pushes_rings_out_by_its_area(self) -> None:
+        theta = np.linspace(0, 2 * np.pi, 64, endpoint=False)
+        ring = np.column_stack([np.cos(theta), np.sin(theta)])
+        (pushed,) = gpx_art.marble_drop([ring], np.zeros(2), 1.0)
+        np.testing.assert_allclose(np.hypot(*pushed.T), np.sqrt(2.0))
+
+    def test_refine_ring_caps_edge_length(self) -> None:
+        square = np.array([[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
+        fine = gpx_art.refine_ring(square, 0.1)
+        edges = np.linalg.norm(np.roll(fine, -1, axis=0) - fine, axis=1)
+        self.assertLessEqual(edges.max(), 0.1 + 1e-9)
+
+    def test_slow_stretch_leaves_ink_rings(self) -> None:
+        # dense points mid-route read as a slow stretch
+        fast = np.linspace(0, 0.01, 60)
+        slow = np.linspace(0.01, 0.0105, 60)
+        lons = 106.7 + np.concatenate([fast, slow, slow[-1] + fast])
+        lats = 10.8 + 0.002 * np.sin(np.linspace(0, 3, len(lons)))
+        fig, bg = gpx_art.suminagashi(lons, lats)
+        self.assertEqual(bg, gpx_art.SUMI_WASH)
+        self.assertGreater(len(fig.axes[0].patches), 8)

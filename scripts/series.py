@@ -1,7 +1,7 @@
 """Find the walks that repeat and write one series as GPX.
 
 series.py report <parquet_dir> --city CITY
-series.py select <parquet_dir> --city CITY --clusters 1,2 <destination>
+series.py select <parquet_dir> --city CITY --clusters 1,2|all <destination>
 """
 
 import argparse
@@ -117,7 +117,7 @@ def main() -> None:
     sel = sub.add_parser("select")
     sel.add_argument("parquet_dir")
     sel.add_argument("--city", required=True)
-    sel.add_argument("--clusters", required=True, help="comma-separated ranks from report")
+    sel.add_argument("--clusters", required=True, help="comma-separated ranks from report, or all")
     sel.add_argument("destination")
     args = parser.parse_args()
 
@@ -130,7 +130,10 @@ def main() -> None:
         print(report(groups))
         return
 
-    ranks = [int(r) for r in args.clusters.split(",")]
+    if args.clusters == "all":
+        ranks = list(range(1, len(groups) + 1))
+    else:
+        ranks = [int(r) for r in args.clusters.split(",")]
     if any(r < 1 or r > len(groups) for r in ranks):
         sys.exit(f"Cluster ranks must be 1..{len(groups)}")
     chosen = [t for r in ranks for t in groups[r - 1]]
