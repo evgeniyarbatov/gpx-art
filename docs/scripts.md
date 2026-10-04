@@ -112,7 +112,7 @@ Make wrapper: `make dtwselect SOURCE_DIR=... NUMBER_OF_GPX=20`.
 
 ## `scripts/sample-tracks.py`
 
-Personal ingest: sample from a `[private]` parquet tree, written as GPX. Drops tracks shorter than 10 km, then takes at least one track from each city file before filling remaining slots.
+Personal ingest: sample from the private parquet tree, written as GPX. Drops tracks shorter than 10 km, then takes at least one track from each city file before filling remaining slots.
 
 ```bash
 uv run python scripts/sample-tracks.py <parquet_dir> <num_files> <destination_directory>
