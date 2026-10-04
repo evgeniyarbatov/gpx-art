@@ -17,6 +17,8 @@ make install                          # uv sync → .venv
 make test                             # unittest discover -s tests
 make render                           # render all styles
 make render-ground                    # elevation styles → images-ground/
+make series-report CITY=…             # repeated-walk clusters (personal parquet)
+make series CITY=… CLUSTERS=1,3 SERIES=name  # select + render → images-series/
 make dtwselect SOURCE_DIR=… NUMBER_OF_GPX=20
 make random SOURCE_DIR=… NUMBER_OF_GPX=20
 make plot                             # grid preview of gpx/
@@ -40,6 +42,8 @@ uv run python -m unittest tests.test_gpx_art_core.TestGpxArtCore.test_style_deco
 |---|---|
 | `scripts/gpx-art.py` | Style registry + renderer + optional QR |
 | `scripts/ground-art.py` | Elevation styles (`breath`, `terrace`, `stone`) |
+| `scripts/series.py` | Repeated-walk clusters → series GPX |
+| `scripts/series-art.py` | Series styles (`palimpsest`): many walks, one sheet |
 | `scripts/render.py` | One track × one style from a seed (`--list-styles`, `--size preview\|full`) |
 | `scripts/dtw-select.py` | Diverse track selection (FastDTW) |
 | `scripts/plot-gpx.py` | Visual preview |

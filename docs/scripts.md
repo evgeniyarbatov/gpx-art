@@ -28,9 +28,9 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 | `--styles s1,s2,...` | Render only the named styles |
 | `--repeat N` | Render each style N times per track |
 
-**Registered styles (11)**
+**Registered styles (12)**
 
-`corridor`, `network`, `notan-fill`, `painting`, `ribcage`, `scaffold`, `shodo`, `simplify`, `stitch`, `sumi-wet`, `tempo-grid`.
+`corridor`, `enso-gap`, `network`, `notan-fill`, `painting`, `ribcage`, `scaffold`, `shodo`, `simplify`, `stitch`, `sumi-wet`, `tempo-grid`.
 
 Make wrapper: `make render`.
 
@@ -54,6 +54,38 @@ uv run python scripts/ground-art.py <gpx_dir> <images_dir> --styles breath,stone
 Tracks without an `<ele>` stream are skipped. Output: `<style>-<track>.png`.
 
 Make wrappers: `make render-ground` (the working set in `gpx/`), `make ground-file GPX=path`. Both write to `images-ground/`.
+
+---
+
+## `scripts/series.py`
+
+Find walks that repeat in one city of the personal parquet, and write a chosen set as GPX.
+
+```bash
+uv run python scripts/series.py report <parquet_dir> --city "Ho Chi Minh City"
+uv run python scripts/series.py select <parquet_dir> --city "Ho Chi Minh City" --clusters 1,3,4 <destination>
+```
+
+- Only timed tracks are used. Two recordings of one walk (start within 30 min, shared ground) keep the denser one.
+- Clusters group walks by shared 30 m cells; `report` ranks them by size, and `select` takes those ranks.
+
+Make wrappers: `make series-report CITY=…`, `make series CITY=… CLUSTERS=1,3,4 SERIES=hcmc` (selects into `series/<SERIES>/`, then renders).
+
+---
+
+## `scripts/series-art.py`
+
+Many walks onto one sheet. Separate registry; styles take every timed walk in the directory, oldest first.
+
+```bash
+uv run python scripts/series-art.py <gpx_dir> <images_dir> [--styles palimpsest]
+```
+
+| Style | What it draws |
+|---|---|
+| `palimpsest` | Repetition sets pressure, recency sets wetness; streets walked once fray. |
+
+Output: `<style>-<dir name>.png`. Make wrapper: `make render-series SERIES_DIR=…` writes to `images-series/`.
 
 ---
 
