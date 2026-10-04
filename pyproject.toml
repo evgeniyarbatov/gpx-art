@@ -58,6 +58,9 @@ warn_unused_ignores = true
 module = "fastdtw.*"
 ignore_missing_imports = true
 
+[tool.uv]
+default-groups = ["dev", "parquet"]
+
 [dependency-groups]
 dev = [
     "mypy>=2.3.0",
