@@ -5,8 +5,19 @@ from collections.abc import Sequence
 
 import gpxpy
 import pandas as pd
+import yaml
 
 MIN_TRACK_LENGTH_KM = 10.0
+TASTE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "taste.yaml")
+
+
+def load_taste(path: str = TASTE_PATH) -> dict:
+    with open(path, encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def kept_styles(lane: str) -> list[str]:
+    return list(load_taste()["lanes"][lane]["kept"])
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

@@ -13,7 +13,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.patches import Circle, Polygon
 from scipy.ndimage import gaussian_filter, map_coordinates
-from utils import get_files, get_lon_lat
+from utils import get_files, get_lon_lat, kept_styles
 
 FloatArray = npt.NDArray[np.float64]
 StyleFunc = Callable[[FloatArray, FloatArray], tuple[Figure, str]]
@@ -923,7 +923,7 @@ def create_art(gpx_filename: str, image_filename: str, style_name: str) -> None:
 
 def main(gpx_dir: str, images_dir: str, styles: list[str] | None = None, repeat: int = 1) -> None:
     os.makedirs(images_dir, exist_ok=True)
-    style_names = styles if styles is not None else sorted(STYLES.keys())
+    style_names = styles if styles is not None else kept_styles("lonlat")
     for name, gpx_path in get_files(gpx_dir):
         for style_name in style_names:
             for r in range(1, repeat + 1):

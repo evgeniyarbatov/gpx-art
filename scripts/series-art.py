@@ -13,7 +13,7 @@ from matplotlib.colors import to_rgb
 from matplotlib.figure import Figure
 from scipy.ndimage import binary_closing, maximum_filter
 from scipy.spatial import cKDTree
-from utils import get_df, get_files
+from utils import get_df, get_files, kept_styles
 
 plt.switch_backend("Agg")
 
@@ -420,7 +420,7 @@ def main(gpx_dir: str, images_dir: str, styles: list[str] | None = None) -> None
         sys.exit(f"A series needs at least two timed walks in {gpx_dir}")
     os.makedirs(images_dir, exist_ok=True)
     name = os.path.basename(os.path.normpath(gpx_dir))
-    for style_name in styles or sorted(STYLES):
+    for style_name in styles or kept_styles("series"):
         fig, bg = STYLES[style_name](walks)
         out = os.path.join(images_dir, f"{style_name}-{name}.png")
         fig.savefig(out, dpi=300, facecolor=bg)

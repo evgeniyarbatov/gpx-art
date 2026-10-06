@@ -72,6 +72,7 @@ def name(lons, lats):
 ```
 
 - Register only via `@style`; `STYLES` is the catalog.
+- `taste.yaml` lists each registry's `kept` styles (the default render set) and `cut` names; `tests/test_taste.py` fails when they drift from `STYLES`.
 - Signature: lon/lat arrays in → `(fig, bg_color)` out.
 - Prefer shared helpers (`essence_path`, `flow_path`, `ink_stroke`, palettes) over one-off path logic.
 - `extract_style_source` must still find the full `@style` function by AST — keep the decorator form intact.

@@ -113,7 +113,7 @@ class TestGpxArtCore(unittest.TestCase):
         save_mock.assert_called_once_with("fig", "out.png", "#fefefe")
         self.assertIn("Created demo: out.png (1.50 seconds)", print_mock.call_args.args[0])
 
-    def test_main_renders_all_styles_for_every_input_file(self) -> None:
+    def test_main_renders_kept_styles_for_every_input_file(self) -> None:
         with (
             patch.object(gpx_art.os, "makedirs") as makedirs_mock,
             patch.object(
@@ -124,12 +124,13 @@ class TestGpxArtCore(unittest.TestCase):
                     ("track-two", "input-dir/track-two.gpx"),
                 ],
             ),
-            patch.dict(gpx_art.STYLES, {"b": Mock(), "a": Mock()}, clear=True),
+            patch.object(gpx_art, "kept_styles", return_value=["a", "b"]) as kept_mock,
             patch.object(gpx_art, "create_art") as create_art_mock,
         ):
             gpx_art.main("input-dir", "images-dir")
 
         makedirs_mock.assert_called_once_with("images-dir", exist_ok=True)
+        kept_mock.assert_called_once_with("lonlat")
         self.assertEqual(
             create_art_mock.call_args_list,
             [

@@ -1,0 +1,91 @@
+# Which styles each registry renders by default (`kept`) and which stay deleted (`cut`).
+# tests/test_taste.py fails when `kept` and the @style registries disagree, or a `cut` name is registered.
+# Why each wave was cut: docs/learnings/style-catalog.md.
+
+lanes:
+  lonlat:
+    script: gpx-art.py
+    kept:
+      stitch: dashes
+      scaffold: wireframe
+      painting: blob wash
+      network: node graph
+      simplify: stacked RDP simplification
+      notan-fill: skyline mass fill
+      tempo-grid: small-multiples grid
+      ribcage: spine with data-driven ribs
+      corridor: spread-based mass
+      sumi-wet: wet ink pools
+      shodo: pressure stroke
+      suminagashi: marbled drops combed by the route
+      enso-gap: the closure error is the stroke, the walked loop a hair
+      girih: heading per cell as ten-point stars
+    cut:
+      picasso: artist costume without grammar
+      dali: artist costume without grammar
+      rembrandt: artist costume without grammar
+      kusama: artist costume without grammar
+      cubist: artist costume without grammar
+      cascade: mechanical ornament
+      field: mechanical ornament
+      hatch: mechanical ornament
+      radial: mechanical ornament
+      shatter: mechanical ornament
+      spoke: mechanical ornament
+      vortex: mechanical ornament
+      weave: mechanical ornament
+      harai: same idea as shodo under another name
+      tome: same idea as shodo under another name
+      fude: same idea as shodo under another name
+      haku: same idea as shodo under another name
+      rake: garden prop, mechanical ornament
+      gravel: garden prop, mechanical ornament
+      karesansui: garden prop, mechanical ornament
+      suiseki: garden prop, mechanical ornament
+      seki: garden prop, mechanical ornament
+      hashi: garden prop, mechanical ornament
+      whisper: atmosphere that reads as a thin default line
+      haze: atmosphere that reads as a thin default line
+      maboroshi: atmosphere that reads as a thin default line
+      kiri: atmosphere that reads as a thin default line
+      tsuki: prop on the page
+      haiga: prop on the page
+      in-seal: prop on the page
+      ikebana: prop on the page
+      ribbon: parallel lines already covered by stitch
+      parallel: parallel lines already covered by stitch
+      ridge: faint contours behind a lat/lon stroke
+      contour: redundant with stitch's offset idea
+      sumi-dry: dry-brush fray read as noise
+      shodo-lift: lifts added too little over shodo
+      yugen: quiet mist read as a thin default line
+      kasumi: quiet haze read as a thin default line
+      glimpse: random crop too gimmicky as a style
+      kintsugi-vein: gold at geometric gaps did not earn a place
+      kintsugi-shard: gold at geometric gaps did not earn a place
+      kintsugi: gold at geometric gaps did not earn a place
+      negative-space: inversion of painting did not earn a place
+      pulse-bars: route as abstract rhythm strip did not earn a place
+  ground:
+    script: ground-art.py
+    kept:
+      breath: distance by elevation, thick ink on sustained climbs
+      terrace: map shape stepped onto shelves keyed to elevation
+      stone: plan-view shadow with the stroke lifted by elevation
+    cut: {}
+  time:
+    script: time-art.py
+    kept:
+      ma: stops as stones sized by dwell, motion a hair
+      score: clock time across, compass heading as pitch
+      kintsugi: gold only on real signal dropouts
+      chladni: speed rhythms pick square-plate modes, sand on nodal lines
+    cut: {}
+  series:
+    script: series-art.py
+    kept:
+      palimpsest: repetition sets pressure, recency sets wetness
+      desordres: one cell per day, drift is the only ink
+      remembered-city: every walked street as a 45-degree transit diagram
+      year-lines: one line per walked day, wobble is pace
+    cut: {}

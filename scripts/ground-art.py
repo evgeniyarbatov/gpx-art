@@ -8,7 +8,7 @@ import numpy.typing as npt
 from matplotlib.axes import Axes
 from matplotlib.collections import PolyCollection
 from matplotlib.figure import Figure
-from utils import get_df, get_files
+from utils import get_df, get_files, kept_styles
 
 plt.switch_backend("Agg")
 
@@ -355,7 +355,7 @@ def create_art(gpx_filename: str, image_filename: str, style_name: str) -> None:
 
 def main(gpx_dir: str, images_dir: str, styles: list[str] | None = None) -> None:
     os.makedirs(images_dir, exist_ok=True)
-    style_names = styles if styles is not None else sorted(STYLES.keys())
+    style_names = styles if styles is not None else kept_styles("ground")
     for name, gpx_path in get_files(gpx_dir):
         for style_name in style_names:
             output = os.path.join(images_dir, f"{style_name}-{name}.png")

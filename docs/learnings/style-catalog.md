@@ -4,6 +4,8 @@ The catalog is not missing names. It is missing ideas. ~76 styles were tried and
 
 ## Current
 
+Machine-readable list of kept and cut styles per registry: [taste.yaml](../../taste.yaml).
+
 Three generations, fourteen styles:
 
 | Generation | Styles | What they do |

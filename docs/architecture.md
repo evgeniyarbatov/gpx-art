@@ -21,7 +21,7 @@ SOURCE_DIR (your GPX library)
 
 1. Collect GPX files into `gpx/` (random sample or DTW selection from a source directory).
 2. Optionally preview tracks with `plot-gpx.py`.
-3. Render each GPX file with every registered style in `gpx-art.py`.
+3. Render each GPX file with every `kept` style for the `lonlat` lane in `taste.yaml`.
 4. Write PNGs to `images/`.
 
 ## Components
@@ -57,7 +57,7 @@ def scaffold(lons, lats):
 - `STYLES` maps name → callable.
 - Each style receives longitude/latitude arrays and returns a figure plus background color.
 - `create_art` looks up the style, draws the track, and saves the PNG.
-- New styles are added by defining another `@style(...)` function in `gpx-art.py`; no central switch statement.
+- New styles are added by defining another `@style(...)` function and listing it under `kept` in `taste.yaml`; no central switch statement.
 - `extract_style_source` parses `gpx-art.py` with the AST to pull the full source of a single `@style` function by name.
 
 `ground-art.py` is a second registry. Its styles take a track with elevation and write to `images-ground/`. `make render` does not call them. A track with no elevation is skipped.
