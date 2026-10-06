@@ -4,13 +4,13 @@ The catalog is not missing names. It is missing ideas. ~76 styles were tried and
 
 ## Current
 
-Three generations, thirteen styles:
+Three generations, fourteen styles:
 
 | Generation | Styles | What they do |
 |---|---|---|
 | Early graphic | `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `ribcage`, `corridor` | Dashes, wireframe, blob wash, node graph, stacked RDP, skyline mass fill, small-multiples grid, spine + data-driven ribs, spread-based mass |
 | Ink | `sumi-wet`, `shodo`, `suminagashi` | Wet pools, pressure stroke, marbled drops combed by the route |
-| New axis | `enso-gap` | Closure error: the missing chord is the stroke, the walked loop a hair |
+| New axis | `enso-gap`, `girih` | Closure error: the missing chord is the stroke, the walked loop a hair; heading per cell as ten-point stars |
 
 The seven-style set held up on the wall across every prior cut. Everything else in the ink/atmosphere/austere experiments below was judged not distinct or not strong enough to keep, even though each passed the distinctness checklist in isolation — a reminder that the checklist is necessary, not sufficient. `notan-fill` and `tempo-grid` were proposed against specific holes (filled mass, small multiples), rendered on a real track, and kept; `kintsugi` and `negative-space` from the same batch were rendered and cut — see wave 5. `pulse-bars`, `ribcage`, and `corridor` were a third batch, each proposed against the surviving nine's register (bold single-mechanism graphic idea) rather than a hole in the ink family; `ribcage` and `corridor` were kept, `pulse-bars` was cut — see wave 6.
 
@@ -29,13 +29,13 @@ Those families map to the taste-doc failures: predictable layers, static diagram
 
 ### Leave buried
 
-- `whisper` / `haze` / `maboroshi` / `ma` — too close to `yugen`/`kasumi` (also both now cut)
+- `whisper` / `haze` / `maboroshi` — too close to `yugen`/`kasumi` (also both now cut). `ma` is back in the time lane on real dwell from timestamps, not atmosphere
 - `ribbon` / `parallel` — `stitch`/`contour` territory already covered and cut once. The ground style `stone` is a different mechanism (plan shadow plus an elevation lift); do not revive the parallel-line `ribbon`
 - `enso*` — how you walk, not a mark style. `enso-gap` is the exception: its mark is the closure error, a coordinate no other style reads
 - `tsuki`, `haiga`, `in-seal`, `ikebana` — props on the page
 - `ridge` — faint contours behind a lat/lon stroke. The ground lane is the elevation work; this one stays buried
 - `sumi-dry`, `shodo-lift`, `yugen`, `kasumi`, `glimpse`, `contour` — tried, kept for a while, cut in wave 4; do not re-add under a new name without a genuinely different mechanism
-- `kintsugi`, `kintsugi-vein`, `kintsugi-shard` — the gold-accent idea has now been tried twice (wave 3 and wave 5) and cut both times; leave the rare-accent idea alone
+- `kintsugi-vein`, `kintsugi-shard`, and gold at geometric gaps or reversals — tried twice (wave 3 and wave 5) and cut both times. The time-lane `kintsugi` is gold on real signal dropouts only
 - `negative-space` — cut in wave 5; don't re-add a `painting` inversion under a new name without a genuinely different mechanism
 - `pulse-bars` — cut in wave 6; don't re-add a route-as-abstract-rhythm-strip idea under a new name without a genuinely different mechanism
 
@@ -49,6 +49,17 @@ Second registry, `scripts/ground-art.py`. Not part of `make render`. Elevation c
 | `terrace` | The map shape stepped onto shelves keyed to elevation. This is the `elevation-terrace` idea, kept out of the lat/lon signatures |
 | `stone` | Plan-view shadow with the same stroke lifted by elevation |
 
+## Time
+
+Fourth registry, `scripts/time-art.py`. Not part of `make render`. Timestamps come from the GPX.
+
+| Style | What it does |
+|---|---|
+| `ma` | Stops as stones sized by dwell; motion a hair |
+| `score` | Clock time across, compass heading as pitch; rests are paper |
+| `kintsugi` | Gold only on signal dropouts, judged against the local pace |
+| `chladni` | The run's two strongest speed rhythms pick square-plate modes; sand on the nodal lines |
+
 ## Series
 
 Third registry, `scripts/series-art.py`. Many walks of one ground onto one sheet; walks come from `scripts/series.py`.
@@ -58,3 +69,4 @@ Third registry, `scripts/series-art.py`. Many walks of one ground onto one sheet
 | `palimpsest` | Repetition sets pressure, recency sets wetness; streets walked once fray as flying white |
 | `desordres` | One cell per day in the same frame; drift from the other days is the only ink |
 | `remembered-city` | Every walked street as a 45° transit diagram; weight is repetition |
+| `year-lines` | One line per walked day of the busiest year; wobble is that day's pace |

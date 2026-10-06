@@ -29,6 +29,7 @@ class Walk:
     lon: FloatArray
     lat: FloatArray
     start: pd.Timestamp
+    t: FloatArray
 
 
 StyleFunc = Callable[[Sequence[Walk]], tuple[Figure, str]]
@@ -50,11 +51,13 @@ def load_walks(gpx_dir: str) -> list[Walk]:
         df = get_df(path)
         if len(df) < 2 or df["time"].isna().any():
             continue
+        times = pd.to_datetime(df["time"], utc=True)
         walks.append(
             Walk(
                 df["lon"].to_numpy(dtype=float),
                 df["lat"].to_numpy(dtype=float),
-                pd.Timestamp(df["time"].iloc[0]),
+                pd.Timestamp(times.iloc[0]),
+                np.asarray((times - times.iloc[0]).dt.total_seconds(), dtype=np.float64),
             )
         )
     return sorted(walks, key=lambda w: w.start)
@@ -357,6 +360,57 @@ def remembered_city(walks: Sequence[Walk]) -> tuple[Figure, str]:
     mx, my = (pts.min(axis=0) + pts.max(axis=0)) / 2
     ax.set_xlim(mx - span / 2, mx + span / 2)
     ax.set_ylim(my - span / 2, my + span / 2)
+    return fig, bg
+
+
+def local_day(walk: Walk) -> pd.Timestamp:
+    """Calendar day at the walk's own solar time, so a dawn run is not filed under yesterday's UTC."""
+    return (walk.start + pd.Timedelta(hours=float(walk.lon.mean()) / 15.0)).normalize()
+
+
+def speed_trace(walk: Walk, step: float = 10.0, window: float = 60.0) -> FloatArray:
+    """Speed (m/s) every `step` seconds, smoothed over `window` seconds."""
+    xs, ys = to_metres([walk])[0]
+    covered = np.concatenate([[0.0], np.cumsum(np.hypot(np.diff(xs), np.diff(ys)))])
+    t = np.arange(0.0, max(float(walk.t[-1]), step), step)
+    speed = np.gradient(np.interp(t, walk.t, covered), step) if len(t) > 1 else np.zeros(1)
+    k = max(1, int(window / step))
+    out: FloatArray = np.convolve(np.pad(speed, k // 2, mode="edge"), np.ones(k) / k, "valid")
+    return out[: len(t)]
+
+
+@style("year-lines")
+def year_lines(walks: Sequence[Walk]) -> tuple[Figure, str]:
+    """One faint line per day of the busiest year, wobbling with that day's pace; rest days are paper."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = plt.subplots(figsize=(8.5, 11), dpi=300)
+    fig.patch.set_facecolor(bg)
+    ax.set_facecolor(bg)
+    ax.axis("off")
+    fig.subplots_adjust(0, 0, 1, 1)
+    days: dict[pd.Timestamp, list[Walk]] = {}
+    for w in walks:
+        days.setdefault(local_day(w), []).append(w)
+    year = max({d.year for d in days}, key=lambda y: sum(d.year == y for d in days))
+    traces = {
+        d: np.concatenate([speed_trace(w) for w in ws]) for d, ws in days.items() if d.year == year
+    }
+    pooled = np.concatenate(list(traces.values()))
+    centre = float(np.median(pooled))
+    spread = float(np.median(np.abs(pooled - centre))) * 1.4826 + 1e-9
+    rgb = to_rgb(ink)
+    lines: list[FloatArray] = []
+    for d, speed in traces.items():
+        row = -float(d.dayofyear)
+        wobble = np.clip((speed - centre) / spread, -3.0, 3.0) * 0.45
+        x = np.linspace(0.0, 1.0, len(speed))
+        lines.append(np.column_stack([x, row + wobble]))
+    ax.add_collection(
+        LineCollection(lines, linewidths=0.3, colors=[(*rgb, 0.8)], joinstyle="round")
+    )
+    total = 366 if pd.Timestamp(year=year, month=12, day=31).dayofyear == 366 else 365
+    ax.set_xlim(-0.08, 1.08)
+    ax.set_ylim(-total - 6, 5)
     return fig, bg
 
 

@@ -28,7 +28,7 @@ Taste criteria and how they map to code: [docs/artistic-direction.md](docs/artis
 make install
 ```
 
-Output goes to `~/Documents/data/gpx-art/` (`gpx/`, `images/`, `images-ground/`, `images-series/`), not into the repo. Override with `DATA_ROOT=/other/root` (keeps the `gpx-art` subfolder) or `DATA_DIR=/exact/path`.
+Output goes to `~/Documents/data/gpx-art/` (`gpx/`, `images/`, `images-ground/`, `images-time/`, `images-series/`), not into the repo. Override with `DATA_ROOT=/other/root` (keeps the `gpx-art` subfolder) or `DATA_DIR=/exact/path`.
 
 There are four ways in, from one track to everything:
 
@@ -37,7 +37,7 @@ There are four ways in, from one track to everything:
 | One track, every style | `make art-file GPX=/path/track.gpx [STYLES=shodo,suminagashi]` | `images/` |
 | A sample from a GPX folder | `make art SOURCE_DIR=/path/to/gpx NUMBER_OF_GPX=20` | `gpx/`, `images/` |
 | Diverse sample, preview first | `make dtwselect SOURCE_DIR=…` → `make plot` → `make render` | `gpx/`, `images/` |
-| Everything from the personal parquet | `make pipeline` | all four folders |
+| Everything from the personal parquet | `make pipeline` | every folder |
 
 `make art` picks tracks at random; `make dtwselect` picks tracks that differ in shape. Either way, `make render` re-renders whatever is in `gpx/`.
 
@@ -47,8 +47,9 @@ There are four ways in, from one track to everything:
 
 1. `art-parquet` — DTW-selects 100 tracks from the parquet into `gpx/` and renders every style to `images/`.
 2. `render-ground` — elevation styles on the same tracks into `images-ground/`.
-3. `series` — the repeated walks of one city (`CLUSTERS`) onto one sheet each, into `images-series/`.
-4. `city` — every walk in the city as one `remembered-city` map.
+3. `render-time` — timestamp styles on the same tracks into `images-time/`.
+4. `series` — the repeated walks of one city (`CLUSTERS`) onto one sheet each, into `images-series/`.
+5. `city` — every walk in the city as one `remembered-city` map and one `year-lines` sheet.
 
 Defaults are `CITY="Ho Chi Minh City"`, `CLUSTERS=1,3,4`, `SERIES=hcmc`, `NUMBER_OF_GPX=100`. Each step also runs on its own:
 
@@ -57,7 +58,7 @@ make pipeline CITY="Hà Nội" SERIES=hanoi NUMBER_OF_GPX=40
 make art-parquet                                # step 1 only
 make series-report                              # rank the city's repeated-walk clusters
 make series CLUSTERS=1 SERIES=hcmc-c1           # one cluster; best for desordres
-make city                                       # step 4 only
+make city                                       # step 5 only
 ```
 
 ### Elevation
@@ -75,6 +76,21 @@ make render-ground                              # whatever is in gpx/
 | `terrace` | The map cut into shelves keyed to elevation. |
 | `stone` | The route as a shadow, the same line lifted by elevation. |
 
+### Time
+
+Four styles read the timestamps in the GPX. A track without `<time>` is skipped.
+
+```bash
+make render-time                                # whatever is in gpx/
+```
+
+| Style | What it draws |
+|---|---|
+| `ma` | Each stop a stone sized by how long you stood; the moving line a hair. |
+| `score` | Clock time across, compass heading as pitch; each straight is a held note, rests are paper. |
+| `kintsugi` | Gold only where the signal dropped while you kept moving. Most tracks have none. |
+| `chladni` | The run's two strongest rhythms drive a square plate; sand settles on the still lines. |
+
 ### Series
 
 Many walks of the same ground on one sheet. Input is a folder of timed GPX: `make series` and `make city` write one, or point at your own with `make render-series SERIES_DIR=/path [STYLES=palimpsest]`.
@@ -84,6 +100,7 @@ Many walks of the same ground on one sheet. Input is a folder of timed GPX: `mak
 | `palimpsest` | Repetition sets pressure, recency sets wetness. |
 | `desordres` | One cell per day in the same frame; only the drift from the other days is inked. |
 | `remembered-city` | Every walked street as a 45° transit diagram; weight is how often. |
+| `year-lines` | One faint line per walked day of the busiest year, wobbling with that day's pace. |
 
 All Make targets and variables: [docs/usage.md](docs/usage.md).
 

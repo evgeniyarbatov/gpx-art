@@ -30,6 +30,7 @@ SOURCE_DIR (your GPX library)
 |---|---|
 | `scripts/gpx-art.py` | Main generator: style registry, rendering |
 | `scripts/ground-art.py` | Elevation styles (`breath`, `terrace`, `stone`); separate registry |
+| `scripts/time-art.py` | Timestamp styles (`ma`, `score`, `kintsugi`, `chladni`); separate registry, with stop and signal-gap helpers |
 | `scripts/series.py` | Repeated-walk clusters from the personal parquet; writes a series as GPX |
 | `scripts/series-art.py` | Series styles (`palimpsest`, `desordres`, `remembered-city`): many walks → one sheet; separate registry |
 | `scripts/dtw-select.py` | Diverse GPX selection via FastDTW |
@@ -61,7 +62,9 @@ def scaffold(lons, lats):
 
 `ground-art.py` is a second registry. Its styles take a track with elevation and write to `images-ground/`. `make render` does not call them. A track with no elevation is skipped.
 
-`series-art.py` is a third registry. Its styles take every timed walk in a directory and write one PNG to `images-series/`.
+`time-art.py` is a third registry. Its styles take a track with per-point seconds and write to `images-time/`. A track with no timestamps is skipped.
+
+`series-art.py` is a fourth registry. Its styles take every timed walk in a directory and write one PNG to `images-series/`.
 
 Path helpers (`flow_path`, `pad_limits`, `ink_stroke`, palettes, etc.) are shared utilities used by many styles.
 

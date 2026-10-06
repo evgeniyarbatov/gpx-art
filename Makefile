@@ -13,6 +13,7 @@ GPX_DIR = $(DATA_DIR)/gpx
 IMAGES_DIR = $(DATA_DIR)/images
 GROUND_DIR = $(DATA_DIR)/images-ground
 GROUND_GPX_DIR ?= $(GPX_DIR)
+TIME_DIR = $(DATA_DIR)/images-time
 SINGLE_DIR = $(DATA_DIR)/gpx-single
 SERIES_ROOT = $(DATA_DIR)/series
 SERIES_IMAGES_DIR = $(DATA_DIR)/images-series
@@ -20,7 +21,7 @@ NUMBER_OF_GPX = 20
 
 include make/parquet.mk
 
-.PHONY: install lock clean random dtwselect plot render render-ground render-series ground-file art art-file run test help
+.PHONY: install lock clean random dtwselect plot render render-ground render-time render-series ground-file art art-file run test help
 
 default: run
 
@@ -52,6 +53,10 @@ render: install
 render-ground: install
 	@mkdir -p $(GROUND_DIR)
 	@uv run python scripts/ground-art.py $(GROUND_GPX_DIR) $(GROUND_DIR)
+
+render-time: install
+	@mkdir -p $(TIME_DIR)
+	@uv run python scripts/time-art.py $(GPX_DIR) $(TIME_DIR)
 
 render-series: install
 	@test -n "$(SERIES_DIR)" || (echo "Usage: make render-series SERIES_DIR=dir/of/gpx [STYLES=palimpsest]" && exit 1)
@@ -89,6 +94,7 @@ help:
 	@echo "plot          - plot GPX tracks"
 	@echo "render        - render GPX art images"
 	@echo "render-ground - render elevation styles (breath, terrace, stone) from $(GROUND_GPX_DIR) into $(GROUND_DIR)"
+	@echo "render-time   - render timestamp styles (ma, score, kintsugi, chladni) from $(GPX_DIR) into $(TIME_DIR)"
 	@echo "render-series - many walks onto one sheet: make render-series SERIES_DIR=dir [STYLES=palimpsest]"
 	@echo "ground-file   - one GPX through the elevation styles: make ground-file GPX=path [STYLES=breath,stone]"
 	@echo "art           - random + render (default)"

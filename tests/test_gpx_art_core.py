@@ -185,3 +185,20 @@ class TestSuminagashi(unittest.TestCase):
         fig, bg = gpx_art.suminagashi(lons, lats)
         self.assertEqual(bg, gpx_art.SUMI_WASH)
         self.assertGreater(len(fig.axes[0].patches), 8)
+
+
+class TestGirih(unittest.TestCase):
+    def test_cell_headings_bin_a_straight_run_into_one_heading(self) -> None:
+        xs, ys = np.linspace(0.0, 1.0, 50), np.zeros(50)
+        _, cells = gpx_art.cell_headings(xs, ys, 4, 10)
+        for h in cells.values():
+            self.assertEqual(int(np.count_nonzero(h)), 1)
+            self.assertGreater(h[0], 0)
+
+    def test_turning_cell_gets_more_arms_than_a_straight_one(self) -> None:
+        lons = 106.7 + np.concatenate([np.linspace(0, 0.01, 40), np.full(40, 0.01)])
+        lats = 10.8 + np.concatenate([np.zeros(40), np.linspace(0, 0.01, 40)])
+        fig, bg = gpx_art.girih(lons, lats)
+        self.assertEqual(bg, gpx_art.SUMI_WASH)
+        self.assertEqual(len(fig.axes[0].patches) % 2, 0)
+        self.assertGreater(len(fig.axes[0].patches), 10)

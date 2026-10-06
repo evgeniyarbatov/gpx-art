@@ -55,6 +55,7 @@ make render
 | `make plot` | Grid preview of tracks in `gpx/` |
 | `make render` | Render all styles to `images/` |
 | `make render-ground` | Render `breath`, `terrace`, `stone` to `images-ground/` |
+| `make render-time` | Render `ma`, `score`, `kintsugi`, `chladni` from `GPX_DIR` to `images-time/` |
 | `make ground-file` | One GPX through those styles: `make ground-file GPX=path [STYLES=breath,stone]` |
 | `make render-series` | Series styles on a folder of timed GPX: `make render-series SERIES_DIR=dir [STYLES=palimpsest]` → `images-series/` |
 | `make art` | `random` then `render` (default target) |
@@ -64,7 +65,7 @@ Variables: `SOURCE_DIR` (default `./source-gpx`), `NUMBER_OF_GPX` (default `20`)
 
 `art-file` clears `IMAGES_DIR` first, then writes to it using every registered style, or only those listed in `STYLES` (comma-separated, matching names in [docs/scripts.md](docs/scripts.md)). `REPEAT=n` renders each style n times per file (output `<style>-<n>-<track>.png`) — useful for styles with per-render randomness (e.g. `painting`, `network`).
 
-`GPX_DIR` and `IMAGES_DIR` default to `$(DATA_DIR)/gpx` and `$(DATA_DIR)/images`, where `DATA_DIR` defaults to `~/Documents/data/gpx-art` (`$(DATA_ROOT)/gpx-art`, `DATA_ROOT` defaulting to `~/Documents/data`). `make render-ground` reads `GPX_DIR` too (override with `GROUND_GPX_DIR=…`); it and `make ground-file` write to `$(DATA_DIR)/images-ground`. Override the root with `make <target> DATA_ROOT=/other/root`, or the exact path with `make <target> DATA_DIR=/tmp/run-42`.
+`GPX_DIR` and `IMAGES_DIR` default to `$(DATA_DIR)/gpx` and `$(DATA_DIR)/images`, where `DATA_DIR` defaults to `~/Documents/data/gpx-art` (`$(DATA_ROOT)/gpx-art`, `DATA_ROOT` defaulting to `~/Documents/data`). `make render-ground` reads `GPX_DIR` too (override with `GROUND_GPX_DIR=…`); it and `make ground-file` write to `$(DATA_DIR)/images-ground`. `make render-time` writes to `$(DATA_DIR)/images-time`. Override the root with `make <target> DATA_ROOT=/other/root`, or the exact path with `make <target> DATA_DIR=/tmp/run-42`.
 
 ## Personal parquet source
 
@@ -77,13 +78,13 @@ make help-parquet
 
 | Target | Description |
 |---|---|
-| `make pipeline` | `art-parquet`, then `render-ground`, `series` and `city` (defaults `CITY=Ho Chi Minh City`, `CLUSTERS=1,3,4`, `SERIES=hcmc`): every image in one run |
+| `make pipeline` | `art-parquet`, then `render-ground`, `render-time`, `series` and `city` (defaults `CITY=Ho Chi Minh City`, `CLUSTERS=1,3,4`, `SERIES=hcmc`): every image in one run |
 | `make data-repo` | Clone or update `GPX_DATA_REPO` (set in gitignored `make/local.mk`) under `$(DATA_DIR)/gpx-data` |
 | `make random-parquet` | Sample ≥10 km tracks from every parquet file into `gpx/` |
 | `make dtwselect-parquet` | Same pool, FastDTW-diverse, not near the current `gpx/` set |
 | `make art-parquet` | `dtwselect-parquet` then `render` |
 | `make series-report` | Rank `CITY`'s repeated-walk clusters |
 | `make series` | Select `CLUSTERS` into `series/<SERIES>/`, then `render-series` |
-| `make city` | Every walk in `CITY` into `series/<SERIES>-city/`, rendered as `remembered-city` |
+| `make city` | Every walk in `CITY` into `series/<SERIES>-city/`, rendered as `remembered-city` and `year-lines` |
 
 Parquet targets default to 100 tracks (`NUMBER_OF_GPX=100`). Override with `make art-parquet NUMBER_OF_GPX=40`. `PARQUET_DIR` defaults to `$(DATA_DIR)/gpx-data/data/parquet`. City files with no track ≥10 km are skipped.

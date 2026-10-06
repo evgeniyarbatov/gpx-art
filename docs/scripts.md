@@ -28,9 +28,9 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 | `--styles s1,s2,...` | Render only the named styles |
 | `--repeat N` | Render each style N times per track |
 
-**Registered styles (13)**
+**Registered styles (14)**
 
-`corridor`, `enso-gap`, `network`, `notan-fill`, `painting`, `ribcage`, `scaffold`, `shodo`, `simplify`, `stitch`, `sumi-wet`, `suminagashi`, `tempo-grid`.
+`corridor`, `enso-gap`, `girih`, `network`, `notan-fill`, `painting`, `ribcage`, `scaffold`, `shodo`, `simplify`, `stitch`, `sumi-wet`, `suminagashi`, `tempo-grid`.
 
 Make wrapper: `make render`.
 
@@ -57,6 +57,28 @@ Make wrappers: `make render-ground` (the working set in `gpx/`), `make ground-fi
 
 ---
 
+## `scripts/time-art.py`
+
+Timestamp styles. Same directory contract as `ground-art.py`, separate registry.
+
+```bash
+uv run python scripts/time-art.py <gpx_dir> <images_dir> [--styles ma,score]
+```
+
+| Style | What it draws |
+|---|---|
+| `ma` | Stops longer than 20 s as stones sized by dwell; the moving line a hair. |
+| `score` | Local solar clock time across, compass heading (8 lines) as pitch; quarter-hour bar lines. |
+| `kintsugi` | Gold seams on signal gaps only; the rest of the track in ink. |
+| `chladni` | Square-plate nodal lines from the two strongest periods (30 s – 20 min) in the run's speed. |
+
+- A stop is a run of segments under 0.4 m/s and 40 m. A signal gap is a segment of ≥ 90 s and ≥ 80 m whose chord speed is under half or over 1.6× the pace of the segments around it.
+- Tracks without `<time>` are skipped. Output: `<style>-<track>.png`.
+
+Make wrapper: `make render-time` (the working set in `gpx/`) writes to `images-time/`.
+
+---
+
 ## `scripts/series.py`
 
 Find walks that repeat in one city of the personal parquet, and write a chosen set as GPX.
@@ -69,7 +91,7 @@ uv run python scripts/series.py select <parquet_dir> --city "Ho Chi Minh City" -
 - Only timed tracks are used. Two recordings of one walk (start within 30 min, shared ground) keep the denser one.
 - Clusters group walks by shared 30 m cells; `report` ranks them by size, and `select` takes those ranks or `all`.
 
-Make wrappers: `make series-report CITY=…`, `make series CITY=… CLUSTERS=1,3,4 SERIES=hcmc` (selects into `series/<SERIES>/`, then renders), `make city` (every walk in `CITY` into `series/<SERIES>-city/`, rendered as `remembered-city`).
+Make wrappers: `make series-report CITY=…`, `make series CITY=… CLUSTERS=1,3,4 SERIES=hcmc` (selects into `series/<SERIES>/`, then renders), `make city` (every walk in `CITY` into `series/<SERIES>-city/`, rendered as `remembered-city` and `year-lines`).
 
 ---
 
@@ -86,6 +108,7 @@ uv run python scripts/series-art.py <gpx_dir> <images_dir> [--styles palimpsest]
 | `palimpsest` | Repetition sets pressure, recency sets wetness; streets walked once fray. |
 | `desordres` | One cell per walk, same frame, oldest first; how far a day strayed from the others sets pressure. Best on one cluster. |
 | `remembered-city` | Walked streets as a 45° transit diagram, centre enlarged; weight is how many walks used a street. Meant for every walk in a city. |
+| `year-lines` | The calendar year with the most walked days, one line per day; wobble is that day's speed against the year's median. Meant for every walk in a city. |
 
 Output: `<style>-<dir name>.png`. Make wrapper: `make render-series SERIES_DIR=…` writes to `images-series/`.
 
@@ -166,7 +189,7 @@ uv run python scripts/render.py --seed 7 --params params.json --out out/ --input
 uv run python scripts/render.py --list-styles
 ```
 
-- `params.json` is `{"style": "<name>"}`; any style from `gpx-art.py` or `ground-art.py`.
+- `params.json` is `{"style": "<name>"}`; any style from `gpx-art.py`, `ground-art.py` or `time-art.py`.
 - Seeds `random` and `numpy.random`, so the same seed, params and track give the same PNG.
 - Writes `<out>/render.png`. `preview` is ~1024 px on the long side; `full` is 300 dpi.
 - `--list-styles` prints `[{name, input, description}]` as JSON.

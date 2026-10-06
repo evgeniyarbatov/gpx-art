@@ -37,11 +37,17 @@ def _load(filename: str, module_name: str) -> ModuleType:
 
 gpx_art = _load("gpx-art.py", "gpx_art_styles")
 ground_art = _load("ground-art.py", "ground_art_styles")
+time_art = _load("time-art.py", "time_art_styles")
 
 
 def list_styles() -> list[dict[str, str]]:
     out = []
-    for registry, kind in ((gpx_art.STYLES, "lonlat"), (ground_art.STYLES, "elevation")):
+    registries = (
+        (gpx_art.STYLES, "lonlat"),
+        (ground_art.STYLES, "elevation"),
+        (time_art.STYLES, "time"),
+    )
+    for registry, kind in registries:
         for name, func in sorted(registry.items()):
             doc = (func.__doc__ or "").strip().splitlines()
             out.append({"name": name, "input": kind, "description": doc[0] if doc else ""})
@@ -62,6 +68,9 @@ def render(seed: int, params: dict[str, Any], track: Path, out_dir: Path, size: 
         bbox = "tight"
     elif style in ground_art.STYLES:
         fig, bg = ground_art.STYLES[style](ground_art.load_track(str(track)))
+        bbox = None
+    elif style in time_art.STYLES:
+        fig, bg = time_art.STYLES[style](time_art.load_track(str(track)))
         bbox = None
     else:
         raise ValueError(f"unknown style {style!r}")

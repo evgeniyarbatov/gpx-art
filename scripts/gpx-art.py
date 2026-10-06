@@ -835,6 +835,64 @@ def suminagashi(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     return fig, bg
 
 
+def cell_headings(
+    xs: FloatArray, ys: FloatArray, cells: int, bins: int
+) -> tuple[float, dict[tuple[int, int], FloatArray]]:
+    """Cell size and, per grid cell the path enters, distance run in each heading bin."""
+    cell = path_extent(xs, ys) / cells
+    dist = np.concatenate([[0.0], np.cumsum(segment_lengths(xs, ys))])
+    t = np.arange(0.0, dist[-1], cell / 20)
+    px, py = np.interp(t, dist, xs), np.interp(t, dist, ys)
+    dx, dy = np.diff(px), np.diff(py)
+    mx, my = (px[:-1] + px[1:]) / 2 - xs.min(), (py[:-1] + py[1:]) / 2 - ys.min()
+    heading = np.round(np.arctan2(dy, dx) / (2 * np.pi) * bins).astype(int) % bins
+    out: dict[tuple[int, int], FloatArray] = {}
+    for i, j, k, step in zip(
+        (mx // cell).astype(int), (my // cell).astype(int), heading, np.hypot(dx, dy), strict=True
+    ):
+        out.setdefault((int(i), int(j)), np.zeros(bins))[k] += step
+    return cell, out
+
+
+@style("girih")
+def girih(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
+    """Each cell run through is a ten-point star; its arms are the headings run inside it."""
+    bg, ink = SUMI_WASH, SUMI_INK
+    fig, ax = create_figure(bg)
+    xs = (lons - lons.mean()) * np.cos(np.radians(lats.mean()))
+    ys = lats - lats.mean()
+    bins = 10
+    cell, headings = cell_headings(xs, ys, 16, bins)
+    peak = max(float(h.sum()) for h in headings.values())
+    outer = np.arange(bins) * 2 * np.pi / bins
+    inner = outer + np.pi / bins
+    for (i, j), h in headings.items():
+        cx, cy = xs.min() + (i + 0.5) * cell, ys.min() + (j + 0.5) * cell
+        w = float(h.sum()) / peak
+        # a street is the same street both ways, so arms are axial and the star point-symmetric
+        axial = h + np.roll(h, bins // 2)
+        arm = 0.2 + 0.52 * np.sqrt(axial / axial.max())
+        r = np.empty(2 * bins)
+        r[0::2], r[1::2] = arm * cell, 0.2 * cell
+        a = np.empty(2 * bins)
+        a[0::2], a[1::2] = outer, inner
+        star = np.column_stack([cx + r * np.cos(a), cy + r * np.sin(a)])
+        ax.add_patch(Polygon(star, closed=True, facecolor=ink, alpha=0.04 + 0.3 * w, linewidth=0))
+        ax.add_patch(
+            Polygon(
+                star,
+                closed=True,
+                fill=False,
+                edgecolor=ink,
+                linewidth=0.3 + 1.1 * w,
+                alpha=0.5 + 0.4 * w,
+                joinstyle="miter",
+            )
+        )
+    pad_limits(ax, xs, ys, 0.1)
+    return fig, bg
+
+
 # ============================================================================
 # MAIN FUNCTIONS
 # ============================================================================

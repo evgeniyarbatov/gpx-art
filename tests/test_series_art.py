@@ -80,3 +80,19 @@ class TestSeriesArt(unittest.TestCase):
             fig, bg = series_art.STYLES[name](walks)
             self.assertEqual(bg, series_art.SUMI_WASH)
             self.assertTrue(fig.axes[0].collections, name)
+
+    def test_local_day_files_a_dawn_run_under_its_own_date(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "a.gpx").write_text(_gpx(10.80, 3))
+            (walk,) = series_art.load_walks(tmp)
+        self.assertEqual(walk.start.day, 3)
+        self.assertEqual(series_art.local_day(walk).day, 4)
+        self.assertEqual(walk.t[-1], 660.0)
+
+    def test_year_lines_draws_one_line_per_walked_day(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            for day in (1, 2, 5):
+                Path(tmp, f"{day}.gpx").write_text(_gpx(10.80, day))
+            fig, bg = series_art.year_lines(series_art.load_walks(tmp))
+        self.assertEqual(bg, series_art.SUMI_WASH)
+        self.assertEqual(len(fig.axes[0].collections[0].get_segments()), 3)

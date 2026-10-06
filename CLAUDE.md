@@ -17,15 +17,16 @@ make install                          # uv sync → .venv
 make test                             # unittest discover -s tests
 make render                           # render all styles
 make render-ground                    # elevation styles → images-ground/
+make render-time                      # timestamp styles → images-time/
 make series-report CITY=…             # repeated-walk clusters (personal parquet)
 make series CITY=… CLUSTERS=1,3 SERIES=name  # select + render → images-series/
-make city CITY=…                      # every walk in the city → remembered-city
+make city CITY=…                      # every walk in the city → remembered-city, year-lines
 make dtwselect SOURCE_DIR=… NUMBER_OF_GPX=20
 make random SOURCE_DIR=… NUMBER_OF_GPX=20
 make plot                             # grid preview of gpx/
 make art SOURCE_DIR=…                 # random + render
 make art-parquet                      # parquet DTW sample (100) + render
-make pipeline                         # art-parquet + render-ground + series + city: all images
+make pipeline                         # art-parquet + render-ground + render-time + series + city
 make help-parquet                     # personal targets
 make clean                            # clear gpx/* and images/*
 ```
@@ -44,8 +45,9 @@ uv run python -m unittest tests.test_gpx_art_core.TestGpxArtCore.test_style_deco
 |---|---|
 | `scripts/gpx-art.py` | Style registry + renderer + optional QR |
 | `scripts/ground-art.py` | Elevation styles (`breath`, `terrace`, `stone`) |
+| `scripts/time-art.py` | Timestamp styles (`ma`, `score`, `kintsugi`, `chladni`), stop and signal-gap helpers |
 | `scripts/series.py` | Repeated-walk clusters → series GPX |
-| `scripts/series-art.py` | Series styles (`palimpsest`, `desordres`, `remembered-city`): many walks, one sheet |
+| `scripts/series-art.py` | Series styles (`palimpsest`, `desordres`, `remembered-city`, `year-lines`): many walks, one sheet |
 | `scripts/render.py` | One track × one style from a seed (`--list-styles`, `--size preview\|full`) |
 | `scripts/dtw-select.py` | Diverse track selection (FastDTW) |
 | `scripts/plot-gpx.py` | Visual preview |
