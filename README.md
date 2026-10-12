@@ -6,6 +6,12 @@ Generate artistic images from GPX tracks.
 
 This project takes a set of GPX files, renders each route in multiple visual styles, and saves PNG outputs.
 
+## Status
+
+| Folder | Status | Last touched | Next step |
+|---|---|---|---|
+| root | active | 2026-10-06 | — |
+
 ## Why
 
 A GPS track is usually a thin line on a map. Here the route is the mark itself — ink, pressure, silence — so the walk can be seen as a drawing rather than a dataset.
