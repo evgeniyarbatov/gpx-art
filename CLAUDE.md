@@ -13,7 +13,7 @@ Details: [docs/architecture.md](docs/architecture.md), [docs/artistic-direction.
 ## Commands
 
 ```sh
-make install                          # uv sync → .venv
+make setup                            # uv sync → .venv
 make test                             # unittest discover -s tests
 make render                           # render all styles
 make render-ground                    # elevation styles → images-ground/
@@ -28,7 +28,7 @@ make art SOURCE_DIR=…                 # random + render
 make art-parquet                      # parquet DTW sample (100) + render
 make pipeline                         # art-parquet + render-ground + render-time + series + city
 make help-parquet                     # personal targets
-make clean                            # clear gpx/* and images/*
+make clean-output                     # clear gpx/* and images/*
 ```
 
 Run scripts via `uv run python scripts/…` or Make (Make already uses `uv run`). Python ≥3.11; deps in `pyproject.toml` / `uv.lock`.

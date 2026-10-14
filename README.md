@@ -25,7 +25,7 @@ Taste criteria and how they map to code: [docs/artistic-direction.md](docs/artis
 ## Running
 
 ```bash
-make install
+make setup
 ```
 
 Output goes to `~/Documents/data/gpx-art/` (`gpx/`, `images/`, `images-ground/`, `images-time/`, `images-series/`), not into the repo. Override with `DATA_ROOT=/other/root` (keeps the `gpx-art` subfolder) or `DATA_DIR=/exact/path`.

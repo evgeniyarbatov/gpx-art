@@ -20,11 +20,11 @@ data-repo:
 		git clone --depth 1 $(GPX_DATA_REPO) $(GPX_DATA_DIR); \
 	fi
 
-random-parquet: install data-repo clean
+random-parquet: setup data-repo clean-output
 	@mkdir -p $(GPX_DIR)
 	@uv run python scripts/sample-tracks.py $(PARQUET_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
-dtwselect-parquet: install data-repo
+dtwselect-parquet: setup data-repo
 	@mkdir -p $(GPX_DIR)
 	@uv run python scripts/dtw-select.py $(PARQUET_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
@@ -42,14 +42,14 @@ pipeline: art-parquet
 	@$(MAKE) city
 	@echo "Images: $(IMAGES_DIR) $(GROUND_DIR) $(TIME_DIR) $(SERIES_IMAGES_DIR)"
 
-series-report: install
+series-report: setup
 	@uv run python scripts/series.py report $(PARQUET_DIR) --city "$(CITY)"
 
-series: install
+series: setup
 	@uv run python scripts/series.py select $(PARQUET_DIR) --city "$(CITY)" --clusters $(CLUSTERS) $(SERIES_ROOT)/$(SERIES)
 	@$(MAKE) render-series SERIES_DIR=$(SERIES_ROOT)/$(SERIES)
 
-city: install
+city: setup
 	@uv run python scripts/series.py select $(PARQUET_DIR) --city "$(CITY)" --clusters all $(SERIES_ROOT)/$(SERIES)-city
 	@$(MAKE) render-series SERIES_DIR=$(SERIES_ROOT)/$(SERIES)-city STYLES=remembered-city,year-lines
 

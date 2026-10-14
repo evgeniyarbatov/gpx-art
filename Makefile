@@ -1,5 +1,4 @@
 # Uses uv (https://docs.astral.sh/uv) for dependency management — uv sync creates/updates .venv; run commands via uv run, no manual activation.
-VENV_PATH := .venv
 
 DATA_ROOT ?= $(HOME)/Documents/data
 REPO_NAME := $(notdir $(CURDIR))
@@ -21,48 +20,48 @@ NUMBER_OF_GPX = 20
 
 include make/parquet.mk
 
-.PHONY: install lock clean random dtwselect plot render render-ground render-time render-series ground-file art art-file run test help
+.DEFAULT_GOAL := help
 
-default: run
+.PHONY: setup lock clean-output random dtwselect plot render render-ground render-time render-series ground-file art art-file run test help
 
 run: art
 
-install:
+setup:
 	@uv sync
 
 lock:
 	@uv lock
 
-clean:
+clean-output:
 	@rm -rf $(IMAGES_DIR)/* $(GPX_DIR)/*
 
-random: install clean
+random: setup clean-output
 	@mkdir -p $(GPX_DIR)
 	@find $(SOURCE_DIR) -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
 
-dtwselect: install clean
+dtwselect: setup clean-output
 	@mkdir -p $(GPX_DIR)
 	@uv run python scripts/dtw-select.py $(SOURCE_DIR) $(NUMBER_OF_GPX) $(GPX_DIR)
 
-plot: install
+plot: setup
 	@uv run python scripts/plot-gpx.py $(GPX_DIR)
 
-render: install
+render: setup
 	@uv run python scripts/gpx-art.py $(GPX_DIR) $(IMAGES_DIR)
 
-render-ground: install
+render-ground: setup
 	@mkdir -p $(GROUND_DIR)
 	@uv run python scripts/ground-art.py $(GROUND_GPX_DIR) $(GROUND_DIR)
 
-render-time: install
+render-time: setup
 	@mkdir -p $(TIME_DIR)
 	@uv run python scripts/time-art.py $(GPX_DIR) $(TIME_DIR)
 
-render-series: install
+render-series: setup
 	@test -n "$(SERIES_DIR)" || (echo "Usage: make render-series SERIES_DIR=dir/of/gpx [STYLES=palimpsest]" && exit 1)
 	@uv run python scripts/series-art.py $(SERIES_DIR) $(SERIES_IMAGES_DIR) $(if $(STYLES),--styles $(STYLES),)
 
-ground-file: install
+ground-file: setup
 	@test -n "$(GPX)" || (echo "Usage: make ground-file GPX=path/to/file.gpx [STYLES=breath,terrace,stone]" && exit 1)
 	@test -f "$(GPX)" || (echo "GPX file not found: $(GPX)" && exit 1)
 	@mkdir -p $(GROUND_DIR)
@@ -72,7 +71,7 @@ ground-file: install
 
 art: random render
 
-art-file: install
+art-file: setup
 	@test -n "$(GPX)" || (echo "Usage: make art-file GPX=path/to/file.gpx [STYLES=style1,style2] [REPEAT=n]" && exit 1)
 	@test -f "$(GPX)" || (echo "GPX file not found: $(GPX)" && exit 1)
 	@tmp_gpx=$$(mktemp "$${TMPDIR:-/tmp}/art-file-gpx.XXXXXX") && \
@@ -82,13 +81,14 @@ art-file: install
 		mv "$$tmp_gpx" "$(SINGLE_DIR)/$$(basename "$(GPX)")"
 	@uv run python scripts/gpx-art.py $(SINGLE_DIR) $(IMAGES_DIR) $(if $(STYLES),--styles $(STYLES),) $(if $(REPEAT),--repeat $(REPEAT),)
 
-test: install
+test: setup
 	@uv run python -m unittest discover -s tests -p "test_*.py" -v
 
 help:
-	@echo "install       - uv sync deps"
+	@echo "run           - alias for art"
+	@echo "setup         - uv sync deps"
 	@echo "lock          - refresh uv.lock"
-	@echo "clean         - remove generated gpx/images files"
+	@echo "clean-output  - remove generated gpx/images files"
 	@echo "random        - copy random GPX files from $(SOURCE_DIR) into $(GPX_DIR)"
 	@echo "dtwselect     - select GPX files via DTW"
 	@echo "plot          - plot GPX tracks"

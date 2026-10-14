@@ -11,14 +11,14 @@
 
 If `shuf` is unavailable, use `make dtwselect` then `make render`.
 
-**Python packages** are declared in `pyproject.toml` and locked in `uv.lock` (installed via `uv sync` / `make install`): `gpxpy`, `matplotlib`, `numpy`, `pandas`, `scipy`, `fastdtw`, `shapely`.
+**Python packages** are declared in `pyproject.toml` and locked in `uv.lock` (installed via `uv sync` / `make setup`): `gpxpy`, `matplotlib`, `numpy`, `pandas`, `scipy`, `fastdtw`, `shapely`.
 
 ## Setup
 
 1. Install dependencies:
 
 ```bash
-make install
+make setup
 ```
 
 2. Point at your GPX library:
@@ -46,10 +46,10 @@ make render
 
 | Target | Description |
 |---|---|
-| `make install` | `uv sync` — create/update `.venv` |
+| `make setup` | `uv sync` — create/update `.venv` |
 | `make lock` | Refresh `uv.lock` |
 | `make test` | Run unit tests |
-| `make clean` | Clear generated `gpx/*` and `images/*` |
+| `make clean-output` | Clear generated `gpx/*` and `images/*` |
 | `make random` | Copy random GPX files from `SOURCE_DIR` into `gpx/` |
 | `make dtwselect` | Copy diverse GPX files via DTW into `gpx/` |
 | `make plot` | Grid preview of tracks in `gpx/` |
