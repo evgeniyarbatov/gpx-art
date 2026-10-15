@@ -28,9 +28,9 @@ uv run python scripts/gpx-art.py <gpx_dir> <images_dir> \
 | `--styles s1,s2,...` | Render only the named styles |
 | `--repeat N` | Render each style N times per track |
 
-**Registered styles (14)**
+**Registered styles (12)**
 
-`corridor`, `enso-gap`, `girih`, `network`, `notan-fill`, `painting`, `ribcage`, `scaffold`, `shodo`, `simplify`, `stitch`, `sumi-wet`, `suminagashi`, `tempo-grid`.
+`corridor`, `girih`, `network`, `notan-fill`, `painting`, `scaffold`, `shodo`, `simplify`, `stitch`, `sumi-wet`, `suminagashi`, `tempo-grid`.
 
 Make wrapper: `make render`.
 

@@ -425,55 +425,6 @@ def tempo_grid(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     return fig, bg_color
 
 
-@style("ribcage")
-def ribcage(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """Anatomical spine: a coarse-simplified backbone with short ribs, not a scaffold to ground."""
-    bg_color, fg_color = random.choice(ZEN_MINIMAL)
-    fig, ax = create_figure(bg_color)
-
-    gpx = gpxpy.gpx.GPX()
-    gpx_track = gpxpy.gpx.GPXTrack()
-    gpx.tracks.append(gpx_track)
-    gpx_segment = gpxpy.gpx.GPXTrackSegment()
-    gpx_track.segments.append(gpx_segment)
-    for lon, lat in zip(lons, lats, strict=False):
-        gpx_segment.points.append(gpxpy.gpx.GPXTrackPoint(lat, lon))
-    gpx.simplify(100)
-
-    spine_lons, spine_lats = [], []
-    for track in gpx.tracks:
-        for segment in track.segments:
-            for point in segment.points:
-                spine_lons.append(point.longitude)
-                spine_lats.append(point.latitude)
-    xs, ys = np.array(spine_lons), np.array(spine_lats)
-    if len(xs) < 4:
-        xs, ys = flow_path(lons, lats, 60)
-
-    ax.plot(xs, ys, color=fg_color, linewidth=1.6, alpha=0.85, solid_capstyle="round")
-
-    nx, ny = path_normals(xs, ys)
-    p = turn_pressure(xs, ys, smooth=3)
-    extent = path_extent(xs, ys)
-    min_gap = extent * 0.025
-    last_x, last_y = None, None
-    for i in range(len(xs)):
-        if last_x is not None and np.hypot(xs[i] - last_x, ys[i] - last_y) < min_gap:
-            continue
-        rib = extent * (0.01 + 0.05 * p[i])
-        ax.plot(
-            [xs[i] - nx[i] * rib, xs[i] + nx[i] * rib],
-            [ys[i] - ny[i] * rib, ys[i] + ny[i] * rib],
-            color=fg_color,
-            linewidth=0.7,
-            alpha=0.35 + 0.35 * p[i],
-        )
-        last_x, last_y = xs[i], ys[i]
-
-    pad_limits(ax, lons, lats, 0.12)
-    return fig, bg_color
-
-
 @style("corridor")
 def corridor(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
     """Filled mass from local spread, not distance-from-baseline: thick where the route loops."""
@@ -715,51 +666,6 @@ def shodo(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
                 )
             )
     pad_limits(ax, lons, lats, 0.12)
-    return fig, bg
-
-
-@style("enso-gap")
-def enso_gap(lons: FloatArray, lats: FloatArray) -> tuple[Figure, str]:
-    """The missing chord between end and start is the stroke; the walked loop is a hair."""
-    bg, ink = SUMI_WASH, SUMI_INK
-    fig, ax = create_figure(bg)
-    xs, ys = flow_path(lons, lats, 900)
-    extent = path_extent(xs, ys)
-    ink_stroke(ax, xs, ys, ink, lw=0.35, alpha=0.32)
-    gap = float(np.hypot(xs[0] - xs[-1], ys[0] - ys[-1]))
-    if gap < extent * 0.02:
-        ax.add_patch(Circle((xs[0], ys[0]), extent * 0.006, color=ink, alpha=0.8, linewidth=0))
-        pad_limits(ax, lons, lats, 0.22)
-        return fig, bg
-    rng = np.random.default_rng(8)
-    t = np.linspace(0.0, 1.0, 160)
-    mid_x, mid_y = (xs[-1] + xs[0]) / 2, (ys[-1] + ys[0]) / 2
-    nx, ny = -(ys[0] - ys[-1]) / gap, (xs[0] - xs[-1]) / gap
-    centre_x, centre_y = float(xs.mean()), float(ys.mean())
-    outward = 1.0 if (mid_x - centre_x) * nx + (mid_y - centre_y) * ny >= 0 else -1.0
-    bow = outward * gap * 0.18 * np.sin(np.pi * t)
-    cx = xs[-1] + (xs[0] - xs[-1]) * t + nx * bow
-    cy = ys[-1] + (ys[0] - ys[-1]) * t + ny * bow
-    env = attack_release(len(t) - 1, 0.5)
-    weight = float(np.clip(gap / extent, 0.08, 0.6))
-    body = extent * 0.004 * (1.0 + 4.0 * weight)
-    for k in range(9):
-        offset = (k - 4) / 4 * body
-        for i in range(len(t) - 1):
-            # bristles run dry toward the release: flying white
-            if rng.random() < 0.15 + 0.7 * t[i] ** 2 * abs(k - 4) / 4:
-                continue
-            ink_stroke(
-                ax,
-                cx[i : i + 2] + nx * offset * env[i],
-                cy[i : i + 2] + ny * offset * env[i],
-                ink,
-                lw=0.6 + 2.2 * env[i] * weight,
-                alpha=0.35 + 0.5 * env[i],
-            )
-    allx = np.concatenate([xs, cx])
-    ally = np.concatenate([ys, cy])
-    pad_limits(ax, allx, ally, 0.18)
     return fig, bg
 
 

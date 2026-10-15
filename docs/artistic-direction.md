@@ -16,7 +16,7 @@ Patterns that repeatedly produce keepers (curated examples live outside the repo
 |---|---|---|
 | **Variable pressure** | Thick at turns / intent, thin on runs | `shodo` |
 | **Spontaneous texture** | Spatter, fray, particles, drip | `sumi-wet` |
-| **Distinct graphic idea, not costume** | A structural conceit (dashes, wireframe, wash, node graph, layered simplification, mass fill, small multiples, anatomical ribs, spread mass) that reads on its own | `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `ribcage`, `corridor` |
+| **Distinct graphic idea, not costume** | A structural conceit (dashes, wireframe, wash, node graph, layered simplification, mass fill, small multiples, spread mass) that reads on its own | `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `corridor` |
 
 ## What fails (avoid or rework)
 
@@ -69,13 +69,11 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 ### Early graphic
 
-`stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `ribcage`, `corridor`
+`stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `corridor`
 
-- Not ink-culture vocabulary; each earns its place on a distinct structural idea (dashes + cross-marks, wireframe bracing, wash blobs, node graph, stacked simplification passes, skyline mass fill, small-multiples grid, anatomical ribs off a simplified spine, spread-based mass) rather than pressure/texture grammar.
+- Not ink-culture vocabulary; each earns its place on a distinct structural idea (dashes + cross-marks, wireframe bracing, wash blobs, node graph, stacked simplification passes, skyline mass fill, small-multiples grid, spread-based mass) rather than pressure/texture grammar.
 
 ### New axis
-
-`enso-gap` — in the lat/lon registry, but its subject is the closure error, not the path. A closed loop leaves only a hair and a seal.
 
 `girih` — heading per map cell. Each cell the run entered is a ten-point star whose arms are the directions run inside it; a straight street is a chain of lozenges, a junction a rosette. Unvisited cells stay paper, so it cannot become a tiling.
 

@@ -13,12 +13,10 @@ lanes:
       simplify: stacked RDP simplification
       notan-fill: skyline mass fill
       tempo-grid: small-multiples grid
-      ribcage: spine with data-driven ribs
       corridor: spread-based mass
       sumi-wet: wet ink pools
       shodo: pressure stroke
       suminagashi: marbled drops combed by the route
-      enso-gap: the closure error is the stroke, the walked loop a hair
       girih: heading per cell as ten-point stars
     cut:
       picasso: artist costume without grammar
@@ -38,6 +36,8 @@ lanes:
       tome: same idea as shodo under another name
       fude: same idea as shodo under another name
       haku: same idea as shodo under another name
+      ribcage: did not earn a keep on the wall
+      enso-gap: did not earn a keep on the wall
       rake: garden prop, mechanical ornament
       gravel: garden prop, mechanical ornament
       karesansui: garden prop, mechanical ornament
