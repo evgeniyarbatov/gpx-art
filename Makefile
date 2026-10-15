@@ -1,5 +1,7 @@
 # Uses uv (https://docs.astral.sh/uv) for dependency management — uv sync creates/updates .venv; run commands via uv run, no manual activation.
 
+SHELL := bash
+
 DATA_ROOT ?= $(HOME)/Documents/data
 REPO_NAME := $(notdir $(CURDIR))
 DATA_DIR  ?= $(DATA_ROOT)/$(REPO_NAME)
@@ -37,7 +39,7 @@ clean-output:
 
 random: setup clean-output
 	@mkdir -p $(GPX_DIR)
-	@find $(SOURCE_DIR) -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
+	@set -o pipefail; find $(SOURCE_DIR) -name "*.gpx" -type f | shuf -n $(NUMBER_OF_GPX) | xargs -I {} cp {} $(GPX_DIR)/
 
 dtwselect: setup clean-output
 	@mkdir -p $(GPX_DIR)
