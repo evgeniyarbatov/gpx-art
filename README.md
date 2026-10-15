@@ -43,7 +43,7 @@ There are four ways in, from one track to everything:
 
 ### Full pipeline
 
-`make pipeline` needs the private track archive. Set `GPX_DATA_REPO` in the gitignored `make/local.mk`. Then one run:
+`make pipeline` clones the private track archive (needs GitHub access to it). One run:
 
 1. `art-parquet` — DTW-selects 100 tracks from the parquet into `gpx/` and renders every style to `images/`.
 2. `render-ground` — elevation styles on the same tracks into `images-ground/`.

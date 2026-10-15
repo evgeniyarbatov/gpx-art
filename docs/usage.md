@@ -79,7 +79,7 @@ make help-parquet
 | Target | Description |
 |---|---|
 | `make pipeline` | `art-parquet`, then `render-ground`, `render-time`, `series` and `city` (defaults `CITY=Ho Chi Minh City`, `CLUSTERS=1,3,4`, `SERIES=hcmc`): every image in one run |
-| `make data-repo` | Clone or update `GPX_DATA_REPO` (set in gitignored `make/local.mk`) under `$(DATA_DIR)/gpx-data` |
+| `make data-repo` | Sparse-clone or update `GPX_DATA_REPO` (only the parquet folder) under `$(DATA_DIR)/activity-data`; parquet targets run it first |
 | `make random-parquet` | Sample ≥10 km tracks from every parquet file into `gpx/` |
 | `make dtwselect-parquet` | Same pool, FastDTW-diverse, not near the current `gpx/` set |
 | `make art-parquet` | `dtwselect-parquet` then `render` |
@@ -87,4 +87,4 @@ make help-parquet
 | `make series` | Select `CLUSTERS` into `series/<SERIES>/`, then `render-series` |
 | `make city` | Every walk in `CITY` into `series/<SERIES>-city/`, rendered as `remembered-city` and `year-lines` |
 
-Parquet targets default to 100 tracks (`NUMBER_OF_GPX=100`). Override with `make art-parquet NUMBER_OF_GPX=40`. `PARQUET_DIR` defaults to `$(DATA_DIR)/gpx-data/data/parquet`. City files with no track ≥10 km are skipped.
+Parquet targets default to 100 tracks (`NUMBER_OF_GPX=100`). Override with `make art-parquet NUMBER_OF_GPX=40`. `PARQUET_DIR` defaults to `$(DATA_DIR)/activity-data/gpx-data/data/parquet`. City files with no track ≥10 km are skipped.
