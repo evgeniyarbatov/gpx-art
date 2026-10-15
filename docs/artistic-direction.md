@@ -73,10 +73,6 @@ Shared helpers in `gpx-art.py` encode the grammar. Prefer them over one-off loop
 
 - Not ink-culture vocabulary; each earns its place on a distinct structural idea (dashes + cross-marks, wireframe bracing, wash blobs, node graph, stacked simplification passes, skyline mass fill, small-multiples grid, spread-based mass) rather than pressure/texture grammar.
 
-### New axis
-
-`girih` — heading per map cell. Each cell the run entered is a ten-point star whose arms are the directions run inside it; a straight street is a chain of lozenges, a junction a rosette. Unvisited cells stay paper, so it cannot become a tiling.
-
 ### Time
 
 `ma`, `score`, `kintsugi`, `chladni` — in `scripts/time-art.py`. The axis is the clock, not the plan.

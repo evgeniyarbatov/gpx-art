@@ -6,19 +6,18 @@ The catalog is not missing names. It is missing ideas. ~76 styles were tried and
 
 Machine-readable list of kept and cut styles per registry: [taste.yaml](../../taste.yaml).
 
-Three generations, twelve styles:
+Two generations, eleven styles:
 
 | Generation | Styles | What they do |
 |---|---|---|
 | Early graphic | `stitch`, `scaffold`, `painting`, `network`, `simplify`, `notan-fill`, `tempo-grid`, `corridor` | Dashes, wireframe, blob wash, node graph, stacked RDP, skyline mass fill, small-multiples grid, spread-based mass |
 | Ink | `sumi-wet`, `shodo`, `suminagashi` | Wet pools, pressure stroke, marbled drops combed by the route |
-| New axis | `girih` | Heading per cell as ten-point stars |
 
 The seven-style set held up on the wall across every prior cut. Everything else in the ink/atmosphere/austere experiments below was judged not distinct or not strong enough to keep, even though each passed the distinctness checklist in isolation — a reminder that the checklist is necessary, not sufficient. `notan-fill` and `tempo-grid` were proposed against specific holes (filled mass, small multiples), rendered on a real track, and kept; `kintsugi` and `negative-space` from the same batch were rendered and cut — see wave 5. `pulse-bars`, `ribcage`, and `corridor` were a third batch, each proposed against the surviving nine's register (bold single-mechanism graphic idea) rather than a hole in the ink family; `corridor` was kept, `pulse-bars` was cut — see wave 6, and `ribcage` later in wave 7.
 
 ## Stay deleted
 
-Seven waves:
+Eight waves:
 
 1. **Artist costume** — `picasso`, `dali`, `rembrandt`, `kusama`, `cubist`, … Costume without grammar.
 2. **Geometric toys** — `cascade`, `field`, `hatch`, `radial`, `shatter`, `spoke`, `vortex`, `weave`. Mechanical ornament.
@@ -27,8 +26,9 @@ Seven waves:
 5. **Graphic-batch cut** (11 → 9) — `kintsugi` (gold-at-gaps/reversals; rare-accent idea, but didn't earn a keep once judged next to the other nine), `negative-space` (whole-frame ink erased along the route; distinct mechanism from `painting`, cut anyway).
 6. **Rhythm-strip cut** (12 → 11) — `pulse-bars` (route abstracted into an EKG-style bar strip; distinct mechanism from everything else in the catalog, cut anyway).
 7. **Wall cut** (14 → 12) — `ribcage` (spine with data-driven ribs), `enso-gap` (closure error as the stroke). Neither earned a keep on the wall.
+8. **Girih cut** (12 → 11) — `girih` (heading per cell as ten-point stars).
 
-Those families map to the taste-doc failures: predictable layers, static diagrams, rake grids, a Japanese name on a gray polyline, or (waves 4–7) a genuinely distinct idea that still didn't earn a place.
+Those families map to the taste-doc failures: predictable layers, static diagrams, rake grids, a Japanese name on a gray polyline, or (waves 4–8) a genuinely distinct idea that still didn't earn a place.
 
 ### Leave buried
 
